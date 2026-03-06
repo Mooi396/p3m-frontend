@@ -135,7 +135,7 @@ function NavList() {
       <ProfilMenu />
 
       {/* BERITA */}
-      <Button variant="text" color="Black" className="flex items-center gap-2">
+      <Button variant="text" color="black" className="flex items-center gap-2">
         <NewspaperIcon className="h-[18px] w-[18px]" />
         Berita
       </Button>
@@ -162,13 +162,14 @@ export function ComplexNavbar() {
   }, []);
 
   return (
-    <Navbar className="mx-auto max-w-screen-3xl p-2 lg:pl-6">
+    <Navbar className="max-w-screen-3xl py-0 px-6 ">
       <div className="relative mx-auto flex items-center justify-between">
         <Typography
           as="a"
           href="#"
-          className="mr-4 ml-2 cursor-pointer py-1.5 font-medium"
+          className="mr-4 ml-2 cursor-pointer py-1.5 font-medium flex items-center gap-3"
         >
+          <img src="logo.png" alt="logo" className="w-20 h-20" />
           <div className="text-black font-bold leading-tight">
             <div className="text-lg">Forum Kepala P3M</div>
             <div className="text-lg">POLITEKNIK SE-INDONESIA</div>
