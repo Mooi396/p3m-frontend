@@ -1,11 +1,66 @@
 import React from 'react';
+import {
+  Card,
+  CardBody,
+  CardFooter,
+  Typography,
+  Button,
+} from "@material-tailwind/react";
 import SidebarAdmin from './sidebarAdmin';
 
 const DashboardAdmin = () => {
   return (
-    <div className='flex'>
+    <div className='flex h-screen overflow-hidden'>
         <SidebarAdmin/>
-        Dashboard Admin
+        <div className="flex-1 min-w-0 overflow-auto">
+            <div className="flex">
+                <Card className="mt-6 w-96">
+                    <CardBody>
+                        <Typography variant="h5" color="blue-gray" className="mb-2">
+                        UI/UX Review Check
+                        </Typography>
+                        <Typography>
+                        The place is close to Barceloneta Beach and bus stop just 2 min by
+                        walk and near to &quot;Naviglio&quot; where you can enjoy the main
+                        night life in Barcelona.
+                        </Typography>
+                    </CardBody>
+                    <CardFooter className="pt-0">
+                        <Button>Read More</Button>
+                    </CardFooter>
+                </Card>
+                <Card className="mt-6 w-96">
+                    <CardBody>
+                        <Typography variant="h5" color="blue-gray" className="mb-2">
+                        UI/UX Review Check
+                        </Typography>
+                        <Typography>
+                        The place is close to Barceloneta Beach and bus stop just 2 min by
+                        walk and near to &quot;Naviglio&quot; where you can enjoy the main
+                        night life in Barcelona.
+                        </Typography>
+                    </CardBody>
+                    <CardFooter className="pt-0">
+                        <Button>Read More</Button>
+                    </CardFooter>
+                </Card>
+                <Card className="mt-6 w-96">
+                    <CardBody>
+                        <Typography variant="h5" color="blue-gray" className="mb-2">
+                        UI/UX Review Check
+                        </Typography>
+                        <Typography>
+                        The place is close to Barceloneta Beach and bus stop just 2 min by
+                        walk and near to &quot;Naviglio&quot; where you can enjoy the main
+                        night life in Barcelona.
+                        </Typography>
+                    </CardBody>
+                    <CardFooter className="pt-0">
+                        <Button>Read More</Button>
+                    </CardFooter>
+                </Card>
+            </div>
+        </div>
     </div>
   )
 }

@@ -6,15 +6,15 @@ import { Card, CardHeader, Input, Typography, Button, CardBody, Chip, Tabs, Tabs
 import { UserCircleIcon, PencilIcon, UserPlusIcon, TrashIcon, CheckIcon, XMarkIcon } from "@heroicons/react/24/solid";
 
 const TABS = [
-  { label: "All", value: "all" },
-  { label: "Verified", value: "verified" },
-  { label: "Pending", value: "pending" },
-  { label: "Rejected", value: "rejected" },
+  { label: "Semua", value: "all" },
+  { label: "Terverifikasi", value: "verified" },
+  { label: "Menunggu", value: "pending" },
+  { label: "Ditolak", value: "rejected" },
 ];
 
 const TABLE_HEAD = ["Member", "Instansi / Jabatan", "Status", "Role", "Actions"];
 
-export default function DaftarUser() {
+export default function DaftarUserAdmin() {
   const [users, setUsers] = useState([]);
   const [filter, setFilter] = useState("all");
 
@@ -27,7 +27,6 @@ export default function DaftarUser() {
       const response = await axios.get("http://localhost:5000/users", {
         withCredentials: true,
       });
-      console.log("STRUKTUR DATA:", response.data[0]);
       setUsers(response.data);
     } catch (error) {
       console.error("Gagal mengambil data user:", error);
@@ -56,15 +55,16 @@ export default function DaftarUser() {
   });
 
   return (
-    <div className="flex">
+    <div className="flex h-screen overflow-hidden">
       <SidebarAdmin/>
-    <Card className="h-full w-full">
+      <div className="flex-1 min-w-0 overflow-auto">
+    <Card className="h-full w-full rounded-none shadow-none">
       <CardHeader floated={false} shadow={false} className="rounded-none">
         <div className="mb-8 flex items-center justify-between gap-8">
           <div>
             <Typography variant="h5" color="blue-gray">Daftar Pengguna</Typography>
             <Typography color="gray" className="mt-1 font-normal">
-              Kelola verifikasi dan data anggota E-Caku
+              Kelola verifikasi dan data anggota P3M
             </Typography>
           </div>
           <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
@@ -202,6 +202,7 @@ export default function DaftarUser() {
         </table>
       </CardBody>
     </Card>
+    </div>
     </div>
   );
 }
