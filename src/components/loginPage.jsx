@@ -6,20 +6,24 @@ import { LoginUser, reset } from "../features/authSlice";
 import {
   Card,
   Input,
-  Checkbox,
   Button,
   Typography,
+  IconButton,
 } from "@material-tailwind/react";
- 
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
+
 export default function LoginPage() {
-const [email, setEmail] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // State untuk menampilkan/menyembunyikan password
+  const [showPassword, setShowPassword] = useState(false);
+  
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  
   const { user, isError, isSuccess, isLoading, message } = useSelector(
     (state) => state.auth
   );
+
   useEffect(() => {
     if (user || isSuccess) {
       navigate("/dashboard");
@@ -32,128 +36,90 @@ const [email, setEmail] = useState("");
     dispatch(LoginUser({ email, password }));
   };
 
-  const toggleShowPassword = () => {
-    setShowPassword(!showPassword);
-  };
+  const toggleShowPassword = () => setShowPassword(!showPassword);
+
   return (
-     <div>
-      {/* head start   */}
-      <Head title={"E-Caku | Masuk"} />
-      {/* head end  */}
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+      <Head title={"Masuk"} />
+      
+      <Card color="transparent" shadow={false} className="w-full max-w-[400px] bg-white p-8 border border-blue-gray-50 shadow-xl shadow-blue-gray-900/5">
+        <Typography variant="h4" color="blue-gray" className="text-center">
+          Masuk
+        </Typography>
+        <Typography color="gray" className="mt-1 font-normal text-center mb-8">
+          Masukkan detail Anda untuk masuk ke akun Anda.
+        </Typography>
 
-      {/* navbar start  */}
-      {/* navbar end  */}
-
-      {/* content start  */}
-      <div
-        className="hero min-h-screen min-w-screen"
-      >
-        <div className="hero-content block">
-          <div className="card shrink-0 w-full shadow-md bg-base-100 mt-8">
-            <div className="card-body">
-              {/* {isError && (
-                // <FormAlert>
-                //   <span>{message}</span>
-                // </FormAlert>
-              )} */}
-              <form onSubmit={Auth}>
-                <h1 className="text-5xl font-semibold text-center">Masuk</h1>
-                <p className="text-xl text-center">
-                  hei, masukkan detail Anda untuk masuk ke akun Anda
-                </p>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Email</span>
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="you@example.com"
-                    className="input input-bordered"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Password</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      placeholder="password"
-                      className="input input-bordered w-full"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                    <button
-                      type="button"
-                      className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 focus:outline-none"
-                      onClick={toggleShowPassword}
-                    >
-                      {showPassword ? (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          class="icon icon-tabler icon-tabler-eye"
-                          width="20"
-                          height="20"
-                          viewBox="0 0 24 24"
-                          stroke-width="1.5"
-                          stroke="#000000"
-                          fill="none"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                          <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
-                          <path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />
-                        </svg>
-                      ) : (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          class="icon icon-tabler icon-tabler-eye-closed"
-                          width="20"
-                          height="20"
-                          viewBox="0 0 24 24"
-                          stroke-width="1.5"
-                          stroke="#000000"
-                          fill="none"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                          <path d="M21 9c-2.4 2.667 -5.4 4 -9 4c-3.6 0 -6.6 -1.333 -9 -4" />
-                          <path d="M3 15l2.5 -3.8" />
-                          <path d="M21 14.976l-2.492 -3.776" />
-                          <path d="M9 17l.5 -4" />
-                          <path d="M15 17l-.5 -4" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                </div>
-                <div className="form-control mt-6">
-                  <button type="submit" className="btn btn-purple">
-                    {isLoading ? "Loading..." : "Masuk"}
-                  </button>
-                </div>
-                <p className="text-center">
-                  belum punya akun?{" "}
-                  <a href="/daftar" className="link link-primary">
-                    Daftar
-                  </a>
-                </p>
-              </form>
+        <form onSubmit={Auth} className="flex flex-col gap-6">
+          <div className="flex flex-col gap-1">
+            <Typography variant="small" color="blue-gray" className="font-medium">
+              Email Anda
+            </Typography>
+            <Input
+              size="lg"
+              placeholder="name@mail.com"
+              className="!border-t-blue-gray-200 focus:!border-t-gray-900"
+              labelProps={{
+                className: "before:content-none after:content-none",
+              }}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <Typography variant="small" color="blue-gray" className="font-medium">
+              Kata Sandi
+            </Typography>
+            <div className="relative">
+              <Input
+                type={showPassword ? "text" : "password"}
+                size="lg"
+                placeholder="********"
+                className="!border-t-blue-gray-200 focus:!border-t-gray-900"
+                labelProps={{
+                  className: "before:content-none after:content-none",
+                }}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <IconButton
+                variant="text"
+                size="sm"
+                className="!absolute right-1 top-1 rounded"
+                onClick={toggleShowPassword}
+              >
+                {showPassword ? (
+                  <EyeSlashIcon className="h-5 w-5" />
+                ) : (
+                  <EyeIcon className="h-5 w-5" />
+                )}
+              </IconButton>
             </div>
           </div>
-          <footer>
-            <p className="text-center pt-8 mt-6">
-              © Copyright E-Caku. All Rights Reserved
-            </p>
-          </footer>
-        </div>
-      </div>
+          {isError && (
+            <Typography variant="small" color="red" className="text-center font-medium">
+              {message}
+            </Typography>
+          )}
+
+          <Button type="submit" size="lg" fullWidth color="gray" loading={isLoading}>
+            {isLoading ? "Memproses..." : "Masuk"}
+          </Button>
+
+          <Typography color="gray" className="mt-4 text-center font-normal">
+            Belum punya akun?{" "}
+            <Link to="/daftar" className="font-medium text-gray-900">
+              Daftar
+            </Link>
+          </Typography>
+        </form>
+      </Card>
+
+      <footer className="mt-auto py-8">
+        <Typography variant="small" color="gray" className="text-center font-normal">
+          © {new Date().getFullYear()} Forum Kepala P3M Politeknik Se-Indonesia. All Rights Reserved
+        </Typography>
+      </footer>
     </div>
   );
 }

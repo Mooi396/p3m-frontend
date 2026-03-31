@@ -48,7 +48,7 @@ export default function SidebarAdmin() {
   };
 
   return (
-    <Card className="h-screen w-full max-w-[20rem] p-4 shadow-none flex flex-col">
+    <Card className="h-screen w-full max-w-[16rem] p-2 shadow-none flex flex-col border-r border-blue-gray-50 rounded-none shadow-none">
       <div className="mb-2 flex items-center gap-4 p-4">
         <img src="https://docs.material-tailwind.com/img/logo-ct-dark.png" alt="brand" className="h-8 w-8" />
         <Typography variant="h5" color="blue-gray">
