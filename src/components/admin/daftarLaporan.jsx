@@ -1,0 +1,222 @@
+import { useState, useEffect } from "react";
+import SidebarAdmin from "./sidebarAdmin"; 
+import axios from "axios";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { Card, CardHeader, Input, Typography, Button, CardBody, Chip, Tabs, TabsHeader, Tab, IconButton, Tooltip } from "@material-tailwind/react";
+import { PencilIcon, PlusIcon, TrashIcon, CheckIcon, XMarkIcon, DocumentIcon } from "@heroicons/react/24/solid";
+
+const TABS = [
+  { label: "Semua", value: "all" },
+  { label: "Terverifikasi", value: "verified" },
+  { label: "Menunggu", value: "pending" },
+  { label: "Ditolak", value: "rejected" },
+];
+
+const TABLE_HEAD = ["Keterangan Laporan", "Tanggal", "Pengirim", "Status", "Actions"];
+
+export default function DaftarLaporanAdmin() {
+  const [laporans, setLaporans] = useState([]);
+  const [filter, setFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    getLaporans();
+  }, []);
+
+  const getLaporans = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/laporans", {
+        withCredentials: true,
+      });
+      setLaporans(response.data);
+    } catch (error) {
+      console.error("Gagal mengambil data laporan:", error);
+    }
+  };
+
+  const deleteLaporan = async (uuid) => {
+    if (window.confirm("Yakin ingin menghapus laporan ini?")) {
+      try {
+        await axios.delete(`http://localhost:5000/laporans/${uuid}`, { withCredentials: true });
+        getLaporans();
+      } catch (error) {
+        alert(error.response?.data?.msg || "Gagal menghapus");
+      }
+    }
+  };
+
+  const verifyLaporan = async (uuid) => {
+    try {
+      await axios.patch(`http://localhost:5000/laporans/${uuid}/verify`, {}, { withCredentials: true });
+      getLaporans();
+    } catch (error) {
+      alert("Gagal memverifikasi laporan");
+    }
+  };
+
+  const rejectLaporan = async (uuid) => {
+    try {
+      await axios.patch(`http://localhost:5000/laporans/${uuid}/reject`, {}, { withCredentials: true });
+      getLaporans();
+    } catch (error) {
+      alert("Gagal menolak laporan");
+    }
+  };
+
+  const filteredRows = laporans.filter((item) => {
+    const matchesTab = filter === "all" || item.status === filter;
+    const matchesSearch = 
+      item.keterangan.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (item.user?.username || "").toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesTab && matchesSearch;
+  });
+
+  return (
+    <div className="flex h-screen overflow-hidden">
+      <SidebarAdmin />
+      <div className="flex-1 min-w-0 overflow-auto">
+      <Card className="h-full w-full rounded-none shadow-none">
+        <CardHeader floated={false} shadow={false} className="rounded-none">
+          <div className="mb-8 flex items-center justify-between gap-8">
+            <div>
+              <Typography variant="h5" color="blue-gray">Manajemen Laporan</Typography>
+              <Typography color="gray" className="mt-1 font-normal">
+                Verifikasi dan kelola dokumen laporan masuk
+              </Typography>
+            </div>
+            <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+              <Button className="flex items-center gap-3" size="sm">
+                <PlusIcon strokeWidth={2} className="h-4 w-4" /> Tambah Laporan
+              </Button>
+            </div>
+          </div>
+          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+            <Tabs value={filter} className="w-full md:w-max">
+              <TabsHeader>
+                {TABS.map(({ label, value }) => (
+                  <Tab key={value} value={value} onClick={() => setFilter(value)}>
+                    &nbsp;&nbsp;{label}&nbsp;&nbsp;
+                  </Tab>
+                ))}
+              </TabsHeader>
+            </Tabs>
+            <div className="w-full md:w-72">
+              <Input 
+                label="Cari Keterangan atau Pengirim..." 
+                icon={<MagnifyingGlassIcon className="h-5 w-5" />} 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardBody className="overflow-scroll px-0">
+          <table className="mt-4 w-full min-w-max table-auto text-left">
+            <thead>
+              <tr>
+                {TABLE_HEAD.map((head) => (
+                  <th key={head} className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-4">
+                    <Typography variant="small" color="blue-gray" className="font-normal leading-none opacity-70">
+                      {head}
+                    </Typography>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredRows.map((laporan, index) => {
+                const isLast = index === filteredRows.length - 1;
+                const classes = isLast ? "p-4" : "p-4 border-b border-blue-gray-50";
+
+                return (
+                  <tr key={laporan.uuid}>
+                    <td className={classes}>
+                      <div className="flex items-center gap-3">
+                        {/* Karena laporan adalah PDF, kita gunakan icon dokumen, bukan img preview */}
+                        <div className="p-2 bg-blue-50 rounded-lg">
+                          <DocumentIcon className="h-6 w-6 text-blue-500" />
+                        </div>
+                        <div className="flex flex-col">
+                          <Typography variant="small" color="blue-gray" className="font-bold">
+                            {laporan.keterangan.length > 50 ? laporan.keterangan.substring(0, 50) + "..." : laporan.keterangan}
+                          </Typography>
+                          <Typography variant="small" className="text-[10px] text-gray-500 font-mono">
+                            {laporan.file_laporan}
+                          </Typography>
+                        </div>
+                      </div>
+                    </td>
+                    <td className={classes}>
+                      <Typography variant="small" color="blue-gray" className="font-normal">
+                        {new Date(laporan.createdAt).toLocaleDateString("id-ID", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric"
+                        })}
+                      </Typography>
+                    </td>
+                    <td className={classes}>
+                      <Typography variant="small" color="blue-gray" className="font-normal">
+                        {laporan.user?.username || "Guest"}
+                      </Typography>
+                    </td>
+                    <td className={classes}>
+                      <div className="w-max">
+                        <Chip
+                          variant="ghost"
+                          size="sm"
+                          value={laporan.status}
+                          color={
+                            laporan.status === "verified" ? "green" : 
+                            laporan.status === "pending" ? "amber" : "red"
+                          }
+                        />
+                      </div>
+                    </td>
+                    <td className={classes}>
+                      <div className="flex gap-2">
+                        {laporan.status === "pending" && (
+                          <>
+                            <Tooltip content="Verifikasi">
+                              <IconButton variant="text" color="green" onClick={() => verifyLaporan(laporan.uuid)}>
+                                <CheckIcon className="h-4 w-4" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip content="Tolak">
+                              <IconButton variant="text" color="red" onClick={() => rejectLaporan(laporan.uuid)}>
+                                <XMarkIcon className="h-4 w-4" />
+                              </IconButton>
+                            </Tooltip>
+                          </>
+                        )}
+                        
+                        <Tooltip content="Unduh/Lihat PDF">
+                          <IconButton variant="text" onClick={() => window.open(laporan.url, "_blank")}>
+                            <DocumentIcon className="h-4 w-4 text-blue-gray-700" />
+                          </IconButton>
+                        </Tooltip>
+
+                        <Tooltip content="Edit">
+                          <IconButton variant="text">
+                            <PencilIcon className="h-4 w-4" />
+                          </IconButton>
+                        </Tooltip>
+
+                        <Tooltip content="Hapus">
+                          <IconButton variant="text" color="red" onClick={() => deleteLaporan(laporan.uuid)}>
+                            <TrashIcon className="h-4 w-4" />
+                          </IconButton>
+                        </Tooltip>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </CardBody>
+      </Card>
+      </div>
+    </div>
+  );
+}

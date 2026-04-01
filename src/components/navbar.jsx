@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import {
   Navbar,
   MobileNav,
@@ -8,21 +9,16 @@ import {
   MenuHandler,
   MenuList,
   MenuItem,
-  Avatar,
-  Card,
+  // Avatar,
+  // Card,
   IconButton,
 } from "@material-tailwind/react";
 import {
-  CubeTransparentIcon,
-  UserCircleIcon,
-  CodeBracketSquareIcon,
-  Square3Stack3DIcon,
+  // CubeTransparentIcon,
+  // UserCircleIcon,
+  // CodeBracketSquareIcon,
+  // Square3Stack3DIcon,
   ChevronDownIcon,
-  Cog6ToothIcon,
-  InboxArrowDownIcon,
-  LifebuoyIcon,
-  PowerIcon,
-  RocketLaunchIcon,
   Bars2Icon,
   NewspaperIcon,
   CalendarDateRangeIcon,
@@ -131,7 +127,7 @@ function LaporanMenu() {
 
 function NavList() {
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-1">
       <ProfilMenu />
 
       {/* BERITA */}
@@ -162,7 +158,7 @@ export function ComplexNavbar() {
   }, []);
 
   return (
-    <Navbar className="max-w-screen-3xl py-0 px-6 ">
+    <Navbar className="max-w-screen-3xl py-0 px-6 shadow-none">
       <div className="relative mx-auto flex items-center justify-between">
         <Typography
           as="a"
@@ -187,10 +183,11 @@ export function ComplexNavbar() {
         >
           <Bars2Icon className="h-6 w-6" />
         </IconButton>
-
-        <Button size="sm" className="bg-black text-white hover:bg-gray-900">
-          <span>Log In</span>
-        </Button>
+        <Link to={"/daftar"}>
+          <Button size="md" className="bg-black text-white hover:bg-gray-900">
+            <span>Bergabung</span>
+          </Button>
+        </Link>
       </div>
       <MobileNav open={isNavOpen} className="overflow-scroll">
         <NavList />
