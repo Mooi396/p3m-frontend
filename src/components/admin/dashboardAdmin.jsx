@@ -63,10 +63,8 @@ const DashboardAdmin = () => {
   return (
     <div className='flex h-screen w-full bg-gray-50 overflow-hidden'>
       <SidebarAdmin />
-
       <div className='flex-1 flex flex-col min-w-0 h-full overflow-y-auto'>
         <DashboardNavbar />
-        
         <div className="p-6">
           <div className="mb-6">
             <Typography variant="h4" color="blue-gray">Selamat datang, Admin</Typography>

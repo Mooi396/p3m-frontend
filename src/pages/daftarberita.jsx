@@ -6,6 +6,7 @@ import DaftarBeritaAdmin from '../components/admin/daftarBerita'
 import Head from "../components/head";
 
 const Daftarberita = () => {
+  const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { isError } = useSelector((state) => state.auth);
@@ -13,11 +14,17 @@ const Daftarberita = () => {
   useEffect(() => {
     dispatch(GetMe());
   }, [dispatch]);
+  
   useEffect(() => {
-    if (isError) {
-      navigate("/masuk");
-    }
-  }, [isError, navigate]);
+          if(isError) {
+              navigate('/masuk');
+              return;
+          }
+          if(user && user.role !== 'admin') {
+              navigate(-1)
+          }
+      },[isError, user, navigate]);
+  
   return (
     <div>
         <Head title={"Daftar Berita"} />
