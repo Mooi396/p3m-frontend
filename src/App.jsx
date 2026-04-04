@@ -9,22 +9,43 @@ import Daftarberita from "./pages/daftarberita";
 import Daftarlaporan from "./pages/daftarlaporan";
 import DaftarTag from "./pages/daftartag";
 import DaftarKategori from "./pages/daftarkategori";
+import TambahUserAdminPage from "./pages/tambahuseradmin";
+import GuestRoute from "./components/guestRoute";
+import { useDispatch } from "react-redux";
+import { useEffect } from "react";
+import { GetMe } from "./features/authSlice.js";
+import DetailProfilUserPage from "./pages/detailprofiladmin.jsx";
 
 function App() {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(GetMe());
+  }, [dispatch]);
   return ( 
   <div>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home/>}/>
-        <Route path="/daftar" element={<Register/>}/>
+        <Route path="/daftar" element={
+          <GuestRoute>
+            <Register />
+          </GuestRoute>
+        }/>
         <Route path="/dashboard" element={<Dashboard/>}></Route>
+        <Route path="/dashboard/profil" element={<DetailProfilUserPage/>}></Route>
         <Route path="/dashboard/pengguna" element={<DaftarUser/>}></Route>
+        <Route path="/dashboard/pengguna/tambah" element={<TambahUserAdminPage/>}></Route>
         <Route path="/dashboard/agenda" element={<DaftarAgenda/>}></Route>
         <Route path="/dashboard/berita" element={<Daftarberita/>}></Route>
         <Route path="/dashboard/berita/tag" element={<DaftarTag/>}></Route>
         <Route path="/dashboard/berita/kategori" element={<DaftarKategori/>}></Route>
         <Route path="/dashboard/laporan" element={<Daftarlaporan/>}></Route>
-        <Route path="/masuk" element={<Login/>}></Route>
+        <Route path="/masuk" element={
+          <GuestRoute>
+            <Login />
+          </GuestRoute>
+        }></Route>
       </Routes>
     </BrowserRouter>
   </div>

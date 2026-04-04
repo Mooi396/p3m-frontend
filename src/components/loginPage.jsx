@@ -26,7 +26,11 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (user || isSuccess) {
+      if (user.role !== "admin") {
       navigate("/dashboard");
+      } else {
+        navigate("/dashboard/profil");
+      }
     }
     dispatch(reset());
   }, [user, isSuccess, dispatch, navigate]);

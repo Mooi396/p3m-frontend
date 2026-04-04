@@ -83,7 +83,7 @@ export default function DaftarTagAdmin() {
     <div className="flex h-screen overflow-hidden">
       <SidebarAdmin />
       <div className="flex-1 min-w-0 overflow-auto">
-      <Card className="h-full w-full rounded-none shadow-none">
+      <Card className="w-full rounded-none shadow-none">
         <CardHeader floated={false} shadow={false} className="rounded-none">
           <div className="mb-8 flex items-center justify-between gap-8">
             <div>
@@ -181,7 +181,7 @@ export default function DaftarTagAdmin() {
           <Button variant="text" color="red" onClick={handleOpen} className="mr-1">
             <span>Batal</span>
           </Button>
-          <Button variant="gradient" color="green" onClick={handleSubmit}>
+          <Button onClick={handleSubmit}>
             <span>{isEdit ? "Simpan Perubahan" : "Simpan"}</span>
           </Button>
         </DialogFooter>

@@ -4,17 +4,17 @@ import {
   Card,
   CardBody,
   Typography,
-  Avatar,
-  Tooltip,
   Button,
+  Avatar,
+  Input,
+  Tooltip,
 } from "@material-tailwind/react";
-import SidebarAnggota from "./sidebarAnggota";
+import { AcademicCapIcon, PencilIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import DashboardNavbar from "../dashboardNavbar";
-import { EyeIcon } from "@heroicons/react/24/solid";
-import { Link } from "react-router-dom";
+import SidebarAdmin from "./sidebarAdmin";
 
-export default function DashboardAnggota() {
-  const [user, setUser] = useState(null);
+const DetailProfilAdmin = () => {
+    const [user, setUser] = useState(null);
 
   useEffect(() => {
     const getMe = async () => {
@@ -40,55 +40,53 @@ export default function DashboardAnggota() {
     return new Date(dateString).toLocaleDateString('id-ID', options);
   };
 
+  const info = user.anggotas && user.anggotas.length > 0 ? user.anggotas[0] : {};
   return (
-    <div className="flex h-screen w-full bg-gray-50 overflow-hidden font-sans">
-      <SidebarAnggota />
+    <div>
+        <div className="flex h-screen w-full bg-gray-50 overflow-hidden font-sans">
+      <SidebarAdmin />
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto">
         <DashboardNavbar />
 
-        <div className="p-8 flex justify-center">
+        <div className="p-6 flex justify-center">
           <Card className="w-full max-w-6xl shadow-sm border border-gray-100 bg-white rounded-lg">
             <CardBody className="p-10">
-              
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-gray-100 mb-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                 <div className="flex items-center gap-6">
-                  <Avatar
-                    src={profil?.url || "https://via.placeholder.com/150"}
-                    alt="foto-profil"
-                    size="xl"
-                    className="border-2 border-black-50 shadow-sm"
-                  />
+                    {info.url ? (
+                        <Avatar src={info.url} alt={user.username} size="sm" variant="circular" />
+                        ) : (
+                        <div className="h-24 w-24 rounded-full bg-blue-gray-50 flex items-center justify-center">
+                        <UserCircleIcon className="h-18 w-18" />
+                        </div>
+                    )}
                   <div>
-                    <Typography variant="h4" color="blue-gray" className="font-bold">
-                      {profil?.nama_lengkap}{profil?.gelar ? `, ${profil.gelar}` : ""}
+                    <Typography variant="h4" color="blue-gray" className="font-bold capitalize">
+                      {user.username}
                     </Typography>
                     <Typography variant="paragraph" color="gray" className="font-medium">
-                      {profil?.jabatan || "Anggota"}
+                      {user.role}
                     </Typography>
                   </div>
                 </div>
-                <Link to="/dashboard/profil">
-                <Tooltip content="Lihat Detail Profil">
-                <Button size="sm" className="flex items-center gap-2 rounded-full normal-case px-6 py-2.5">
-                  <EyeIcon className="h-4 w-4" />
-                  Lihat Detail
-                </Button>
-                </Tooltip>
-                </Link>                             
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
                 
+                <Button size="sm" className="flex items-center gap-2 bg-blue-600 rounded-full normal-case px-6 py-2.5">
+                  <PencilIcon className="h-4 w-4" />
+                  Edit Profil
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 pt-8 border-t border-gray-100">
                 <div>
                   <Typography variant="h6" color="blue-gray" className="font-semibold mb-5">
                     Informasi Akun
                   </Typography>
                   <div className="space-y-5">
-                    <div className="flex gap-4">
-                      <ReadOnlyField label="Role" value={user.role} isChip color="blue" />
-                      <ReadOnlyField label="Status" value={user.status} isChip color={user.status === 'verified' ? 'green' : user.status === 'pending' ? 'amber' : 'red'} />
-                    </div>
                     <ReadOnlyField label="Email" value={user.email || "-"} />
                     <ReadOnlyField label="Username" value={user.username || "-"} />
+                    <div className="flex gap-4">
+                      <ReadOnlyField label="Role" value={user.role} isChip color="blue" />
+                      <ReadOnlyField label="Status" value={user.status} isChip color={user.status === 'verified' ? 'green' : 'amber'} />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -97,7 +95,8 @@ export default function DashboardAnggota() {
         </div>
       </div>
     </div>
-  );
+    </div>
+  )
 }
 
 function ReadOnlyField({ label, value, isChip, color }) {
@@ -118,3 +117,25 @@ function ReadOnlyField({ label, value, isChip, color }) {
     </div>
   );
 }
+
+function AcademicLink({ label, href, color }) {
+  const isAvailable = href && href !== "" && href !== "#";
+  return (
+    <Tooltip content={isAvailable ? `Lihat ${label}` : `${label} belum diisi`}>
+      <Typography
+        as="a"
+        href={isAvailable ? href : "#"}
+        target={isAvailable ? "_blank" : "_self"}
+        className={`text-2xl transition-all duration-300 ${
+          isAvailable 
+            ? `text-${color}-600 hover:scale-110 hover:opacity-80` 
+            : "text-gray-300 cursor-not-allowed"
+        }`}
+      >
+        <AcademicCapIcon className="h-5 w-5"/>
+      </Typography>
+    </Tooltip>
+  );
+}
+
+export default DetailProfilAdmin

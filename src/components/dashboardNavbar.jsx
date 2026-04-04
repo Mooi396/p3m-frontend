@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Navbar,
   Typography,
@@ -12,55 +14,77 @@ import {
 import {
   UserCircleIcon,
   ChevronDownIcon,
-  Cog6ToothIcon,
-  InboxArrowDownIcon,
-  LifebuoyIcon,
-  PowerIcon,
+  PencilIcon,
 } from "@heroicons/react/24/solid";
- 
+
 const profileMenuItems = [
   {
     label: "My Profile",
     icon: UserCircleIcon,
+    path: "/dashboard/profil",
   },
   {
     label: "Edit Profile",
-    icon: Cog6ToothIcon,
-  },
-  {
-    label: "Inbox",
-    icon: InboxArrowDownIcon,
-  },
-  {
-    label: "Help",
-    icon: LifebuoyIcon,
-  },
-  {
-    label: "Sign Out",
-    icon: PowerIcon,
+    icon: PencilIcon,
+    path: "/dashboard/edit",
   },
 ];
- 
+
 function ProfileMenu() {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
- 
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const getMe = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/me", {
+          withCredentials: true,
+        });
+        setUser(response.data);
+      } catch (error) {
+        console.error("Gagal mengambil data user:", error);
+      }
+    };
+    getMe();
+  }, []);
+  const info = user?.anggotas && user.anggotas.length > 0 ? user.anggotas[0] : {};
+  const isNotVerified = user?.status !== "verified";
+
   const closeMenu = () => setIsMenuOpen(false);
- 
+
+  const handleMenuClick = (path, label) => {
+  if (label === "Edit Profile" && (user?.status === "pending" || user?.status === "rejected")) {
+    return; 
+  }
+  
+  closeMenu();
+  if (path) navigate(path);
+};
+
+  if (!user) return <div className="h-8 w-8 animate-pulse rounded-full bg-gray-200" />;
+
   return (
     <Menu open={isMenuOpen} handler={setIsMenuOpen} placement="bottom-end">
       <MenuHandler>
         <Button
           variant="text"
           color="blue-gray"
-          className="flex items-center gap-1 rounded-full py-0.5 pr-2 pl-0.5 lg:ml-auto"
+          className="flex items-center gap-1 rounded-full py-0.5 pr-2 pl-0.5 lg:ml-auto focus:outline-none"
         >
-          <Avatar
-            variant="circular"
-            size="sm"
-            alt="tania andrew"
-            className="border border-gray-900 p-0.5"
-            src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1480&q=80"
-          />
+          {info.url ? (
+            <Avatar 
+              src={info.url} 
+              alt={user.username} 
+              size="sm" 
+              variant="circular" 
+              className="border border-gray-900 p-0.5"
+            />
+          ) : (
+            <div className="h-8 w-8 rounded-full bg-blue-gray-50 flex items-center justify-center border border-gray-900">
+              <UserCircleIcon className="h-6 w-6 text-blue-gray-300" />
+            </div>
+          )}
           <ChevronDownIcon
             strokeWidth={2.5}
             className={`h-3 w-3 transition-transform ${
@@ -70,29 +94,28 @@ function ProfileMenu() {
         </Button>
       </MenuHandler>
       <MenuList className="p-1">
-        {profileMenuItems.map(({ label, icon }, key) => {
-          const isLastItem = key === profileMenuItems.length - 1;
+        {profileMenuItems.map(({ label, icon, path }) => {
+          const isDisabled = label === "Edit Profile" && isNotVerified;
+
           return (
             <MenuItem
               key={label}
-              onClick={closeMenu}
+              disabled={isDisabled}
+              onClick={() => handleMenuClick(path, label)}
               className={`flex items-center gap-2 rounded ${
-                isLastItem
-                  ? "hover:bg-red-500/10 focus:bg-red-500/10 active:bg-red-500/10"
-                  : ""
+                isDisabled ? "opacity-50 cursor-not-allowed pointer-events-none" : ""
               }`}
             >
               {React.createElement(icon, {
-                className: `h-4 w-4 ${isLastItem ? "text-red-500" : ""}`,
+                className: `h-4 w-4 ${isDisabled ? "text-gray-400" : ""}`,
                 strokeWidth: 2,
               })}
-              <Typography
-                as="span"
-                variant="small"
+              <Typography 
+                variant="small" 
                 className="font-normal"
-                color={isLastItem ? "red" : "inherit"}
+                color={isDisabled ? "gray" : "inherit"}
               >
-                {label}
+                {label} {isDisabled && "(Tidak memiliki akses)"}
               </Typography>
             </MenuItem>
           );
@@ -101,17 +124,17 @@ function ProfileMenu() {
     </Menu>
   );
 }
- 
+
 export default function DashboardNavbar() {
   return (
     <Navbar fullWidth className="p-2 lg:pl-6 rounded-none shadow-none border border-blue-gray-50">
       <div className="relative mx-auto flex items-center justify-between text-blue-gray-900">
         <Typography
-          as="a"
-          href="#"
-          className="mr-4 ml-2 cursor-pointer py-1.5 font-medium"
+          as={Link}
+          to="/dashboard"
+          className="mr-4 ml-2 cursor-pointer py-1.5 font-bold uppercase tracking-wider"
         >
-          Material Tailwind
+          P3M Dashboard
         </Typography>
         <ProfileMenu />
       </div>

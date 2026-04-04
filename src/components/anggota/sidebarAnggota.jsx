@@ -12,6 +12,7 @@ import {
 import {
   UserCircleIcon,
   PowerIcon,
+  PresentationChartBarIcon,
 } from "@heroicons/react/24/solid";
 
 export default function SidebarAnggota() {
@@ -45,9 +46,9 @@ export default function SidebarAnggota() {
         <Link to={'/dashboard'}>
           <ListItem>
             <ListItemPrefix>
-              <UserCircleIcon className="h-5 w-5"/>
+              <PresentationChartBarIcon className="h-5 w-5"/>
             </ListItemPrefix>
-            Profil Anggota
+            Dashboard
           </ListItem>
         </Link>
       </List>
