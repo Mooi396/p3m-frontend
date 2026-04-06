@@ -45,8 +45,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <Head title={"Masuk"} />
-      
-      {/* Container Card disesuaikan agar serupa dengan Register (shadow & border) */}
       <Card color="transparent" shadow={true} className="p-8 w-full max-w-[28rem] bg-white border border-blue-gray-50">
         <Typography variant="h4" color="blue-gray">
           Masuk

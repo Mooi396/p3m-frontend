@@ -13,6 +13,7 @@ import { AcademicCapIcon, PencilIcon, UserCircleIcon } from "@heroicons/react/24
 import DashboardNavbar from "./dashboardNavbar";
 import SidebarAdmin from "./admin/sidebarAdmin";
 import SidebarAnggota from "./anggota/sidebarAnggota";
+import { Link } from "react-router-dom";
 
 export default function DetailProfile() {
   const [user, setUser] = useState(null);
@@ -73,14 +74,16 @@ export default function DetailProfile() {
                   </div>
                 </div>
                 {user.status === "verified" ? (
-                  <Button size="sm" className="flex items-center gap-2 bg-blue-600 rounded-full normal-case px-6 py-2.5">
+                  <Link to="/dashboard/profil/edit">
+                  <Button size="sm" className="flex items-center gap-2 rounded-full normal-case px-6 py-2.5">
                     <PencilIcon className="h-4 w-4" />
                     Edit Profil
                   </Button>
+                  </Link>
                 ) : (
                 <Tooltip content="Tidak memiliki akses">
                     <div className="w-max">
-                        <Button size="sm" className="flex items-center gap-2 bg-blue-600 rounded-full normal-case px-6 py-2.5" disabled={active === 1}>
+                        <Button size="sm" className="flex items-center gap-2 rounded-full normal-case px-6 py-2.5" disabled={active === 1}>
                             <PencilIcon className="h-4 w-4" />
                             Edit Profil
                         </Button>

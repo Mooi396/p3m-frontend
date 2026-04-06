@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { GetMe } from "../features/authSlice";
 import Head from "../components/head";
-import TambahUserAdmin from "../components/admin/tambahUser";
+import TambahUserAdmin from "../components/admin/user/tambahUser";
 
 const TambahUserAdminPage = () => {
   const { user } = useSelector((state) => state.auth);

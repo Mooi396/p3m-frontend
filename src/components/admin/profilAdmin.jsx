@@ -54,7 +54,7 @@ const DetailProfilAdmin = () => {
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                 <div className="flex items-center gap-6">
                     {info.url ? (
-                        <Avatar src={info.url} alt={user.username} size="sm" variant="circular" />
+                        <Avatar src={info.url} alt={user.username} size="lg" variant="circular" />
                         ) : (
                         <div className="h-24 w-24 rounded-full bg-blue-gray-50 flex items-center justify-center">
                         <UserCircleIcon className="h-18 w-18" />
@@ -70,7 +70,7 @@ const DetailProfilAdmin = () => {
                   </div>
                 </div>
                 
-                <Button size="sm" className="flex items-center gap-2 bg-blue-600 rounded-full normal-case px-6 py-2.5">
+                <Button size="sm" className="flex items-center gap-2 rounded-full normal-case px-6 py-2.5">
                   <PencilIcon className="h-4 w-4" />
                   Edit Profil
                 </Button>

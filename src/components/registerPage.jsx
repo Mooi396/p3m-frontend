@@ -15,7 +15,6 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   
-  // Semua input dikelola dalam satu state formData
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -34,7 +33,6 @@ export default function RegisterPage() {
 
   const [file, setFile] = useState(null);
 
-  // Fungsi handle tunggal untuk semua input teks
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -45,16 +43,11 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e) => {
   e.preventDefault();
-
-  // 1. Validasi di Frontend (agar tidak perlu request ke server jika sudah jelas salah)
   if (formData.password !== formData.confPassword) {
     return alert("Password dan Konfirmasi Password tidak cocok!");
   }
 
   const data = new FormData();
-  
-  // 2. JANGAN di-destructure (jangan buang confPassword)
-  // Kirim SEMUA isi formData ke backend
   Object.keys(formData).forEach((key) => {
     data.append(key, formData[key]);
   });
@@ -66,7 +59,6 @@ export default function RegisterPage() {
     alert(response.data.msg);
     navigate("/masuk");
   } catch (error) {
-    // Pesan "tidak cocok" ini kemungkinan datang dari error.response.data.msg milik backend
     alert(error.response?.data?.msg || "Terjadi kesalahan");
   }
 };

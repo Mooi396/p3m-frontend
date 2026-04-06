@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import SidebarAdmin from "./sidebarAdmin"; 
+import SidebarAdmin from "../sidebarAdmin"; 
 import axios from "axios";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { 
@@ -7,6 +7,7 @@ import {
   IconButton, Tooltip, Dialog, DialogHeader, DialogBody, DialogFooter 
 } from "@material-tailwind/react";
 import { PencilIcon, PlusIcon, TrashIcon, TagIcon } from "@heroicons/react/24/solid";
+import DashboardNavbar from "../../dashboardNavbar";
 
 const TABLE_HEAD = ["Nama Tag", "UUID", "Actions"];
 
@@ -83,6 +84,7 @@ export default function DaftarTagAdmin() {
     <div className="flex h-screen overflow-hidden">
       <SidebarAdmin />
       <div className="flex-1 min-w-0 overflow-auto">
+        <DashboardNavbar />
       <Card className="w-full rounded-none shadow-none">
         <CardHeader floated={false} shadow={false} className="rounded-none">
           <div className="mb-8 flex items-center justify-between gap-8">
@@ -147,12 +149,12 @@ export default function DaftarTagAdmin() {
                     <td className={classes}>
                       <div className="flex gap-2">
                         <Tooltip content="Edit Tag">
-                          <IconButton variant="text" onClick={() => handleEdit(tag)}>
+                          <IconButton variant="text" size="sm" onClick={() => handleEdit(tag)}>
                             <PencilIcon className="h-4 w-4 text-blue-500" />
                           </IconButton>
                         </Tooltip>
                         <Tooltip content="Hapus Tag">
-                          <IconButton variant="text" color="red" onClick={() => deleteTag(tag.uuid)}>
+                          <IconButton variant="text" color="red" size="sm" onClick={() => deleteTag(tag.uuid)}>
                             <TrashIcon className="h-4 w-4" />
                           </IconButton>
                         </Tooltip>

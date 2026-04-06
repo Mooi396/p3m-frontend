@@ -26,7 +26,7 @@ const profileMenuItems = [
   {
     label: "Edit Profile",
     icon: PencilIcon,
-    path: "/dashboard/edit",
+    path: "/dashboard/profil/edit",
   },
 ];
 

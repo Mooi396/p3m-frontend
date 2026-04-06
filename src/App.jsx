@@ -15,6 +15,11 @@ import { useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { GetMe } from "./features/authSlice.js";
 import DetailProfilUserPage from "./pages/detailprofiladmin.jsx";
+import TambahBeritaPage from "./pages/tambahberita.jsx";
+import DetailBeritaPage from "./pages/detailberita.jsx";
+import EditberitaPage from "./pages/editberita.jsx";
+import TambahAgendaPage from "./pages/tambahagenda.jsx";
+import EditProfilUserPage from "./pages/editprofil.jsx";
 
 function App() {
   const dispatch = useDispatch();
@@ -34,10 +39,15 @@ function App() {
         }/>
         <Route path="/dashboard" element={<Dashboard/>}></Route>
         <Route path="/dashboard/profil" element={<DetailProfilUserPage/>}></Route>
+        <Route path="/dashboard/profil/edit" element={<EditProfilUserPage/>}></Route>
         <Route path="/dashboard/pengguna" element={<DaftarUser/>}></Route>
         <Route path="/dashboard/pengguna/tambah" element={<TambahUserAdminPage/>}></Route>
         <Route path="/dashboard/agenda" element={<DaftarAgenda/>}></Route>
+        <Route path="/dashboard/agenda/tambah" element={<TambahAgendaPage/>}></Route>
         <Route path="/dashboard/berita" element={<Daftarberita/>}></Route>
+        <Route path="/dashboard/berita/:uuid" element={<DetailBeritaPage/>}></Route>
+        <Route path="/dashboard/berita/edit/:uuid" element={<EditberitaPage/>}></Route>
+        <Route path="/dashboard/berita/tambah" element={<TambahBeritaPage/>}></Route>
         <Route path="/dashboard/berita/tag" element={<DaftarTag/>}></Route>
         <Route path="/dashboard/berita/kategori" element={<DaftarKategori/>}></Route>
         <Route path="/dashboard/laporan" element={<Daftarlaporan/>}></Route>

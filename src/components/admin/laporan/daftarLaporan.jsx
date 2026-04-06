@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
-import SidebarAdmin from "./sidebarAdmin"; 
+import SidebarAdmin from "../sidebarAdmin"; 
 import axios from "axios";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Card, CardHeader, Input, Typography, Button, CardBody, Chip, Tabs, TabsHeader, Tab, IconButton, Tooltip } from "@material-tailwind/react";
 import { PencilIcon, PlusIcon, TrashIcon, CheckIcon, XMarkIcon, DocumentIcon } from "@heroicons/react/24/solid";
+import { Link } from "react-router-dom";
+import CreateLaporan from "./buatLaporan";
+import EditLaporan from "./editLaporan";
+import DashboardNavbar from "../../dashboardNavbar";
 
 const TABS = [
   { label: "Semua", value: "all" },
@@ -18,10 +22,19 @@ export default function DaftarLaporanAdmin() {
   const [laporans, setLaporans] = useState([]);
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [open, setOpen] = useState(false);
+  const handleOpen = () => setOpen(!open);
+  const [openEdit, setOpenEdit] = useState(false);
+  const [selectedLaporan, setSelectedLaporan] = useState(null);
 
   useEffect(() => {
     getLaporans();
   }, []);
+
+  const handleEdit = (laporan) => {
+    setSelectedLaporan(laporan);
+    setOpenEdit(true);
+  };
 
   const getLaporans = async () => {
     try {
@@ -75,6 +88,7 @@ export default function DaftarLaporanAdmin() {
     <div className="flex h-screen overflow-hidden">
       <SidebarAdmin />
       <div className="flex-1 min-w-0 overflow-auto">
+        <DashboardNavbar />
       <Card className="w-full rounded-none shadow-none">
         <CardHeader floated={false} shadow={false} className="rounded-none">
           <div className="mb-8 flex items-center justify-between gap-8">
@@ -85,7 +99,7 @@ export default function DaftarLaporanAdmin() {
               </Typography>
             </div>
             <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-              <Button className="flex items-center gap-3" size="sm">
+              <Button className="flex items-center gap-3" size="sm" onClick={handleOpen}>
                 <PlusIcon strokeWidth={2} className="h-4 w-4" /> Tambah Laporan
               </Button>
             </div>
@@ -178,32 +192,32 @@ export default function DaftarLaporanAdmin() {
                         {laporan.status === "pending" && (
                           <>
                             <Tooltip content="Verifikasi">
-                              <IconButton variant="text" color="green" onClick={() => verifyLaporan(laporan.uuid)}>
+                              <IconButton variant="text" color="green" size="sm" onClick={() => verifyLaporan(laporan.uuid)}>
                                 <CheckIcon className="h-4 w-4" />
                               </IconButton>
                             </Tooltip>
                             <Tooltip content="Tolak">
-                              <IconButton variant="text" color="red" onClick={() => rejectLaporan(laporan.uuid)}>
+                              <IconButton variant="text" color="red" size="sm" onClick={() => rejectLaporan(laporan.uuid)}>
                                 <XMarkIcon className="h-4 w-4" />
                               </IconButton>
                             </Tooltip>
                           </>
                         )}
                         
-                        <Tooltip content="Unduh/Lihat PDF">
-                          <IconButton variant="text" onClick={() => window.open(laporan.url, "_blank")}>
+                        <Tooltip content="Lihat PDF">
+                          <IconButton variant="text" size="sm" onClick={() => window.open(laporan.url, "_blank")}>
                             <DocumentIcon className="h-4 w-4 text-blue-gray-700" />
                           </IconButton>
                         </Tooltip>
 
                         <Tooltip content="Edit">
-                          <IconButton variant="text">
+                          <IconButton variant="text" size="sm" onClick={() => handleEdit(laporan)}>
                             <PencilIcon className="h-4 w-4" />
                           </IconButton>
                         </Tooltip>
 
                         <Tooltip content="Hapus">
-                          <IconButton variant="text" color="red" onClick={() => deleteLaporan(laporan.uuid)}>
+                          <IconButton variant="text" color="red" size="sm" onClick={() => deleteLaporan(laporan.uuid)}>
                             <TrashIcon className="h-4 w-4" />
                           </IconButton>
                         </Tooltip>
@@ -217,6 +231,17 @@ export default function DaftarLaporanAdmin() {
         </CardBody>
       </Card>
       </div>
+      <CreateLaporan 
+        open={open} 
+        handler={handleOpen} 
+        refreshData={getLaporans} 
+      />
+      <EditLaporan 
+        open={openEdit} 
+        handler={() => setOpenEdit(false)} 
+        laporan={selectedLaporan} 
+        refreshData={getLaporans} 
+      />
     </div>
   );
 }

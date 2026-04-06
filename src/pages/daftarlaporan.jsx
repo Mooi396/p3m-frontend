@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { GetMe } from "../features/authSlice";
-import DaftarLaporanAdmin from '../components/admin/daftarLaporan'
+import DaftarLaporanAdmin from '../components/admin/laporan/daftarLaporan'
 import Head from "../components/head";
 
 const Daftarlaporan = () => {

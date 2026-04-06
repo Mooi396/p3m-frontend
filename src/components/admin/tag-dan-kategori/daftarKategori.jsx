@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import SidebarAdmin from "./sidebarAdmin"; 
+import SidebarAdmin from "../sidebarAdmin"; 
 import axios from "axios";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { 
@@ -7,6 +7,7 @@ import {
   IconButton, Tooltip, Dialog, DialogHeader, DialogBody, DialogFooter 
 } from "@material-tailwind/react";
 import { PencilIcon, PlusIcon, TrashIcon, Squares2X2Icon } from "@heroicons/react/24/solid";
+import DashboardNavbar from "../../dashboardNavbar";
 
 const TABLE_HEAD = ["Nama Kategori", "UUID", "Actions"];
 
@@ -88,6 +89,7 @@ export default function DaftarKategoriAdmin() {
     <div className="flex h-screen overflow-hidden">
       <SidebarAdmin />
       <div className="flex-1 min-w-0 overflow-auto">
+        <DashboardNavbar />
       <Card className="w-full rounded-none shadow-none">
         <CardHeader floated={false} shadow={false} className="rounded-none">
           <div className="mb-8 flex items-center justify-between gap-8">
@@ -152,12 +154,12 @@ export default function DaftarKategoriAdmin() {
                     <td className={classes}>
                       <div className="flex gap-2">
                         <Tooltip content="Edit Kategori">
-                          <IconButton variant="text" onClick={() => handleEdit(kategori)}>
+                          <IconButton variant="text" size="sm" onClick={() => handleEdit(kategori)}>
                             <PencilIcon className="h-4 w-4 text-blue-500" />
                           </IconButton>
                         </Tooltip>
                         <Tooltip content="Hapus Kategori">
-                          <IconButton variant="text" color="red" onClick={() => deleteKategori(kategori.uuid)}>
+                          <IconButton variant="text" color="red" size="sm" onClick={() => deleteKategori(kategori.uuid)}>
                             <TrashIcon className="h-4 w-4" />
                           </IconButton>
                         </Tooltip>
@@ -186,7 +188,7 @@ export default function DaftarKategoriAdmin() {
           <Button variant="text" color="red" onClick={handleOpen} className="mr-1">
             <span>Batal</span>
           </Button>
-          <Button variant="gradient" color="green" onClick={handleSubmit}>
+          <Button onClick={handleSubmit}>
             <span>{isEdit ? "Simpan Perubahan" : "Simpan"}</span>
           </Button>
         </DialogFooter>

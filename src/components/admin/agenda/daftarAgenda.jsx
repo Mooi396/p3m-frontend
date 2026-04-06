@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
-import SidebarAdmin from "./sidebarAdmin";
+import SidebarAdmin from "../sidebarAdmin";
 import axios from "axios";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Card, CardHeader, Input, Typography, Button, CardBody, Chip, Tabs, TabsHeader, Tab, IconButton, Tooltip } from "@material-tailwind/react";
 import { PencilIcon, PlusIcon, TrashIcon, CheckIcon, XMarkIcon, DocumentIcon } from "@heroicons/react/24/solid";
+import { Link } from "react-router-dom";
+import ModalEditAgenda from "./editAgenda";
+import DashboardNavbar from "../../dashboardNavbar";
 
 const TABS = [
   { label: "Semua", value: "all" },
@@ -18,6 +21,8 @@ export default function DaftarAgendaAdmin() {
   const [agendas, setAgendas] = useState([]);
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [openEdit, setOpenEdit] = useState(false);
+  const [selectedAgenda, setSelectedAgenda] = useState(null);
 
   useEffect(() => {
     getAgendas();
@@ -70,10 +75,16 @@ export default function DaftarAgendaAdmin() {
     return matchesTab && matchesSearch;
   });
 
+  const handleEditClick = (agenda) => {
+    setSelectedAgenda(agenda);
+    setOpenEdit(true);
+  };
+
   return (
     <div className="flex h-screen overflow-hidden">
       <SidebarAdmin />
       <div className="flex-1 min-w-0 overflow-auto">
+        <DashboardNavbar />
       <Card className="w-full rounded-none shadow-none">
         <CardHeader floated={false} shadow={false} className="rounded-none">
           <div className="mb-8 flex items-center justify-between gap-8">
@@ -84,9 +95,11 @@ export default function DaftarAgendaAdmin() {
               </Typography>
             </div>
             <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+              <Link to="/dashboard/agenda/tambah">
               <Button className="flex items-center gap-3" size="sm">
                 <PlusIcon strokeWidth={2} className="h-4 w-4" /> Tambah Agenda
               </Button>
+              </Link>
             </div>
           </div>
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
@@ -131,7 +144,9 @@ export default function DaftarAgendaAdmin() {
                   <tr key={agenda.uuid}>
                     <td className={classes}>
                       <div className="flex items-center gap-3">
-                        <DocumentIcon className="h-5 w-5 text-red-500" />
+                        <div className="p-2 bg-blue-50 rounded-lg">
+                          <DocumentIcon className="h-6 w-6 text-blue-500" />
+                        </div>
                         <Typography variant="small" color="blue-gray" className="font-bold">
                           {agenda.nama_kegiatan}
                         </Typography>
@@ -174,12 +189,12 @@ export default function DaftarAgendaAdmin() {
                         {agenda.status == "pending" && (
                           <>
                             <Tooltip content="Verifikasi">
-                              <IconButton variant="text" color="green" onClick={() => verifyAgenda(agenda.uuid)}>
+                              <IconButton variant="text" color="green" size="sm" onClick={() => verifyAgenda(agenda.uuid)}>
                                 <CheckIcon className="h-4 w-4" />
                               </IconButton>
                             </Tooltip>
                             <Tooltip content="Tolak">
-                              <IconButton variant="text" color="red" onClick={() => rejectAgenda(agenda.uuid)}>
+                              <IconButton variant="text" color="red" size="sm" onClick={() => rejectAgenda(agenda.uuid)}>
                                 <XMarkIcon className="h-4 w-4" />
                               </IconButton>
                             </Tooltip>
@@ -187,19 +202,19 @@ export default function DaftarAgendaAdmin() {
                         )}
                         
                         <Tooltip content="Lihat PDF">
-                          <IconButton variant="text" onClick={() => window.open(agenda.url, "_blank")}>
-                            <MagnifyingGlassIcon className="h-4 w-4" />
+                          <IconButton variant="text" color="blue-gray" size="sm" onClick={() => window.open(agenda.url, "_blank")}>
+                            <DocumentIcon className="h-4 w-4" />
                           </IconButton>
                         </Tooltip>
 
-                        <Tooltip content="Edit">
-                          <IconButton variant="text">
+                        <Tooltip content="Edit Agenda">
+                          <IconButton variant="text" size="sm" onClick={() => handleEditClick(agenda)}>
                             <PencilIcon className="h-4 w-4" />
                           </IconButton>
                         </Tooltip>
 
                         <Tooltip content="Hapus">
-                          <IconButton variant="text" color="red" onClick={() => deleteAgenda(agenda.uuid)}>
+                          <IconButton variant="text" color="red" size="sm" onClick={() => deleteAgenda(agenda.uuid)}>
                             <TrashIcon className="h-4 w-4" />
                           </IconButton>
                         </Tooltip>
@@ -213,6 +228,12 @@ export default function DaftarAgendaAdmin() {
         </CardBody>
       </Card>
       </div>
+      <ModalEditAgenda 
+        open={openEdit} 
+        handler={() => setOpenEdit(false)} 
+        agenda={selectedAgenda} 
+        refreshData={getAgendas} 
+      />
     </div>
   );
 }

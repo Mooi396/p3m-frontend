@@ -24,7 +24,7 @@ const DetailProfilUserPage = () => {
   
   return (
     <div>
-        <Head title={"Detail Profil Admin"} />
+        <Head title={"Detail Profil"} />
         <DetailProfile/>
     </div>
   )

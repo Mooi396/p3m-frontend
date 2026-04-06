@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import SidebarAdmin from "./sidebarAdmin";
+import SidebarAdmin from "../sidebarAdmin";
 import axios from "axios";
 import TambahUserAdmin from "./tambahUser";
 import EditUserAdmin from "./editUser";
@@ -37,6 +37,7 @@ import {
   BriefcaseIcon,
   BuildingOfficeIcon,
 } from "@heroicons/react/24/outline";
+import DashboardNavbar from "../../dashboardNavbar";
 
 const TABS = [
   { label: "Semua", value: "all" },
@@ -168,6 +169,7 @@ export default function DaftarUserAdmin() {
     <div className="flex h-screen overflow-hidden">
       <SidebarAdmin />
       <div className="flex-1 min-w-0 overflow-auto bg-gray-50">
+        <DashboardNavbar />
         <Card className="w-full rounded-none shadow-none">
           <CardHeader shadow={false} floated={false} className="rounded-none">
             <div className="mb-8 flex items-center justify-between gap-8">
@@ -275,36 +277,37 @@ export default function DaftarUserAdmin() {
                         </Typography>
                       </td>
                       <td className={classes}>
-                        <div className="flex gap-2">
+                        <div className="flex gap-1">
                           {user.status === "pending" && (
                             <>
                               <Tooltip content="Verifikasi">
-                                <IconButton variant="text" color="green" onClick={() => verifyUser(user.uuid)}>
+                                <IconButton variant="text" color="green" size="sm" onClick={() => verifyUser(user.uuid)}>
                                   <CheckIcon className="h-4 w-4" />
                                 </IconButton>
                               </Tooltip>
                               <Tooltip content="Tolak">
-                                <IconButton variant="text" color="red" onClick={() => rejectUser(user.uuid)}>
+                                <IconButton variant="text" color="red" size="sm" onClick={() => rejectUser(user.uuid)}>
                                   <XMarkIcon className="h-4 w-4" />
                                 </IconButton>
                               </Tooltip>
                             </>
                           )}
-                          <Tooltip content="Edit">
-                            <IconButton variant="text">
-                              <PencilIcon className="h-4 w-4" onClick={() => handleOpenEdit(user)}/>
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip content="Hapus">
-                            <IconButton variant="text" color="red" onClick={() => deleteUser(user.uuid)}>
-                              <TrashIcon className="h-4 w-4" />
-                            </IconButton>
-                          </Tooltip>
                           <Tooltip content="Lihat Profil">
-                            <IconButton variant="text" onClick={() => handleOpen(user)}>
+                            <IconButton variant="text" size="sm" onClick={() => handleOpen(user)}>
                               <EyeIcon className="h-4 w-4" />
                             </IconButton>
                           </Tooltip>
+                          <Tooltip content="Edit">
+                            <IconButton variant="text" size="sm" onClick={() => handleOpenEdit(user)}>
+                              <PencilIcon className="h-4 w-4"/>
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip content="Hapus">
+                            <IconButton variant="text" color="red" size="sm" onClick={() => deleteUser(user.uuid)}>
+                              <TrashIcon className="h-4 w-4" />
+                            </IconButton>
+                          </Tooltip>
+                          
                         </div>
                       </td>
                     </tr>
