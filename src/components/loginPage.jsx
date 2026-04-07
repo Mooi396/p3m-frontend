@@ -26,7 +26,11 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (user || isSuccess) {
+      if (user.role !== "admin") {
       navigate("/dashboard");
+      } else {
+        navigate("/dashboard/profil");
+      }
     }
     dispatch(reset());
   }, [user, isSuccess, dispatch, navigate]);
@@ -41,46 +45,36 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <Head title={"Masuk"} />
-      
-      <Card color="transparent" shadow={false} className="w-full max-w-[400px] bg-white p-8 border border-blue-gray-50 shadow-xl shadow-blue-gray-900/5">
-        <Typography variant="h4" color="blue-gray" className="text-center">
+      <Card color="transparent" shadow={true} className="p-8 w-full max-w-[28rem] bg-white border border-blue-gray-50">
+        <Typography variant="h4" color="blue-gray">
           Masuk
         </Typography>
-        <Typography color="gray" className="mt-1 font-normal text-center mb-8">
+        <Typography color="gray" className="mt-1 font-normal mb-8">
           Masukkan detail Anda untuk masuk ke akun Anda.
         </Typography>
 
         <form onSubmit={Auth} className="flex flex-col gap-6">
-          <div className="flex flex-col gap-1">
-            <Typography variant="small" color="blue-gray" className="font-medium">
+          <div className="flex flex-col gap-4">
+            <Typography variant="h6" color="blue-gray" className="-mb-3">
               Email Anda
             </Typography>
             <Input
-              size="lg"
-              placeholder="name@mail.com"
-              className="!border-t-blue-gray-200 focus:!border-t-gray-900"
-              labelProps={{
-                className: "before:content-none after:content-none",
-              }}
+              size="lg" label="Email" name="email" placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
             />
-          </div>
-          <div className="flex flex-col gap-1">
-            <Typography variant="small" color="blue-gray" className="font-medium">
+
+            <Typography variant="h6" color="blue-gray" className="-mb-3">
               Kata Sandi
             </Typography>
             <div className="relative">
               <Input
                 type={showPassword ? "text" : "password"}
-                size="lg"
-                placeholder="********"
-                className="!border-t-blue-gray-200 focus:!border-t-gray-900"
-                labelProps={{
-                  className: "before:content-none after:content-none",
-                }}
+                size="lg" label="Kata Sandi" name="password" placeholder="********"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                required
               />
               <IconButton
                 variant="text"
@@ -96,13 +90,22 @@ export default function LoginPage() {
               </IconButton>
             </div>
           </div>
+
           {isError && (
-            <Typography variant="small" color="red" className="text-center font-medium">
-              {message}
-            </Typography>
+            <div className="bg-red-50 p-3 rounded-md border border-red-100">
+                <Typography variant="small" color="red" className="text-center font-medium">
+                {message}
+                </Typography>
+            </div>
           )}
 
-          <Button type="submit" size="lg" fullWidth color="gray" loading={isLoading}>
+          <Button 
+            type="submit" 
+            size="lg" 
+            fullWidth 
+            color="gray" 
+            disabled={isLoading}
+          >
             {isLoading ? "Memproses..." : "Masuk"}
           </Button>
 
@@ -115,8 +118,8 @@ export default function LoginPage() {
         </form>
       </Card>
 
-      <footer className="mt-auto py-8">
-        <Typography variant="small" color="gray" className="text-center font-normal">
+      <footer className="mt-12">
+        <Typography variant="small" color="gray" className="text-center font-normal opacity-70">
           © {new Date().getFullYear()} Forum Kepala P3M Politeknik Se-Indonesia. All Rights Reserved
         </Typography>
       </footer>

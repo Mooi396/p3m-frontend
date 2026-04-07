@@ -9,15 +9,9 @@ import {
   MenuHandler,
   MenuList,
   MenuItem,
-  // Avatar,
-  // Card,
   IconButton,
 } from "@material-tailwind/react";
 import {
-  // CubeTransparentIcon,
-  // UserCircleIcon,
-  // CodeBracketSquareIcon,
-  // Square3Stack3DIcon,
   ChevronDownIcon,
   Bars2Icon,
   NewspaperIcon,
@@ -25,7 +19,6 @@ import {
   DocumentTextIcon,
 } from "@heroicons/react/24/solid";
 
-// nav list menu
 function ProfilMenu() {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
@@ -129,17 +122,11 @@ function NavList() {
   return (
     <div className="flex items-center gap-1">
       <ProfilMenu />
-
-      {/* BERITA */}
       <Button variant="text" color="black" className="flex items-center gap-2">
         <NewspaperIcon className="h-[18px] w-[18px]" />
         Berita
       </Button>
-
-      {/* AGENDA */}
       <AgendaMenu />
-
-      {/* LAPORAN */}
       <LaporanMenu />
     </div>
   );

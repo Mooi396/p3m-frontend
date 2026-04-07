@@ -2,10 +2,10 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { GetMe } from "../features/authSlice";
-import DaftarUserAdmin from '../components/admin/user/daftarUser'
 import Head from "../components/head";
+import DetailProfile from "../components/detailProfile";
 
-const DaftarUser = () => {
+const DetailProfilUserPage = () => {
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -16,20 +16,18 @@ const DaftarUser = () => {
   }, [dispatch]);
   
   useEffect(() => {
-            if(isError) {
-                navigate('/masuk');
-                return;
-            }
-            if(user && user.role !== 'admin') {
-                navigate(-1)
-            }
-        },[isError, user, navigate]);
+          if(isError) {
+              navigate('/masuk');
+              return;
+          }
+      },[isError, user, navigate]);
+  
   return (
     <div>
-        <Head title={"Daftar User"} />
-        <DaftarUserAdmin/>
+        <Head title={"Detail Profil"} />
+        <DetailProfile/>
     </div>
   )
 }
 
-export default DaftarUser
+export default DetailProfilUserPage

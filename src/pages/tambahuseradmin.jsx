@@ -2,10 +2,10 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { GetMe } from "../features/authSlice";
-import DaftarUserAdmin from '../components/admin/user/daftarUser'
 import Head from "../components/head";
+import TambahUserAdmin from "../components/admin/user/tambahUser";
 
-const DaftarUser = () => {
+const TambahUserAdminPage = () => {
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -26,10 +26,10 @@ const DaftarUser = () => {
         },[isError, user, navigate]);
   return (
     <div>
-        <Head title={"Daftar User"} />
-        <DaftarUserAdmin/>
+        <Head title={"Tambah User"} />
+        <TambahUserAdmin/>
     </div>
   )
 }
 
-export default DaftarUser
+export default TambahUserAdminPage
