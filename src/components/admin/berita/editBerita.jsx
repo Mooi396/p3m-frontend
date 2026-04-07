@@ -45,6 +45,12 @@ export default function EditBerita() {
           withCredentials: true,
         });
         
+        if (resBerita.data.status === "verified") {
+        alert("Berita yang sudah diverifikasi tidak dapat diedit kembali.");
+        navigate("/dashboard/berita");
+        return;
+      }
+
         const data = resBerita.data;
         setJudul(data.judul_berita);
         setIsi(data.isi_berita);

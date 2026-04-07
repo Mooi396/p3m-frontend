@@ -14,7 +14,7 @@ const GuestRoute = ({ children }) => {
     <>
       {isError && message && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4">
-          <Alert 
+          {/* <Alert 
             color="red" 
             variant="gradient"
             className="flex items-center gap-2"
@@ -34,7 +34,7 @@ const GuestRoute = ({ children }) => {
               />
             </svg>
             <span className="text-sm font-medium">{message}</span>
-          </Alert>
+          </Alert> */}
         </div>
       )}
       {children}
