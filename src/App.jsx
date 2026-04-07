@@ -16,7 +16,7 @@ import { useEffect } from "react";
 import { GetMe } from "./features/authSlice.js";
 import DetailProfilUserPage from "./pages/detailprofiladmin.jsx";
 import TambahBeritaPage from "./pages/tambahberita.jsx";
-import DetailBeritaPage from "./pages/detailberita.jsx";
+import DetailBeritaDashboardPage from "./pages/detailberitadashboard.jsx";
 import EditberitaPage from "./pages/editberita.jsx";
 import TambahAgendaPage from "./pages/tambahagenda.jsx";
 import EditProfilUserPage from "./pages/editprofil.jsx";
@@ -45,7 +45,7 @@ function App() {
         <Route path="/dashboard/agenda" element={<DaftarAgenda/>}></Route>
         <Route path="/dashboard/agenda/tambah" element={<TambahAgendaPage/>}></Route>
         <Route path="/dashboard/berita" element={<Daftarberita/>}></Route>
-        <Route path="/dashboard/berita/:uuid" element={<DetailBeritaPage/>}></Route>
+        <Route path="/dashboard/berita/:uuid" element={<DetailBeritaDashboardPage/>}></Route>
         <Route path="/dashboard/berita/edit/:uuid" element={<EditberitaPage/>}></Route>
         <Route path="/dashboard/berita/tambah" element={<TambahBeritaPage/>}></Route>
         <Route path="/dashboard/berita/tag" element={<DaftarTag/>}></Route>

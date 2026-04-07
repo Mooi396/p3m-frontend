@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import SidebarAdmin from "../sidebarAdmin"; 
 import axios from "axios";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Card, CardHeader, Input, Typography, Button, CardBody, Chip, Tabs, TabsHeader, Tab, IconButton, Tooltip } from "@material-tailwind/react";
 import { PencilIcon, PlusIcon, TrashIcon, CheckIcon, XMarkIcon, DocumentIcon } from "@heroicons/react/24/solid";
-import { Link } from "react-router-dom";
 import CreateLaporan from "./buatLaporan";
 import EditLaporan from "./editLaporan";
 import DashboardNavbar from "../../dashboardNavbar";
@@ -76,6 +75,32 @@ export default function DaftarLaporanAdmin() {
     }
   };
 
+  const cancelVerifyLaporan = async (uuid) => {
+  if (window.confirm("Batalkan verifikasi? Laporan ini akan kembali ke status Pending dan bisa diedit.")) {
+    try {
+      await axios.patch(`http://localhost:5000/laporans/${uuid}/cancel-verify`, {}, { 
+        withCredentials: true 
+      });
+      getLaporans();
+    } catch (error) {
+      alert("Gagal membatalkan verifikasi");
+    }
+  }
+};
+
+  const cancelRejectLaporan = async (uuid) => {
+  if (window.confirm("Batalkan penolakan? Laporan ini akan kembali ke status Pending")) {
+    try {
+      await axios.patch(`http://localhost:5000/laporans/${uuid}/cancel-reject`, {}, { 
+        withCredentials: true 
+      });
+      getLaporans();
+    } catch (error) {
+      alert("Gagal membatalkan penolakan");
+    }
+  }
+};
+
   const filteredRows = laporans.filter((item) => {
     const matchesTab = filter === "all" || item.status === filter;
     const matchesSearch = 
@@ -146,7 +171,6 @@ export default function DaftarLaporanAdmin() {
                   <tr key={laporan.uuid}>
                     <td className={classes}>
                       <div className="flex items-center gap-3">
-                        {/* Karena laporan adalah PDF, kita gunakan icon dokumen, bukan img preview */}
                         <div className="p-2 bg-blue-50 rounded-lg">
                           <DocumentIcon className="h-6 w-6 text-blue-500" />
                         </div>
@@ -189,6 +213,30 @@ export default function DaftarLaporanAdmin() {
                     </td>
                     <td className={classes}>
                       <div className="flex gap-2">
+                        {laporan.status === "verified" && (
+                          <Tooltip content="Batalkan Verifikasi (Edit kembali)">
+                            <IconButton 
+                              variant="text" 
+                              color="amber" 
+                              size="sm" 
+                              onClick={() => cancelVerifyLaporan(laporan.uuid)}
+                            >
+                              <ArrowPathIcon className="h-4 w-4" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        {laporan.status === "rejected" && (
+                          <Tooltip content="Batalkan Penolakan">
+                            <IconButton 
+                              variant="text" 
+                              color="amber" 
+                              size="sm" 
+                              onClick={() => cancelRejectLaporan(laporan.uuid)}
+                            >
+                              <ArrowPathIcon className="h-4 w-4" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                         {laporan.status === "pending" && (
                           <>
                             <Tooltip content="Verifikasi">
@@ -203,19 +251,18 @@ export default function DaftarLaporanAdmin() {
                             </Tooltip>
                           </>
                         )}
-                        
-                        <Tooltip content="Lihat PDF">
-                          <IconButton variant="text" size="sm" onClick={() => window.open(laporan.url, "_blank")}>
-                            <DocumentIcon className="h-4 w-4 text-blue-gray-700" />
-                          </IconButton>
-                        </Tooltip>
-
-                        <Tooltip content="Edit">
-                          <IconButton variant="text" size="sm" onClick={() => handleEdit(laporan)}>
-                            <PencilIcon className="h-4 w-4" />
-                          </IconButton>
-                        </Tooltip>
-
+                          <Tooltip content="Lihat PDF">
+                            <IconButton variant="text" size="sm" onClick={() => window.open(laporan.url, "_blank")}>
+                              <DocumentIcon className="h-4 w-4 text-blue-gray-700" />
+                            </IconButton>
+                          </Tooltip>
+                        {laporan.status !== "verified" && (
+                          <Tooltip content="Edit">
+                            <IconButton variant="text" size="sm" onClick={() => handleEdit(laporan)}>
+                              <PencilIcon className="h-4 w-4" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                         <Tooltip content="Hapus">
                           <IconButton variant="text" color="red" size="sm" onClick={() => deleteLaporan(laporan.uuid)}>
                             <TrashIcon className="h-4 w-4" />

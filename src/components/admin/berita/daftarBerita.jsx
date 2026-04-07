@@ -12,7 +12,7 @@ import {
   XMarkIcon 
 } from "@heroicons/react/24/solid";
 import {
-  EyeIcon
+  EyeIcon, ArrowPathIcon
 } from "@heroicons/react/24/outline";
 import { Link, useNavigate } from "react-router-dom";
 import DashboardNavbar from "../../dashboardNavbar";
@@ -31,8 +31,6 @@ export default function DaftarBeritaAdmin() {
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
-
-  // State untuk Modal Gambar
   const [openImageModal, setOpenImageModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState({ url: "", image: "", title: ""  });
 
@@ -84,6 +82,32 @@ export default function DaftarBeritaAdmin() {
       alert("Gagal menolak berita");
     }
   };
+
+  const cancelVerifyBerita = async (uuid) => {
+  if (window.confirm("Batalkan verifikasi? Berita ini akan kembali ke status Pending dan bisa diedit.")) {
+    try {
+      await axios.patch(`http://localhost:5000/beritas/${uuid}/cancel-verify`, {}, { 
+        withCredentials: true 
+      });
+      getBeritas();
+    } catch (error) {
+      alert("Gagal membatalkan verifikasi");
+    }
+  }
+};
+
+  const cancelRejectBerita = async (uuid) => {
+  if (window.confirm("Batalkan penolakan? Berita ini akan kembali ke status Pending")) {
+    try {
+      await axios.patch(`http://localhost:5000/beritas/${uuid}/cancel-reject`, {}, { 
+        withCredentials: true 
+      });
+      getBeritas();
+    } catch (error) {
+      alert("Gagal membatalkan penolakan");
+    }
+  }
+};
 
   const filteredRows = beritas.filter((item) => {
     const matchesTab = filter === "all" || item.status === filter;
@@ -154,13 +178,11 @@ export default function DaftarBeritaAdmin() {
 
                 return (
                   <tr key={berita.uuid} className="hover:bg-gray-50/50 transition-colors">
-                    {/* KOLOM BERITA & GAMBAR */}
                     <td className={classes}>
                       <div className="flex items-center gap-3">
                         <Tooltip content="Klik untuk lihat gambar">
                           <div 
                             className="relative h-12 w-12 cursor-pointer group overflow-hidden rounded-lg shadow-sm border border-blue-gray-100"
-                            // PERBAIKAN: Pastikan mengirimkan berita.image (nama file) untuk modal
                             onClick={() => handleOpenImage(berita.url, berita.image, berita.judul_berita)}
                           >
                             <img 
@@ -169,7 +191,6 @@ export default function DaftarBeritaAdmin() {
                               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                               onError={(e) => { e.target.src = "https://via.placeholder.com/150?text=No+Image" }}
                             />
-                            {/* OVERLAY HOVER GAMBAR */}
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                               <PhotoIcon className="h-5 w-5 text-white" />
                             </div>
@@ -186,8 +207,6 @@ export default function DaftarBeritaAdmin() {
                         </div>
                       </div>
                     </td>
-
-                    {/* ... (Kolom Kategori, Tanggal, Penulis, Status tetap sama) ... */}
                     <td className={classes}>
                       <div className="flex gap-1 flex-wrap max-w-[150px]">
                         {berita.kategoris?.map((cat) => (
@@ -208,10 +227,32 @@ export default function DaftarBeritaAdmin() {
                         <Chip variant="ghost" size="sm" value={berita.status} color={berita.status === "verified" ? "green" : berita.status === "pending" ? "amber" : "red"} />
                       </div>
                     </td>
-
-                    {/* ACTIONS */}
                     <td className={classes}>
                       <div className="flex gap-1">
+                        {berita.status === "verified" && (
+                          <Tooltip content="Batalkan Verifikasi (Edit kembali)">
+                            <IconButton 
+                              variant="text" 
+                              color="amber" 
+                              size="sm" 
+                              onClick={() => cancelVerifyBerita(berita.uuid)}
+                            >
+                              <ArrowPathIcon className="h-4 w-4" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        {berita.status === "rejected" && (
+                          <Tooltip content="Batalkan Penolakan">
+                            <IconButton 
+                              variant="text" 
+                              color="amber" 
+                              size="sm" 
+                              onClick={() => cancelRejectBerita(berita.uuid)}
+                            >
+                              <ArrowPathIcon className="h-4 w-4" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                         {berita.status === "pending" && (
                           <>
                             <Tooltip content="Setujui Berita">
@@ -231,17 +272,18 @@ export default function DaftarBeritaAdmin() {
                             <EyeIcon className="h-4 w-4" />
                           </IconButton>
                         </Tooltip>
+                        {berita.status !== "verified" && (
                         <Tooltip content="Edit">
                           <IconButton variant="text" color="black" size="sm" onClick={() => navigate(`/dashboard/berita/edit/${berita.uuid}`)}>
                             <PencilIcon className="h-4 w-4" />
                           </IconButton>
                         </Tooltip>
-
-                        <Tooltip content="Hapus">
-                          <IconButton variant="text" color="red" size="sm" onClick={() => deleteBerita(berita.uuid)}>
-                            <TrashIcon className="h-4 w-4" />
-                          </IconButton>
-                        </Tooltip>
+                      )}
+                      <Tooltip content="Hapus">
+                        <IconButton variant="text" color="red" size="sm" onClick={() => deleteBerita(berita.uuid)}>
+                          <TrashIcon className="h-4 w-4" />
+                        </IconButton>
+                      </Tooltip>
                       </div>
                     </td>
                   </tr>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import SidebarAdmin from "../sidebarAdmin";
 import axios from "axios";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Card, CardHeader, Input, Typography, Button, CardBody, Chip, Tabs, TabsHeader, Tab, IconButton, Tooltip } from "@material-tailwind/react";
 import { PencilIcon, PlusIcon, TrashIcon, CheckIcon, XMarkIcon, DocumentIcon } from "@heroicons/react/24/solid";
 import { Link } from "react-router-dom";
@@ -67,6 +67,32 @@ export default function DaftarAgendaAdmin() {
       alert("Gagal menolak");
     }
   };
+
+  const cancelVerifyAgenda = async (uuid) => {
+  if (window.confirm("Batalkan verifikasi? Agenda ini akan kembali ke status Pending dan bisa diedit.")) {
+    try {
+      await axios.patch(`http://localhost:5000/agendas/${uuid}/cancel-verify`, {}, { 
+        withCredentials: true 
+      });
+      getAgendas();
+    } catch (error) {
+      alert("Gagal membatalkan verifikasi");
+    }
+  }
+};
+
+  const cancelRejectAgenda = async (uuid) => {
+  if (window.confirm("Batalkan penolakan? Agenda ini akan kembali ke status Pending")) {
+    try {
+      await axios.patch(`http://localhost:5000/agendas/${uuid}/cancel-reject`, {}, { 
+        withCredentials: true 
+      });
+      getAgendas();
+    } catch (error) {
+      alert("Gagal membatalkan penolakan");
+    }
+  }
+};
 
   const filteredRows = agendas.filter((item) => {
     const matchesTab = filter === "all" || item.status === filter;
@@ -186,6 +212,30 @@ export default function DaftarAgendaAdmin() {
                     </td>
                     <td className={classes}>
                       <div className="flex gap-2">
+                        {agenda.status === "verified" && (
+                          <Tooltip content="Batalkan Verifikasi (Edit kembali)">
+                            <IconButton 
+                              variant="text" 
+                              color="amber" 
+                              size="sm" 
+                              onClick={() => cancelVerifyAgenda(agenda.uuid)}
+                            >
+                              <ArrowPathIcon className="h-4 w-4" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        {agenda.status === "rejected" && (
+                          <Tooltip content="Batalkan Penolakan">
+                            <IconButton 
+                              variant="text" 
+                              color="amber" 
+                              size="sm" 
+                              onClick={() => cancelRejectAgenda(agenda.uuid)}
+                            >
+                              <ArrowPathIcon className="h-4 w-4" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                         {agenda.status == "pending" && (
                           <>
                             <Tooltip content="Verifikasi">
@@ -206,12 +256,13 @@ export default function DaftarAgendaAdmin() {
                             <DocumentIcon className="h-4 w-4" />
                           </IconButton>
                         </Tooltip>
-
-                        <Tooltip content="Edit Agenda">
-                          <IconButton variant="text" size="sm" onClick={() => handleEditClick(agenda)}>
-                            <PencilIcon className="h-4 w-4" />
-                          </IconButton>
-                        </Tooltip>
+                        {agenda.status !== "verified" && (
+                          <Tooltip content="Edit Agenda">
+                            <IconButton variant="text" size="sm" onClick={() => handleEditClick(agenda)}>
+                              <PencilIcon className="h-4 w-4" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
 
                         <Tooltip content="Hapus">
                           <IconButton variant="text" color="red" size="sm" onClick={() => deleteAgenda(agenda.uuid)}>
