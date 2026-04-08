@@ -321,7 +321,6 @@ export default function DaftarBeritaAdmin() {
               src={selectedImage.url}
             />
           </div>
-          {/* INFO NAMA FILE DI FOOTER MODAL */}
           <div className="bg-white p-4 border-t border-gray-100">
             <div className="flex items-center gap-2">
                <PhotoIcon className="h-4 w-4 text-gray-400" />
