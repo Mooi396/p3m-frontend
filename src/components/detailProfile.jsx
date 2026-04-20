@@ -6,7 +6,6 @@ import {
   Typography,
   Button,
   Avatar,
-  Input,
   Tooltip,
 } from "@material-tailwind/react";
 import { AcademicCapIcon, PencilIcon, UserCircleIcon } from "@heroicons/react/24/solid";
@@ -14,10 +13,11 @@ import DashboardNavbar from "./dashboardNavbar";
 import SidebarAdmin from "./admin/sidebarAdmin";
 import SidebarAnggota from "./anggota/sidebarAnggota";
 import { Link } from "react-router-dom";
+import SidebarHumas from "./admin-humas/sidebarHumas";
 
 export default function DetailProfile() {
   const [user, setUser] = useState(null);
-  const [active, setActive] = React.useState(1);
+  const [active] = React.useState(1);
 
   useEffect(() => {
     const getMe = async () => {
@@ -39,15 +39,9 @@ export default function DetailProfile() {
 
   const info = user.anggotas && user.anggotas.length > 0 ? user.anggotas[0] : {};
 
-  const formatTanggal = (dateString) => {
-    if (!dateString) return "-";
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString('id-ID', options);
-  };
-
   return (
     <div className="flex h-screen w-full bg-gray-50 overflow-hidden font-sans">
-        { user.role === "admin" ? <SidebarAdmin /> : user.role === "anggota" && <SidebarAnggota /> }
+        { user.role === "admin" ? <SidebarAdmin /> : user.role === "anggota" ? <SidebarAnggota /> : user.role === "humas" && <SidebarHumas /> }
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto">
         <DashboardNavbar />
 
@@ -58,10 +52,10 @@ export default function DetailProfile() {
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-gray-100 mb-8">
                 <div className="flex items-center gap-6">
                   {info.url ? (
-                        <Avatar src={info.url} alt={user.username} size="sm" variant="circular" />
+                        <Avatar src={info.url} alt={user.username} size="lg" variant="circular" />
                         ) : (
-                        <div className="h-24 w-24 rounded-full bg-blue-gray-50 flex items-center justify-center">
-                        <UserCircleIcon className="h-18 w-18" />
+                        <div className="h-16 w-16 rounded-full bg-blue-gray-100 flex items-center justify-center border border-blue-gray-50">
+                          <UserCircleIcon className="h-12 w-12 text-blue-gray-500" />
                         </div>
                     )}
                   <div>

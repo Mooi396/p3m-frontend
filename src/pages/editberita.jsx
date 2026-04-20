@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { GetMe } from "../features/authSlice";
 import Head from "../components/head";
-import EditBerita from "../components/admin/berita/editBerita";
+import EditBerita from "../components/admin-humas/berita/editBerita";
 
 const EditberitaPage = () => {
     const { user } = useSelector((state) => state.auth);

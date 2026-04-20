@@ -19,11 +19,10 @@ import {
   BuildingOfficeIcon,
   EyeIcon
 } from "@heroicons/react/24/outline";
-import SidebarAdmin from '../sidebarAdmin';
-import DashboardNavbar from '../../dashboardNavbar';
+import DashboardNavbar from '../dashboardNavbar';
 import { Link, useNavigate } from 'react-router-dom';
-import DetailAgenda from './detailAgenda';
-import DetailLaporan from './detailLaporan';
+import DetailLaporan from './detail/detailLaporan';
+import SidebarKetuaForum from './sidebarKetuaForum';
 
 const InfoItem = ({ icon, label, value }) => (
   <div className="flex items-start gap-3">
@@ -48,45 +47,50 @@ const SocialLink = ({ label, value }) => (
   </div>
 );
 
-const DashboardAdmin = () => {
+const DashboardKetuaForum = () => {
   const [users, setUsers] = useState([]);
   const [beritas, setBeritas] = useState([]);
   const [agendas, setAgendas] = useState([]);
   const [laporans, setLaporans] = useState([]);
-  const [openDetailAgenda, setOpenDetailAgenda] = useState(false);
   const [openDetailLaporan, setOpenDetailLaporan] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [totals, setTotals] = useState({ anggota: 0, agenda: 0, berita: 0, laporan: 0 });
   const [open, setOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const navigate = useNavigate();
-
+  const [user, setUser] = useState(null);
+  
   const handleOpen = (user = null) => {
     setSelectedUser(user);
     setOpen(!open);
   };
 
   useEffect(() => {
+    const getMe = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/me", {
+          withCredentials: true,
+        });
+        setUser(response.data);
+      } catch (error) {
+        console.error("Gagal mengambil data user:", error);
+      }
+    };
+    getMe();
     fetchData();
   }, []);
 
+
   const fetchData = async () => {
     try {
-      const [resUsers, resAnggota, resAgenda, resBerita, resLaporan] = await Promise.all([
+      const [resUsers, resLaporan] = await Promise.all([
         axios.get("http://localhost:5000/users", { withCredentials: true }),
-        axios.get("http://localhost:5000/anggotas", { withCredentials: true }),
-        axios.get("http://localhost:5000/agendas", { withCredentials: true }),
-        axios.get("http://localhost:5000/beritas", { withCredentials: true }),
         axios.get("http://localhost:5000/laporans", { withCredentials: true })
       ]);
       setUsers(resUsers.data);
-      setAgendas(resAgenda.data);
-      setBeritas(resBerita.data);
       setLaporans(resLaporan.data);
       setTotals({
-        anggota: resAnggota.data.length,
-        agenda: resAgenda.data.length,
-        berita: resBerita.data.length,
+        user: resUsers.data.length,
         laporan: resLaporan.data.length
       });
     } catch (error) {
@@ -94,7 +98,6 @@ const DashboardAdmin = () => {
     }
   };
 
-  // Fungsi Verifikasi Generik
   const handleAction = async (type, uuid, action) => {
     try {
       await axios.patch(`http://localhost:5000/${type}/${uuid}/${action}`, {}, { withCredentials: true });
@@ -108,29 +111,21 @@ const DashboardAdmin = () => {
 
   return (
     <div className='flex h-screen w-full bg-gray-50 overflow-hidden'>
-      <SidebarAdmin />
+      <SidebarKetuaForum />
       <div className='flex-1 flex flex-col min-w-0 h-full overflow-y-auto'>
         <DashboardNavbar />
         <div className="p-6">
           <div className="mb-6">
-            <Typography variant="h4" color="blue-gray">Selamat datang, Admin</Typography>
+            <Typography variant="h4" color="blue-gray">Selamat datang, {user?.username}</Typography>
             <Typography color="gray" className="font-normal">Ringkasan data organisasi hari ini.</Typography>
           </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <StatCard icon={<UserGroupIcon className="h-6 w-6"/>} color="blue" label="Total Anggota" value={totals.anggota} />
-            <StatCard icon={<CalendarDateRangeIcon className="h-6 w-6"/>} color="green" label="Total Agenda" value={totals.agenda} />
-            <StatCard icon={<NewspaperIcon className="h-6 w-6"/>} color="amber" label="Total Berita" value={totals.berita} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
+            <StatCard icon={<UserGroupIcon className="h-6 w-6"/>} color="blue" label="Total Anggota" value={totals.user} />
             <StatCard icon={<DocumentTextIcon className="h-6 w-6"/>} color="red" label="Total Laporan" value={totals.laporan} />
           </div>
-
-          {/* Grid Tables */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            
-            {/* Tabel Verifikasi User */}
             <VerificationTable 
-              title="Persetujuan Pengguna" 
+              title="Persetujuan Anggota Forum" 
               data={users.filter(u => u.status === "pending")}
               link="/dashboard/pengguna"
               renderRow={(user, classes) => (
@@ -152,59 +147,8 @@ const DashboardAdmin = () => {
                 </tr>
               )}
             />
-            {/* Tabel Verifikasi Berita */}
             <VerificationTable 
-              title="Persetujuan Berita" 
-              data={beritas.filter(b => b.status === "pending")}
-              link="/dashboard/berita"
-              renderRow={(berita, classes) => (
-                <tr key={berita.uuid}>
-                  <td className={classes}>
-                    <Typography variant="small" className="font-bold truncate w-40">{berita.judul_berita}</Typography>
-                  </td>
-                  <td className={classes}><Chip className="w-max" size="sm" variant="ghost" value="pending" color="amber" /></td>
-                  <td className={classes}>
-                    <div className="flex gap-1">
-                      {/* Berita: Pindah Halaman */}
-                      <IconButton variant="text" size="sm" onClick={() => navigate(`/dashboard/berita/${berita.uuid}`)}>
-                        <EyeIcon className="h-4 w-4"/>
-                      </IconButton>
-                      <IconButton variant="text" color="green" size="sm" onClick={() => handleAction('beritas', berita.uuid, 'verify')}><CheckIcon className="h-4 w-4"/></IconButton>
-                      <IconButton variant="text" color="red" size="sm" onClick={() => handleAction('beritas', berita.uuid, 'reject')}><XMarkIcon className="h-4 w-4"/></IconButton>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            />
-
-            {/* Tabel Verifikasi Agenda */}
-            <VerificationTable 
-              title="Persetujuan Agenda" 
-              data={agendas.filter(a => a.status === "pending")}
-              link="/dashboard/agenda"
-              renderRow={(agenda, classes) => (
-                <tr key={agenda.uuid}>
-                  <td className={classes}>
-                    <Typography variant="small" className="font-bold truncate w-40">{agenda.nama_kegiatan}</Typography>
-                  </td>
-                  <td className={classes}><Chip className="w-max" size="sm" variant="ghost" value="pending" color="amber" /></td>
-                  <td className={classes}>
-                    <div className="flex gap-1">
-                      {/* Agenda: Buka Modal Detail Agenda */}
-                      <IconButton variant="text" size="sm" onClick={() => { setSelectedItem(agenda); setOpenDetailAgenda(true); }}>
-                        <EyeIcon className="h-4 w-4"/>
-                      </IconButton>
-                      <IconButton variant="text" color="green" size="sm" onClick={() => handleAction('agendas', agenda.uuid, 'verify')}><CheckIcon className="h-4 w-4"/></IconButton>
-                      <IconButton variant="text" color="red" size="sm" onClick={() => handleAction('agendas', agenda.uuid, 'reject')}><XMarkIcon className="h-4 w-4"/></IconButton>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            />
-
-            {/* Tabel Verifikasi Laporan */}
-            <VerificationTable 
-              title="Persetujuan Laporan" 
+              title="Daftar Laporan pending" 
               data={laporans.filter(l => l.status === "pending")}
               link="/dashboard/laporan"
               renderRow={(laporan, classes) => (
@@ -215,12 +159,9 @@ const DashboardAdmin = () => {
                   <td className={classes}><Chip className="w-max" size="sm" variant="ghost" value="pending" color="amber" /></td>
                   <td className={classes}>
                     <div className="flex gap-1">
-                      {/* Laporan: Buka Modal Detail Laporan */}
                       <IconButton variant="text" size="sm" onClick={() => { setSelectedItem(laporan); setOpenDetailLaporan(true); }}>
                         <EyeIcon className="h-4 w-4"/>
                       </IconButton>
-                      <IconButton variant="text" color="green" size="sm" onClick={() => handleAction('laporans', laporan.uuid, 'verify')}><CheckIcon className="h-4 w-4"/></IconButton>
-                      <IconButton variant="text" color="red" size="sm" onClick={() => handleAction('laporans', laporan.uuid, 'reject')}><XMarkIcon className="h-4 w-4"/></IconButton>
                     </div>
                   </td>
                 </tr>
@@ -294,13 +235,6 @@ const DashboardAdmin = () => {
                 <Button onClick={() => handleOpen(null)}>Tutup</Button>
               </DialogFooter>
             </Dialog>
-            <DetailAgenda 
-              open={openDetailAgenda} 
-              handler={() => setOpenDetailAgenda(false)} 
-              agenda={selectedItem} 
-            />
-
-            {/* Modal Detail Laporan */}
             <DetailLaporan 
               open={openDetailLaporan} 
               handler={() => setOpenDetailLaporan(false)} 
@@ -309,8 +243,6 @@ const DashboardAdmin = () => {
     </div>
   );
 };
-
-// --- Komponen Reusable Baru ---
 
 const StatCard = ({ icon, color, label, value }) => (
   <Card className="border border-blue-gray-50 shadow-none">
@@ -366,4 +298,4 @@ const VerificationTable = ({ title, data, link, renderRow }) => (
   </Card>
 );
 
-export default DashboardAdmin;
+export default DashboardKetuaForum;

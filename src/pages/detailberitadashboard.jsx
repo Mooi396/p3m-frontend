@@ -2,9 +2,8 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { GetMe } from "../features/authSlice";
-import DaftarUserAdmin from '../components/admin/user/daftarUser'
 import Head from "../components/head";
-import DetailBerita from '../components/admin/berita/detailBerita'
+import DetailBerita from '../components/admin-humas/berita/detailBerita'
 
 const DetailBeritaDashboardPage = () => {
   const { user } = useSelector((state) => state.auth);
@@ -21,7 +20,7 @@ const DetailBeritaDashboardPage = () => {
                   navigate('/masuk');
                   return;
               }
-              if(user && user.role !== 'admin') {
+              if(user && user.role !== 'admin' && user.role !== 'humas') {
                   navigate(-1)
               }
           },[isError, user, navigate]);

@@ -95,7 +95,7 @@ export default function DetailBerita() {
                   src={`https://ui-avatars.com/api/?name=${(berita.user || berita.User)?.username}&background=random`} 
                 />
                 <Typography variant="small" className="font-bold">
-                  {(berita.user || berita.User)?.username || "Admin"}
+                  {(berita.user || berita.User)?.username || "Penulis Tidak Diketahui"}
                 </Typography>
               </div>
               <div className="flex items-center gap-2">

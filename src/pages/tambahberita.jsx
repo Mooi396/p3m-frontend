@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { GetMe } from "../features/authSlice";
 import Head from "../components/head";
-import CreateBerita from '../components/admin/berita/buatBerita'
+import CreateBerita from '../components/admin-humas/berita/buatBerita'
 
 const TambahBeritaPage = () => {
     const { user } = useSelector((state) => state.auth);
@@ -20,7 +20,7 @@ const TambahBeritaPage = () => {
                     navigate('/masuk');
                     return;
                 }
-                if(user && user.role !== 'admin') {
+                if(user && user.role !== 'admin' && user.role !== 'humas') {
                     navigate(-1)
                 }
             },[isError, user, navigate]);

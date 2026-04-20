@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import SidebarAdmin from "../sidebarAdmin"; 
+import SidebarAdmin from "../../admin/sidebarAdmin"; 
 import axios from "axios";
 import { ArrowPathIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Card, CardHeader, Input, Typography, Button, CardBody, Chip, Tabs, TabsHeader, Tab, IconButton, Tooltip } from "@material-tailwind/react";
@@ -7,6 +7,8 @@ import { PencilIcon, PlusIcon, TrashIcon, CheckIcon, XMarkIcon, DocumentIcon } f
 import CreateLaporan from "./buatLaporan";
 import EditLaporan from "./editLaporan";
 import DashboardNavbar from "../../dashboardNavbar";
+import SidebarKetuaForum from "../sidebarKetuaForum";
+import { useSelector } from "react-redux";
 
 const TABS = [
   { label: "Semua", value: "all" },
@@ -17,7 +19,7 @@ const TABS = [
 
 const TABLE_HEAD = ["Keterangan Laporan", "Tanggal", "Pengirim", "Status", "Actions"];
 
-export default function DaftarLaporanAdmin() {
+export default function DaftarLaporanComponents() {
   const [laporans, setLaporans] = useState([]);
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -25,6 +27,7 @@ export default function DaftarLaporanAdmin() {
   const handleOpen = () => setOpen(!open);
   const [openEdit, setOpenEdit] = useState(false);
   const [selectedLaporan, setSelectedLaporan] = useState(null);
+  const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
     getLaporans();
@@ -111,7 +114,7 @@ export default function DaftarLaporanAdmin() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <SidebarAdmin />
+      {user?.role === "admin" ? <SidebarAdmin /> : user?.role === "ketua_forum" && <SidebarKetuaForum />}
       <div className="flex-1 min-w-0 overflow-auto">
         <DashboardNavbar />
       <Card className="w-full rounded-none shadow-none">
@@ -169,6 +172,8 @@ export default function DaftarLaporanAdmin() {
 
                 return (
                   <tr key={laporan.uuid}>
+                    {(user?.role === "admin" || user?.uuid === laporan.user?.uuid) && (
+                    <>
                     <td className={classes}>
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-blue-50 rounded-lg">
@@ -213,6 +218,8 @@ export default function DaftarLaporanAdmin() {
                     </td>
                     <td className={classes}>
                       <div className="flex gap-2">
+                        {user?.role === "admin" && (
+                          <>
                         {laporan.status === "verified" && (
                           <Tooltip content="Batalkan Verifikasi (Edit kembali)">
                             <IconButton 
@@ -251,11 +258,15 @@ export default function DaftarLaporanAdmin() {
                             </Tooltip>
                           </>
                         )}
+                        </>
+                        )}
                           <Tooltip content="Lihat PDF">
                             <IconButton variant="text" size="sm" onClick={() => window.open(laporan.url, "_blank")}>
                               <DocumentIcon className="h-4 w-4 text-blue-gray-700" />
                             </IconButton>
                           </Tooltip>
+                          {(user?.role === "admin" || user?.uuid === laporan.user?.uuid) && (
+                            <>
                         {laporan.status !== "verified" && (
                           <Tooltip content="Edit">
                             <IconButton variant="text" size="sm" onClick={() => handleEdit(laporan)}>
@@ -263,13 +274,17 @@ export default function DaftarLaporanAdmin() {
                             </IconButton>
                           </Tooltip>
                         )}
-                        <Tooltip content="Hapus">
-                          <IconButton variant="text" color="red" size="sm" onClick={() => deleteLaporan(laporan.uuid)}>
-                            <TrashIcon className="h-4 w-4" />
-                          </IconButton>
-                        </Tooltip>
+                          <Tooltip content="Hapus">
+                            <IconButton variant="text" color="red" size="sm" onClick={() => deleteLaporan(laporan.uuid)}>
+                              <TrashIcon className="h-4 w-4" />
+                            </IconButton>
+                          </Tooltip>
+                        </>
+                        )}
                       </div>
                     </td>
+                    </>
+                    )}
                   </tr>
                 );
               })}

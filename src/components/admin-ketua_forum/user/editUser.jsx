@@ -15,7 +15,7 @@ import {
 } from "@material-tailwind/react";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
 
-export default function EditUserAdmin({ open, handler, user, refreshData }) {
+export default function EditUserComponent({ open, handler, user, refreshData }) {
   const [formData, setFormData] = useState({
     username: "",
     email: "",

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import SidebarAdmin from "../sidebarAdmin";
+import SidebarAdmin from "../../admin/sidebarAdmin";
 import axios from "axios";
 import TambahUserAdmin from "./tambahUser";
-import EditUserAdmin from "./editUser";
+import EditUserComponent from "./editUser";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import {
   Card,
@@ -30,6 +30,7 @@ import {
   TrashIcon,
   CheckIcon,
   XMarkIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/solid";
 import {
   EyeIcon,
@@ -38,6 +39,8 @@ import {
   BuildingOfficeIcon,
 } from "@heroicons/react/24/outline";
 import DashboardNavbar from "../../dashboardNavbar";
+import SidebarKetuaForum from "../sidebarKetuaForum";
+import { useSelector } from "react-redux";
 
 const TABS = [
   { label: "Semua", value: "all" },
@@ -93,16 +96,19 @@ export default function DaftarUserAdmin() {
   const [openAdd, setOpenAdd] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [userToEdit, setUserToEdit] = useState(null);
+  
+  // Mengambil data user yang sedang login dari Redux
+  const { user: authuser } = useSelector((state) => state.auth);
 
-  const handleOpenEdit = (user = null) => {
-    setUserToEdit(user);
+  const handleOpenEdit = (userData = null) => {
+    setUserToEdit(userData);
     setOpenEdit(!openEdit);
   };
 
   const handleOpenAdd = () => setOpenAdd(!openAdd);
 
-  const handleOpen = (user = null) => {
-    setSelectedUser(user);
+  const handleOpen = (userData = null) => {
+    setSelectedUser(userData);
     setOpen(!open);
   };
 
@@ -152,9 +158,36 @@ export default function DaftarUserAdmin() {
     }
   };
 
+  const cancelVerifyUser = async (uuid) => {
+    if (window.confirm("Batalkan verifikasi? User ini akan kembali ke status Pending dan bisa diedit.")) {
+      try {
+        await axios.patch(`http://localhost:5000/users/${uuid}/cancel-verify`, {}, { 
+          withCredentials: true 
+        });
+        getUsers();
+      } catch (error) {
+        alert("Gagal membatalkan verifikasi");
+      }
+    }
+  };
+  
+  const cancelRejectUser = async (uuid) => {
+    if (window.confirm("Batalkan penolakan? User ini akan kembali ke status Pending")) {
+      try {
+        await axios.patch(`http://localhost:5000/users/${uuid}/cancel-reject`, {}, { 
+          withCredentials: true 
+        });
+        getUsers();
+      } catch (error) {
+        alert("Gagal membatalkan penolakan");
+      }
+    }
+  };
+
   const filteredRows = users.filter((item) => {
     const info = item.anggotas && item.anggotas.length > 0 ? item.anggotas[0] : {};
     const matchesTab = filter === "all" || item.status === filter;
+    const canSee = authuser?.role === "admin" || (authuser?.role === "ketua_forum" && item.role === "anggota");
 
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch =
@@ -162,12 +195,12 @@ export default function DaftarUserAdmin() {
       (item.username || "").toLowerCase().includes(searchLower) ||
       (item.email || "").toLowerCase().includes(searchLower);
 
-    return matchesTab && matchesSearch;
+    return matchesTab && matchesSearch && canSee;
   });
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <SidebarAdmin />
+      {authuser?.role === "admin" ? <SidebarAdmin /> : authuser?.role === "ketua_forum" && <SidebarKetuaForum />}
       <div className="flex-1 min-w-0 overflow-auto bg-gray-50">
         <DashboardNavbar />
         <Card className="w-full rounded-none shadow-none">
@@ -175,7 +208,7 @@ export default function DaftarUserAdmin() {
             <div className="mb-8 flex items-center justify-between gap-8">
               <div>
                 <Typography variant="h5" color="blue-gray">
-                  Daftar Pengguna
+                  Daftar {authuser?.role === "admin" ? "Pengguna" : "Anggota Forum"}
                 </Typography>
                 <Typography color="gray" className="mt-1 font-normal">
                   Kelola verifikasi dan data anggota P3M
@@ -222,17 +255,17 @@ export default function DaftarUserAdmin() {
                 </tr>
               </thead>
               <tbody>
-                {filteredRows.map((user, index) => {
+                {filteredRows.map((item, index) => {
                   const isLast = index === filteredRows.length - 1;
                   const classes = isLast ? "p-4" : "p-4 border-b border-blue-gray-50";
-                  const info = user.anggotas && user.anggotas.length > 0 ? user.anggotas[0] : {};
+                  const info = item.anggotas && item.anggotas.length > 0 ? item.anggotas[0] : {};
 
                   return (
-                    <tr key={user.uuid}>
+                    <tr key={item.uuid}>
                       <td className={classes}>
                         <div className="flex items-center gap-3">
                           {info.url ? (
-                            <Avatar src={info.url} alt={user.username} size="sm" variant="circular" />
+                            <Avatar src={info.url} alt={item.username} size="sm" variant="circular" />
                           ) : (
                             <div className="h-9 w-9 rounded-full bg-blue-gray-50 flex items-center justify-center">
                               <UserCircleIcon className="h-6 w-6 text-blue-gray-300" />
@@ -240,10 +273,10 @@ export default function DaftarUserAdmin() {
                           )}
                           <div className="flex flex-col">
                             <Typography variant="small" color="blue-gray" className="font-bold">
-                              {info.nama_lengkap || user.username}
+                              {info.nama_lengkap || item.username}
                             </Typography>
                             <Typography variant="small" className="font-normal opacity-70">
-                              {user.email}
+                              {item.email}
                             </Typography>
                           </div>
                         </div>
@@ -263,50 +296,81 @@ export default function DaftarUserAdmin() {
                           <Chip
                             variant="ghost"
                             size="sm"
-                            value={user.status}
+                            value={item.status}
                             color={
-                              user.status === "verified" ? "green" : 
-                              user.status === "pending" ? "amber" : "red"
+                              item.status === "verified" ? "green" : 
+                              item.status === "pending" ? "amber" : "red"
                             }
                           />
                         </div>
                       </td>
                       <td className={classes}>
                         <Typography variant="small" color="blue-gray" className="font-normal">
-                          {user.role}
+                          {item.role}
                         </Typography>
                       </td>
                       <td className={classes}>
                         <div className="flex gap-1">
-                          {user.status === "pending" && (
+                          {item.status === "verified" && (
+                          <Tooltip content="Batalkan Verifikasi">
+                            <IconButton 
+                              variant="text" 
+                              color="amber" 
+                              size="sm" 
+                              onClick={() => cancelVerifyUser(item.uuid)}
+                            >
+                              <ArrowPathIcon className="h-4 w-4" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        {item.status === "rejected" && (
+                          <Tooltip content="Batalkan Penolakan">
+                            <IconButton 
+                              variant="text" 
+                              color="amber" 
+                              size="sm" 
+                              onClick={() => cancelRejectUser(item.uuid)}
+                            >
+                              <ArrowPathIcon className="h-4 w-4" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                          {item.status === "pending" && (
                             <>
                               <Tooltip content="Verifikasi">
-                                <IconButton variant="text" color="green" size="sm" onClick={() => verifyUser(user.uuid)}>
+                                <IconButton variant="text" color="green" size="sm" onClick={() => verifyUser(item.uuid)}>
                                   <CheckIcon className="h-4 w-4" />
                                 </IconButton>
                               </Tooltip>
                               <Tooltip content="Tolak">
-                                <IconButton variant="text" color="red" size="sm" onClick={() => rejectUser(user.uuid)}>
+                                <IconButton variant="text" color="red" size="sm" onClick={() => rejectUser(item.uuid)}>
                                   <XMarkIcon className="h-4 w-4" />
                                 </IconButton>
                               </Tooltip>
                             </>
                           )}
                           <Tooltip content="Lihat Profil">
-                            <IconButton variant="text" size="sm" onClick={() => handleOpen(user)}>
+                            <IconButton variant="text" size="sm" onClick={() => handleOpen(item)}>
                               <EyeIcon className="h-4 w-4" />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip content="Edit">
-                            <IconButton variant="text" size="sm" onClick={() => handleOpenEdit(user)}>
-                              <PencilIcon className="h-4 w-4"/>
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip content="Hapus">
-                            <IconButton variant="text" color="red" size="sm" onClick={() => deleteUser(user.uuid)}>
-                              <TrashIcon className="h-4 w-4" />
-                            </IconButton>
-                          </Tooltip>
+                          
+                          {/* KHUSUS ADMIN: Tombol Edit & Hapus */}
+                          {authuser?.role === "admin" && (
+                            <>
+                              <Tooltip content="Edit">
+                                <IconButton variant="text" size="sm" onClick={() => handleOpenEdit(item)}>
+                                  <PencilIcon className="h-4 w-4"/>
+                                </IconButton>
+                              </Tooltip>
+                              
+                              <Tooltip content="Hapus">
+                                <IconButton variant="text" color="red" size="sm" onClick={() => deleteUser(item.uuid)}>
+                                  <TrashIcon className="h-4 w-4" />
+                                </IconButton>
+                              </Tooltip>
+                            </>
+                          )}
                           
                         </div>
                       </td>
@@ -318,17 +382,19 @@ export default function DaftarUserAdmin() {
           </CardBody>
         </Card>
       </div>
+      
       <TambahUserAdmin
         open={openAdd} 
         handler={handleOpenAdd} 
         refreshData={getUsers} 
       />
-      <EditUserAdmin 
+      <EditUserComponent 
         open={openEdit} 
         handler={() => setOpenEdit(false)} 
         user={userToEdit} 
         refreshData={getUsers} 
       />
+      
       <Dialog open={open} handler={() => handleOpen(null)} size="md" className="overflow-auto">
         <DialogHeader className="flex justify-between items-center border-b border-gray-100">
           <Typography variant="h5" color="blue-gray">Detail Profil Pengguna</Typography>
