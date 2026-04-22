@@ -1,22 +1,31 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
-  Card,
-  Input,
   Button,
+  Dialog,
+  DialogHeader,
+  DialogBody,
+  DialogFooter,
+  Input,
   Typography,
+  IconButton,
 } from "@material-tailwind/react";
-import { ArrowLeftIcon, DocumentIcon } from "@heroicons/react/24/solid";
+import { DocumentIcon, XMarkIcon } from "@heroicons/react/24/solid";
 
-export default function CreateAgenda() {
-  const navigate = useNavigate();
-  
+export default function CreateAgendaModal({ open, handler, refreshData }) {
   const [namaKegiatan, setNamaKegiatan] = useState("");
   const [tuanRumah, setTuanRumah] = useState("");
   const [jadwal, setJadwal] = useState("");
   const [file, setFile] = useState(null);
   const [fileName, setFileName] = useState("");
+
+  const resetForm = () => {
+    setNamaKegiatan("");
+    setTuanRumah("");
+    setJadwal("");
+    setFile(null);
+    setFileName("");
+  };
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -47,30 +56,32 @@ export default function CreateAgenda() {
         withCredentials: true,
       });
       alert(response.data.msg);
-      navigate("/dashboard/agenda");
+      resetForm();
+      refreshData(); // Memanggil fungsi fetch data di parent
+      handler(); // Menutup modal
     } catch (error) {
       alert(error.response?.data?.msg || "Terjadi kesalahan saat menyimpan agenda");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <Card color="transparent" shadow={true} className="p-8 w-full max-w-[40rem] mx-auto bg-white border border-gray-100">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <Typography variant="h4" color="blue-gray">Buat Agenda Baru</Typography>
-            <Typography color="gray" className="mt-1 font-normal text-sm">
-              Tambahkan jadwal kegiatan dan unggah dokumen undangan.
-            </Typography>
-          </div>
-          <Button variant="text" size="sm" className="flex items-center gap-2" onClick={() => navigate(-1)}>
-            <ArrowLeftIcon className="h-4 w-4" /> Kembali
-          </Button>
+    <Dialog open={open} handler={handler} size="md" className="p-4">
+      <DialogHeader className="flex items-center justify-between">
+        <div>
+          <Typography variant="h5" color="blue-gray">Buat Agenda Baru</Typography>
+          <Typography color="gray" className="font-normal text-sm">
+            Tambahkan jadwal kegiatan dan unggah dokumen undangan.
+          </Typography>
         </div>
+        <IconButton variant="text" color="blue-gray" onClick={handler}>
+          <XMarkIcon className="h-5 w-5" />
+        </IconButton>
+      </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <form onSubmit={handleSubmit}>
+        <DialogBody divider className="flex flex-col gap-4 overflow-y-auto max-h-[70vh]">
           <div>
-            <Typography variant="h6" color="blue-gray" className="mb-2">
+            <Typography variant="small" color="blue-gray" className="mb-2 font-bold">
               Nama Kegiatan
             </Typography>
             <Input
@@ -82,19 +93,19 @@ export default function CreateAgenda() {
             />
           </div>
           <div>
-            <Typography variant="h6" color="blue-gray" className="mb-2">
+            <Typography variant="small" color="blue-gray" className="mb-2 font-bold">
               Tuan Rumah / Lokasi
             </Typography>
             <Input
               size="lg"
-              placeholder="Contoh: Aula Gedung A / Nama Instansi"
+              placeholder="Contoh: Aula Gedung A"
               value={tuanRumah}
               onChange={(e) => setTuanRumah(e.target.value)}
               required
             />
           </div>
           <div>
-            <Typography variant="h6" color="blue-gray" className="mb-2">
+            <Typography variant="small" color="blue-gray" className="mb-2 font-bold">
               Jadwal & Waktu
             </Typography>
             <Input
@@ -106,42 +117,33 @@ export default function CreateAgenda() {
             />
           </div>
           <div>
-            <Typography variant="h6" color="blue-gray" className="mb-2">
+            <Typography variant="small" color="blue-gray" className="mb-2 font-bold">
               Dokumen Undangan (PDF)
             </Typography>
-            <div className="flex flex-col gap-3">
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
-                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <DocumentIcon className="w-8 h-8 text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-500">
-                    {fileName ? (
-                      <span className="text-blue-600 font-medium">{fileName}</span>
-                    ) : (
-                      "Klik untuk unggah file PDF"
-                    )}
-                  </p>
-                  <p className="text-[10px] text-gray-400 uppercase mt-1">Maksimal 5MB</p>
-                </div>
-                <input 
-                  type="file" 
-                  className="hidden" 
-                  onChange={handleFileChange} 
-                  accept=".pdf" 
-                />
-              </label>
-            </div>
+            <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+              <div className="flex flex-col items-center justify-center pt-2 pb-3">
+                <DocumentIcon className="w-6 h-6 text-gray-400 mb-1" />
+                <p className="text-xs text-gray-500">
+                  {fileName ? (
+                    <span className="text-blue-600 font-medium">{fileName}</span>
+                  ) : (
+                    "Klik untuk unggah file PDF"
+                  )}
+                </p>
+              </div>
+              <input type="file" className="hidden" onChange={handleFileChange} accept=".pdf" />
+            </label>
           </div>
-
-          <div className="flex gap-4 mt-4">
-            <Button type="submit" color="blue" fullWidth>
-              Simpan Agenda
-            </Button>
-            <Button variant="text" color="red" fullWidth onClick={() => navigate("/dashboard/agenda")}>
-              Batal
-            </Button>
-          </div>
-        </form>
-      </Card>
-    </div>
+        </DialogBody>
+        <DialogFooter className="gap-2">
+          <Button variant="text" color="red" onClick={handler}>
+            Batal
+          </Button>
+          <Button type="submit">
+            Simpan Agenda
+          </Button>
+        </DialogFooter>
+      </form>
+    </Dialog>
   );
 }

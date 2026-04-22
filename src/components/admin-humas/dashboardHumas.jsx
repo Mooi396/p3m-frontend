@@ -2,36 +2,80 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
   Card, CardHeader, Typography, CardBody, 
-  IconButton, Avatar, Chip, Tooltip, 
-  Button, Dialog,
-  DialogHeader,
-  DialogBody,
-  DialogFooter,
+  IconButton, Chip, Button, Drawer
 } from "@material-tailwind/react";
 import { 
-  CalendarDateRangeIcon, NewspaperIcon, UserGroupIcon,
-  CheckIcon, XMarkIcon, UserCircleIcon,
-  ArrowLongRightIcon, DocumentTextIcon, ClipboardDocumentCheckIcon
+  CalendarDateRangeIcon, NewspaperIcon,
+  XMarkIcon, EyeIcon, Bars3Icon, ArrowLongRightIcon
 } from "@heroicons/react/24/solid";
-import {
-  AcademicCapIcon,
-  BriefcaseIcon,
-  BuildingOfficeIcon,
-  EyeIcon
-} from "@heroicons/react/24/outline";
 import SidebarHumas from './sidebarHumas';
 import DashboardNavbar from '../dashboardNavbar';
 import { Link, useNavigate } from 'react-router-dom';
 import DetailAgenda from './detailAgenda';
 
+// --- Komponen Reusable ---
+const StatCard = ({ icon, color, label, value }) => (
+  <Card className="border border-blue-gray-50 shadow-sm">
+    <CardBody className="flex items-center gap-4 p-4 text-black">
+      <IconButton variant="outlined" color={color} size="lg" className="pointer-events-none rounded-full">
+        {icon}
+      </IconButton>
+      <div>
+        <Typography variant="small" className="font-medium text-blue-gray-500">{label}</Typography>
+        <Typography variant="h4">{value}</Typography>
+      </div>
+    </CardBody>
+  </Card>
+);
+
+const VerificationTable = ({ title, data, link, renderRow }) => (
+  <Card className="border border-blue-gray-50 shadow-sm h-full text-black">
+    <CardHeader floated={false} shadow={false} className="flex justify-between items-center rounded-none pb-2 mx-4 mt-4">
+      <Typography variant="h6" color="blue-gray" className="text-sm sm:text-base">{title}</Typography>
+      <Link to={link}>
+        <Button variant="text" size="sm" className="flex items-center gap-2">
+          Semua <ArrowLongRightIcon className="h-4 w-4" />
+        </Button>
+      </Link>
+    </CardHeader>
+    <CardBody className="p-0 overflow-x-auto">
+      <table className="w-full min-w-[300px] table-auto text-left">
+        <thead>
+          <tr>
+            {["Data", "Status", "Actions"].map((head) => (
+              <th key={head} className="border-b border-blue-gray-100 bg-blue-gray-50/50 p-3 text-black">
+                <Typography variant="small" className="font-bold opacity-70 text-[10px] uppercase">{head}</Typography>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.length > 0 ? (
+            data.slice(0, 3).map((item, index) => renderRow(item, index === 2 ? "p-3" : "p-3 border-b border-blue-gray-50"))
+          ) : (
+            <tr>
+              <td colSpan={3} className="p-4 text-center">
+                <Typography variant="small" color="gray" className="italic text-xs">Tidak ada data pending</Typography>
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </CardBody>
+  </Card>
+);
+
+// --- Main Component ---
 const DashboardHumas = () => {
   const [beritas, setBeritas] = useState([]);
   const [agendas, setAgendas] = useState([]);
   const [openDetailAgenda, setOpenDetailAgenda] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [totals, setTotals] = useState({ agenda: 0, berita: 0 });
-  const navigate = useNavigate();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [user, setUser] = useState(null);
+  
+  const navigate = useNavigate();
 
   useEffect(() => {
     const getMe = async () => {
@@ -65,136 +109,140 @@ const DashboardHumas = () => {
     }
   };
 
-  const myAgendas = agendas.filter(a => a.users_uuid === user?.uuid);
-  const myBeritas = beritas.filter(b => b.users_uuid === user?.uuid);
-
-  // Filter tambahan untuk tabel "Pending" milik sendiri
-  const myPendingBeritas = myBeritas.filter(b => b.status === "pending");
-  const myPendingAgendas = myAgendas.filter(a => a.status === "pending");
-
-  const TABLE_HEAD = ["Data", "Status", "Actions"];
+  // Filter data milik sendiri (Humas)
+  const myAgendas = agendas.filter(a => a.user?.uuid === user?.uuid);
+  const myBeritas = beritas.filter(b => b.user?.uuid === user?.uuid);
 
   return (
     <div className='flex h-screen w-full bg-gray-50 overflow-hidden'>
-          <SidebarHumas />
-          <div className='flex-1 flex flex-col min-w-0 h-full overflow-y-auto'>
-            <DashboardNavbar />
-            <div className="p-6">
-              <div className="mb-6">
-                <Typography variant="h4" color="blue-gray">Selamat datang, {user?.username}</Typography>
-                <Typography color="gray" className="font-normal">Ringkasan data organisasi hari ini.</Typography>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
-                <StatCard icon={<CalendarDateRangeIcon className="h-6 w-6"/>} color="green" label="Total Agenda" value={totals.agenda} />
-                <StatCard icon={<NewspaperIcon className="h-6 w-6"/>} color="amber" label="Total Berita" value={totals.berita} />
-              </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <VerificationTable 
-                  title="Daftar berita Pending" 
-                  data={beritas.filter(b => b.status === "pending")}
-                  link="/dashboard/berita"
-                  renderRow={(berita, classes) => (
-                    <tr key={berita.uuid}>
-                      <td className={classes}>
-                        <Typography variant="small" className="font-bold truncate w-40">{berita.judul_berita}</Typography>
-                      </td>
-                      <td className={classes}><Chip className="w-max" size="sm" variant="ghost" value="pending" color="amber" /></td>
-                      <td className={classes}>
-                        <div className="flex gap-1">
-                          <IconButton variant="text" size="sm" onClick={() => navigate(`/dashboard/berita/${berita.uuid}`)}>
-                            <EyeIcon className="h-4 w-4"/>
-                          </IconButton>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                />
-                <VerificationTable 
-                  title="Daftar Agenda pending" 
-                  data={agendas.filter(a => a.status === "pending")}
-                  link="/dashboard/agenda"
-                  renderRow={(agenda, classes) => (
-                    <tr key={agenda.uuid}>
-                      <td className={classes}>
-                        <Typography variant="small" className="font-bold truncate w-40">{agenda.nama_kegiatan}</Typography>
-                      </td>
-                      <td className={classes}><Chip className="w-max" size="sm" variant="ghost" value="pending" color="amber" /></td>
-                      <td className={classes}>
-                        <div className="flex gap-1">
-                          <IconButton variant="text" size="sm" onClick={() => { setSelectedItem(agenda); setOpenDetailAgenda(true); }}>
-                            <EyeIcon className="h-4 w-4"/>
-                          </IconButton>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                />
-              </div>
-            </div>
-          </div>
-                <DetailAgenda 
-                  open={openDetailAgenda} 
-                  handler={() => setOpenDetailAgenda(false)} 
-                  agenda={selectedItem} 
-                />
+      {/* SIDEBAR DESKTOP */}
+      <div className="hidden lg:block">
+        <SidebarHumas />
+      </div>
+
+      {/* SIDEBAR MOBILE (DRAWER) */}
+      <Drawer open={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} className="p-0">
+        <div className="flex items-center justify-between p-4 border-b">
+          <Typography variant="h5" color="blue-gray">Humas Panel</Typography>
+          <IconButton variant="text" color="blue-gray" onClick={() => setIsDrawerOpen(false)}>
+            <XMarkIcon className="h-5 w-5" />
+          </IconButton>
         </div>
-      );
-    };
-    
-    // --- Komponen Reusable Baru ---
-    
-    const StatCard = ({ icon, color, label, value }) => (
-      <Card className="border border-blue-gray-50 shadow-none">
-        <CardBody className="flex items-center gap-4 p-4">
-          <IconButton variant="outlined" color={color} size="lg" className="pointer-events-none rounded-full">{icon}</IconButton>
-          <div>
-            <Typography variant="small" className="font-medium text-blue-gray-500">{label}</Typography>
-            <Typography variant="h4">{value}</Typography>
+        <SidebarHumas />
+      </Drawer>
+
+      <div className='flex-1 flex flex-col min-w-0 h-full overflow-hidden'>
+        {/* TOPBAR / NAVBAR */}
+        <div className="flex items-center bg-white lg:bg-transparent shrink-0">
+          <IconButton 
+            variant="text" 
+            color="blue-gray" 
+            className="lg:hidden mr-2" 
+            onClick={() => setIsDrawerOpen(true)}
+          >
+            <Bars3Icon className="h-6 w-6" />
+          </IconButton>
+          <div className="flex-1">
+            <DashboardNavbar />
           </div>
-        </CardBody>
-      </Card>
-    );
-    
-    const VerificationTable = ({ title, data, link, renderRow }) => (
-      <Card className="border border-blue-gray-50 shadow-none h-full">
-        <CardHeader floated={false} shadow={false} className="flex justify-between items-center rounded-none pb-2 mx-4 mt-4">
-          <div>
-            <Typography variant="h6" color="blue-gray">{title}</Typography>
+        </div>
+
+        {/* MAIN CONTENT AREA */}
+        <div className="flex-1 overflow-y-auto p-4 lg:p-6 text-black">
+          <div className="mb-6">
+            <Typography variant="h4" color="blue-gray" className="text-2xl font-bold">
+              Selamat datang, {user?.username}
+            </Typography>
+            <Typography color="gray" className="font-normal text-sm lg:text-base">
+              Kelola publikasi agenda dan berita hari ini.
+            </Typography>
           </div>
-          <Link to={link}>
-            <Button variant="text" size="sm" className="flex items-center gap-2">
-              Semua <ArrowLongRightIcon className="h-4 w-4" />
-            </Button>
-          </Link>
-        </CardHeader>
-        <CardBody className="p-0 overflow-hidden">
-          <table className="w-full table-auto text-left">
-            <thead>
-              <tr>
-                {["Data", "Status", "Actions"].map((head) => (
-                  <th key={head} className="border-b border-blue-gray-100 bg-blue-gray-50/50 p-3">
-                    <Typography variant="small" className="font-bold opacity-70 text-[10px] uppercase">{head}</Typography>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data.length > 0 ? (
-                data.slice(0, 3).map((item, index) => {
-                  const classes = index === 2 ? "p-3" : "p-3 border-b border-blue-gray-50";
-                  return renderRow(item, classes);
-                })
-              ) : (
-                <tr>
-                  <td colSpan={3} className="p-4 text-center">
-                    <Typography variant="small" color="gray" className="italic text-xs">Kosong</Typography>
+
+          {/* Stats Cards - Responsive Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+            <StatCard 
+              icon={<CalendarDateRangeIcon className="h-6 w-6"/>} 
+              color="green" 
+              label="Total Agenda" 
+              value={myAgendas.length} 
+            />
+            <StatCard 
+              icon={<NewspaperIcon className="h-6 w-6"/>} 
+              color="amber" 
+              label="Total Berita" 
+              value={myBeritas.length} 
+            />
+          </div>
+
+          {/* Verification Tables - Responsive Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6 text-black">
+            {/* Tabel Berita Pending Milik Sendiri */}
+            <VerificationTable 
+              title="Berita Saya (Pending)" 
+              data={myBeritas.filter(b => b.status === "pending")}
+              link="/dashboard/berita"
+              renderRow={(berita, classes) => (
+                <tr key={berita.uuid}>
+                  <td className={classes}>
+                    <Typography variant="small" className="font-bold truncate w-32 sm:w-48 text-xs text-black">
+                      {berita.judul_berita}
+                    </Typography>
+                  </td>
+                  <td className={classes}>
+                    <Chip size="sm" variant="ghost" value="pending" color="amber" className="text-[10px]"/>
+                  </td>
+                  <td className={classes}>
+                    <IconButton 
+                      variant="text" 
+                      size="sm" 
+                      onClick={() => navigate(`/dashboard/berita/${berita.uuid}`)}
+                    >
+                      <EyeIcon className="h-4 w-4 text-blue-gray-700"/>
+                    </IconButton>
                   </td>
                 </tr>
               )}
-            </tbody>
-          </table>
-        </CardBody>
-      </Card>
-    );
+            />
 
-export default DashboardHumas
+            {/* Tabel Agenda Pending Milik Sendiri */}
+            <VerificationTable 
+              title="Agenda Saya (Pending)" 
+              data={myAgendas.filter(a => a.status === "pending")}
+              link="/dashboard/agenda"
+              renderRow={(agenda, classes) => (
+                <tr key={agenda.uuid}>
+                  <td className={classes}>
+                    <Typography variant="small" className="font-bold truncate w-32 sm:w-48 text-xs text-black">
+                      {agenda.nama_kegiatan}
+                    </Typography>
+                  </td>
+                  <td className={classes}>
+                    <Chip size="sm" variant="ghost" value="pending" color="amber" className="text-[10px]"/>
+                  </td>
+                  <td className={classes}>
+                    <IconButton 
+                      variant="text" 
+                      size="sm" 
+                      onClick={() => { setSelectedItem(agenda); setOpenDetailAgenda(true); }}
+                    >
+                      <EyeIcon className="h-4 w-4 text-blue-gray-700"/>
+                    </IconButton>
+                  </td>
+                </tr>
+              )}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* MODAL DETAIL AGENDA */}
+      <DetailAgenda 
+        open={openDetailAgenda} 
+        handler={() => setOpenDetailAgenda(false)} 
+        agenda={selectedItem} 
+      />
+    </div>
+  );
+};
+
+export default DashboardHumas;
