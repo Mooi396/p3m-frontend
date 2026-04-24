@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import SidebarAdmin from "../sidebarAdmin"; 
+import SidebarAdmin from "../../admin/sidebarAdmin"; 
 import axios from "axios";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { 
@@ -8,6 +8,8 @@ import {
 } from "@material-tailwind/react";
 import { PencilIcon, PlusIcon, TrashIcon, Squares2X2Icon } from "@heroicons/react/24/solid";
 import DashboardNavbar from "../../dashboardNavbar";
+import { useSelector } from "react-redux";
+import SidebarHumas from "../sidebarHumas";
 
 const TABLE_HEAD = ["Nama Kategori", "UUID", "Actions"];
 
@@ -18,6 +20,7 @@ export default function DaftarKategoriAdmin() {
   const [isEdit, setIsEdit] = useState(false);
   const [currentUuid, setCurrentUuid] = useState("");
   const [namaKategori, setNamaKategori] = useState("");
+  const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
     getKategoris();
@@ -87,7 +90,7 @@ export default function DaftarKategoriAdmin() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <SidebarAdmin />
+      {user?.role === "admin" ? <SidebarAdmin /> : user?.role === "humas" && <SidebarHumas />}
       <div className="flex-1 min-w-0 overflow-auto">
         <DashboardNavbar />
       <Card className="w-full rounded-none shadow-none">

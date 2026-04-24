@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import SidebarAdmin from "../sidebarAdmin";
+import SidebarAdmin from "../../admin/sidebarAdmin";
 import axios from "axios";
 import { PhotoIcon,MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { 
@@ -16,6 +16,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { Link, useNavigate } from "react-router-dom";
 import DashboardNavbar from "../../dashboardNavbar";
+import { useSelector } from "react-redux";
+import SidebarHumas from "../sidebarHumas";
 
 const TABS = [
   { label: "Semua", value: "all" },
@@ -33,6 +35,7 @@ export default function DaftarBeritaAdmin() {
   const navigate = useNavigate();
   const [openImageModal, setOpenImageModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState({ url: "", image: "", title: ""  });
+  const { user } = useSelector((state) => state.auth);
 
   const handleOpenImage = (url, image, title) => {
     setSelectedImage({ url, image, title });
@@ -118,7 +121,7 @@ export default function DaftarBeritaAdmin() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <SidebarAdmin />
+      {user?.role === "admin" ? <SidebarAdmin /> : user?.role === "humas" && <SidebarHumas />}
       <div className="flex-1 min-w-0 overflow-auto">
         <DashboardNavbar />
         <Card className="w-full rounded-none shadow-none">
@@ -178,6 +181,8 @@ export default function DaftarBeritaAdmin() {
 
                 return (
                   <tr key={berita.uuid} className="hover:bg-gray-50/50 transition-colors">
+                    {(user?.role === "admin" || user?.uuid === berita.user?.uuid) && (
+                      <>
                     <td className={classes}>
                       <div className="flex items-center gap-3">
                         <Tooltip content="Klik untuk lihat gambar">
@@ -229,6 +234,8 @@ export default function DaftarBeritaAdmin() {
                     </td>
                     <td className={classes}>
                       <div className="flex gap-1">
+                        {user?.role === "admin" && (
+                        <>
                         {berita.status === "verified" && (
                           <Tooltip content="Batalkan Verifikasi (Edit kembali)">
                             <IconButton 
@@ -267,25 +274,30 @@ export default function DaftarBeritaAdmin() {
                             </Tooltip>
                           </>
                         )}
+                        </>
+                      )}
                         <Tooltip content="Baca Detail Berita">
                           <IconButton variant="text" color="black" size="sm" onClick={() => navigate(`/dashboard/berita/${berita.uuid}`)}>
                             <EyeIcon className="h-4 w-4" />
                           </IconButton>
                         </Tooltip>
-                        {berita.status !== "verified" && (
-                        <Tooltip content="Edit">
-                          <IconButton variant="text" color="black" size="sm" onClick={() => navigate(`/dashboard/berita/edit/${berita.uuid}`)}>
-                            <PencilIcon className="h-4 w-4" />
+                          {berita.status !== "verified" && (
+                          <Tooltip content="Edit">
+                            <IconButton variant="text" color="black" size="sm" onClick={() => navigate(`/dashboard/berita/edit/${berita.uuid}`)}>
+                              <PencilIcon className="h-4 w-4" />
+                            </IconButton>
+                          </Tooltip>
+                          )}
+                        <Tooltip content="Hapus">
+                          <IconButton variant="text" color="red" size="sm" onClick={() => deleteBerita(berita.uuid)}>
+                            <TrashIcon className="h-4 w-4" />
                           </IconButton>
                         </Tooltip>
-                      )}
-                      <Tooltip content="Hapus">
-                        <IconButton variant="text" color="red" size="sm" onClick={() => deleteBerita(berita.uuid)}>
-                          <TrashIcon className="h-4 w-4" />
-                        </IconButton>
-                      </Tooltip>
                       </div>
                     </td>
+                    </>
+                    )}
+
                   </tr>
                 );
               })}
@@ -321,7 +333,6 @@ export default function DaftarBeritaAdmin() {
               src={selectedImage.url}
             />
           </div>
-          {/* INFO NAMA FILE DI FOOTER MODAL */}
           <div className="bg-white p-4 border-t border-gray-100">
             <div className="flex items-center gap-2">
                <PhotoIcon className="h-4 w-4 text-gray-400" />

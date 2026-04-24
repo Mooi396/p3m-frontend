@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -16,7 +16,6 @@ import {
   EnvelopeIcon, 
   LockClosedIcon,
   IdentificationIcon,
-  AcademicCapIcon,
   BriefcaseIcon,
   BuildingOfficeIcon,
   ArrowLeftIcon 
@@ -44,39 +43,39 @@ export default function EditProfil() {
   });
   const [file, setFile] = useState(null);
 
-  useEffect(() => {
-    if (user) {
-      getUserData();
-    }
-  }, [user]);
+const getUserData = useCallback(async () => {
+  try {
+    const response = await axios.get(`http://localhost:5000/users/${user.uuid}`, {
+      withCredentials: true,
+    });
+    const data = response.data;
+    const detail = data.anggotas?.[0] || {};
+    
+    setFormData({
+      username: data.username || "",
+      email: data.email || "",
+      password: "",
+      nama_lengkap: detail.nama_lengkap || "",
+      gelar: detail.gelar || "",
+      jabatan: detail.jabatan || "",
+      masa_jabat: detail.masa_jabat || "",
+      instansi: detail.instansi || "",
+      linkedin: detail.linkedin || "",
+      google_scholar: detail.google_scholar || "",
+      scopus: detail.scopus || "",
+      sinta: detail.sinta || "",
+    });
+    setPreview(detail.url || "");
+  } catch (error) {
+    console.error("Gagal mengambil data profil", error);
+  }
+}, [user?.uuid]);
 
-  const getUserData = async () => {
-    try {
-      const response = await axios.get(`http://localhost:5000/users/${user.uuid}`, {
-        withCredentials: true,
-      });
-      const data = response.data;
-      const detail = data.anggotas?.[0] || {};
-      
-      setFormData({
-        username: data.username || "",
-        email: data.email || "",
-        password: "",
-        nama_lengkap: detail.nama_lengkap || "",
-        gelar: detail.gelar || "",
-        jabatan: detail.jabatan || "",
-        masa_jabat: detail.masa_jabat || "",
-        instansi: detail.instansi || "",
-        linkedin: detail.linkedin || "",
-        google_scholar: detail.google_scholar || "",
-        scopus: detail.scopus || "",
-        sinta: detail.sinta || "",
-      });
-      setPreview(detail.url || "");
-    } catch (error) {
-      console.error("Gagal mengambil data profil", error);
-    }
-  };
+useEffect(() => {
+  if (user) {
+    getUserData();
+  }
+}, [user, getUserData]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

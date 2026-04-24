@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { GetMe } from "../features/authSlice";
-import DaftarLaporanAdmin from '../components/admin/laporan/daftarLaporan'
+import DaftarLaporanComponents from '../components/admin-ketua_forum/laporan/daftarLaporan'
 import Head from "../components/head";
 
 const Daftarlaporan = () => {
@@ -20,14 +20,14 @@ const Daftarlaporan = () => {
                 navigate('/masuk');
                 return;
             }
-            if(user && user.role !== 'admin') {
+            if(user && user.role !== 'admin' && user.role !== 'ketua_forum') {
                 navigate(-1)
             }
         },[isError, user, navigate]);
   return (
     <div>
         <Head title={"Daftar Laporan"} />
-        <DaftarLaporanAdmin/>
+        <DaftarLaporanComponents/>
     </div>
   )
 }

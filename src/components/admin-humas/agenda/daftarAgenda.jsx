@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import SidebarAdmin from "../sidebarAdmin";
+import { useSelector } from "react-redux";
+import SidebarAdmin from "../../admin/sidebarAdmin";
 import axios from "axios";
 import { ArrowPathIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Card, CardHeader, Input, Typography, Button, CardBody, Chip, Tabs, TabsHeader, Tab, IconButton, Tooltip } from "@material-tailwind/react";
@@ -7,6 +8,7 @@ import { PencilIcon, PlusIcon, TrashIcon, CheckIcon, XMarkIcon, DocumentIcon } f
 import { Link } from "react-router-dom";
 import ModalEditAgenda from "./editAgenda";
 import DashboardNavbar from "../../dashboardNavbar";
+import SidebarHumas from "../sidebarHumas";
 
 const TABS = [
   { label: "Semua", value: "all" },
@@ -23,6 +25,7 @@ export default function DaftarAgendaAdmin() {
   const [searchTerm, setSearchTerm] = useState("");
   const [openEdit, setOpenEdit] = useState(false);
   const [selectedAgenda, setSelectedAgenda] = useState(null);
+  const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
     getAgendas();
@@ -108,7 +111,7 @@ export default function DaftarAgendaAdmin() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <SidebarAdmin />
+      {user?.role === "admin" ? <SidebarAdmin /> : user?.role === "humas" && <SidebarHumas />}
       <div className="flex-1 min-w-0 overflow-auto">
         <DashboardNavbar />
       <Card className="w-full rounded-none shadow-none">
@@ -168,6 +171,8 @@ export default function DaftarAgendaAdmin() {
 
                 return (
                   <tr key={agenda.uuid}>
+                    {(user?.role === "admin" || user?.uuid === agenda.user?.uuid) && (
+                      <>
                     <td className={classes}>
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-blue-50 rounded-lg">
@@ -212,45 +217,48 @@ export default function DaftarAgendaAdmin() {
                     </td>
                     <td className={classes}>
                       <div className="flex gap-2">
-                        {agenda.status === "verified" && (
-                          <Tooltip content="Batalkan Verifikasi (Edit kembali)">
-                            <IconButton 
-                              variant="text" 
-                              color="amber" 
-                              size="sm" 
-                              onClick={() => cancelVerifyAgenda(agenda.uuid)}
-                            >
-                              <ArrowPathIcon className="h-4 w-4" />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                        {agenda.status === "rejected" && (
-                          <Tooltip content="Batalkan Penolakan">
-                            <IconButton 
-                              variant="text" 
-                              color="amber" 
-                              size="sm" 
-                              onClick={() => cancelRejectAgenda(agenda.uuid)}
-                            >
-                              <ArrowPathIcon className="h-4 w-4" />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                        {agenda.status == "pending" && (
+                        {user?.role === "admin" && (
                           <>
-                            <Tooltip content="Verifikasi">
-                              <IconButton variant="text" color="green" size="sm" onClick={() => verifyAgenda(agenda.uuid)}>
-                                <CheckIcon className="h-4 w-4" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip content="Tolak">
-                              <IconButton variant="text" color="red" size="sm" onClick={() => rejectAgenda(agenda.uuid)}>
-                                <XMarkIcon className="h-4 w-4" />
-                              </IconButton>
-                            </Tooltip>
+                            {agenda.status === "verified" && (
+                              <Tooltip content="Batalkan Verifikasi (Edit kembali)">
+                                <IconButton 
+                                  variant="text" 
+                                  color="amber" 
+                                  size="sm" 
+                                  onClick={() => cancelVerifyAgenda(agenda.uuid)}
+                                >
+                                  <ArrowPathIcon className="h-4 w-4" />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                            {agenda.status === "rejected" && (
+                              <Tooltip content="Batalkan Penolakan">
+                                <IconButton 
+                                  variant="text" 
+                                  color="amber" 
+                                  size="sm" 
+                                  onClick={() => cancelRejectAgenda(agenda.uuid)}
+                                >
+                                  <ArrowPathIcon className="h-4 w-4" />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                            {agenda.status === "pending" && (
+                              <>
+                                <Tooltip content="Verifikasi">
+                                  <IconButton variant="text" color="green" size="sm" onClick={() => verifyAgenda(agenda.uuid)}>
+                                    <CheckIcon className="h-4 w-4" />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip content="Tolak">
+                                  <IconButton variant="text" color="red" size="sm" onClick={() => rejectAgenda(agenda.uuid)}>
+                                    <XMarkIcon className="h-4 w-4" />
+                                  </IconButton>
+                                </Tooltip>
+                              </>
+                            )}
                           </>
                         )}
-                        
                         <Tooltip content="Lihat PDF">
                           <IconButton variant="text" color="blue-gray" size="sm" onClick={() => window.open(agenda.url, "_blank")}>
                             <DocumentIcon className="h-4 w-4" />
@@ -263,14 +271,20 @@ export default function DaftarAgendaAdmin() {
                             </IconButton>
                           </Tooltip>
                         )}
-
-                        <Tooltip content="Hapus">
-                          <IconButton variant="text" color="red" size="sm" onClick={() => deleteAgenda(agenda.uuid)}>
-                            <TrashIcon className="h-4 w-4" />
-                          </IconButton>
-                        </Tooltip>
+                          <Tooltip content="Hapus">
+                            <IconButton 
+                              variant="text" 
+                              color="red" 
+                              size="sm" 
+                              onClick={() => deleteAgenda(agenda.uuid)}
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                            </IconButton>
+                          </Tooltip>
                       </div>
                     </td>
+                    </>
+                    )}
                   </tr>
                 );
               })}
