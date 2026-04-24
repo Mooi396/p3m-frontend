@@ -7,7 +7,6 @@ export default function PengurusCard({ name, role, institution, image }) {
       <img
         src={image}
         alt={name}
-        className="h-48 w-full object-cover rounded-t-xl"
       />
 
       <CardBody className="text-center">
