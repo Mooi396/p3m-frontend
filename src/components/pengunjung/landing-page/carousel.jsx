@@ -2,7 +2,7 @@ import { Carousel, IconButton } from "@material-tailwind/react";
 
 export function CarouselCustomArrows() {
   return (
-    <div className=" max-w-screen-xl mx-auto pr-6 py-12 flex items-center gap-10 ">
+    <div className="mx-auto px-10 py-12 flex items-center gap-10">
       <div className="w-1/2">
         <h1 className="text-5xl font-bold text-gray-900 leading-tight">
           {" "}
@@ -15,7 +15,7 @@ export function CarouselCustomArrows() {
       </div>
       <div className="w-1/2">
         <Carousel
-          className="rounded-3xl overflow-hidden h-[350px] w-[650px]"
+          className="rounded-3xl overflow-hidden h-[350px] w-full"
           prevArrow={({ handlePrev }) => (
             <IconButton
               variant="text"

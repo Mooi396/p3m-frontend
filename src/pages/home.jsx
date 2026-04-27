@@ -1,18 +1,25 @@
-import { ComplexNavbar } from "../components/navbar";
-import { CarouselCustomArrows } from "../components/carousel";
-import { AvatarSizes } from "../components/avatar";
-import { Text } from "../components/text1";
+import { ComplexNavbar } from "../components/pengunjung/navbar";
+import { CarouselCustomArrows } from "../components/pengunjung/landing-page/carousel";
+import { AvatarMarquee } from "../components/pengunjung/landing-page/avatar";
+import { Text } from "../components/pengunjung/landing-page/text1";
+import HeroSection from "../components/pengunjung/landing-page/HeroSection";
+import PengurusSection from "../components/pengunjung/landing-page/pengurussection";
+import BeritaP3M from "../components/pengunjung/landing-page/BeritaP3M";
+import Footer from "../components/pengunjung/landing-page/Footer";
 
 function Home() {
   return (
-    <>
+    <div className="bg-blue-50/30">
       <ComplexNavbar />
-      <CarouselCustomArrows/>
-      <AvatarSizes/>
-      <Text/>
-    </>
-   );  
+      <CarouselCustomArrows />
+      <AvatarMarquee />
+      <Text />
+      <HeroSection />
+      <PengurusSection />
+      <BeritaP3M />
+      <Footer />
+    </div>
+  );
 }
-
 
 export default Home;

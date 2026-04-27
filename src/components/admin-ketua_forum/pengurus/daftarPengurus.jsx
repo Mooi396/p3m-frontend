@@ -22,7 +22,9 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import DashboardNavbar from "../../dashboardNavbar";
 import { useSelector } from "react-redux";
-import SidebarHumas from "../sidebarHumas";
+import SidebarKetuaForum from "../sidebarKetuaForum";
+import CreatePengurusModal from "./buatPengurus";
+import EditPengurusModal from "./editPengurus";
 
 const TABS = [
   { label: "Semua", value: "all" },
@@ -31,17 +33,22 @@ const TABS = [
   { label: "Ditolak", value: "rejected" },
 ];
 
-const TABLE_HEAD = ["Berita", "Kategori", "Tanggal Dibuat", "Penulis", "Status", "Actions"];
+const TABLE_HEAD = ["Pengurus", "Jabatan", "Instansi", "Actions"];
 
-export default function DaftarBeritaAdmin() {
-  const [beritas, setBeritas] = useState([]);
+export default function DaftarPengurusComponent() {
+  const [pengurus, setPengurus] = useState([]);
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false); // State untuk Drawer
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const navigate = useNavigate();
   const [openImageModal, setOpenImageModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState({ url: "", image: "", title: ""  });
   const { user: authuser } = useSelector((state) => state.auth);
+  const [openAdd, setOpenAdd] = useState(false);
+  const [openEdit, setOpenEdit] = useState(false);
+  const [selectedPengurus, setSelectedPengurus] = useState(null);
+  
+  const handleOpenAdd = () => setOpenAdd(!openAdd);
 
   const handleOpenImage = (url, image, title) => {
     setSelectedImage({ url, image, title });
@@ -49,106 +56,61 @@ export default function DaftarBeritaAdmin() {
   };
 
   useEffect(() => {
-    getBeritas();
+    getPengurus();
   }, []);
 
-  const getBeritas = async () => {
+  const getPengurus = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/beritas", {
+      const response = await axios.get("http://localhost:5000/pengurus", {
         withCredentials: true,
       });
-      setBeritas(response.data);
+      setPengurus(response.data);
     } catch (error) {
-      console.error("Gagal mengambil data berita:", error);
+      console.error("Gagal mengambil data pengurus:", error);
     }
   };
 
-  const deleteBerita = async (uuid) => {
-    if (window.confirm("Yakin ingin menghapus berita ini?")) {
+  const deletePengurus = async (uuid) => {
+    if (window.confirm("Yakin ingin menghapus pengurus ini?")) {
       try {
-        await axios.delete(`http://localhost:5000/beritas/${uuid}`, { withCredentials: true });
-        getBeritas();
+        await axios.delete(`http://localhost:5000/pengurus/${uuid}`, { withCredentials: true });
+        getPengurus();
       } catch (error) {
         alert(error.response?.data?.msg || "Gagal menghapus");
       }
     }
   };
 
-  const verifyBerita = async (uuid) => {
-    try {
-      await axios.patch(`http://localhost:5000/beritas/${uuid}/verify`, {}, { withCredentials: true });
-      getBeritas();
-    } catch (error) {
-      alert("Gagal memverifikasi berita");
-    }
+  const handleEditClick = (pengurus) => {
+    setSelectedPengurus(pengurus);
+    setOpenEdit(true);
   };
 
-  const rejectBerita = async (uuid) => {
-    try {
-      await axios.patch(`http://localhost:5000/beritas/${uuid}/reject`, {}, { withCredentials: true });
-      getBeritas();
-    } catch (error) {
-      alert("Gagal menolak berita");
-    }
-  };
-
-  const cancelVerifyBerita = async (uuid) => {
-    if (window.confirm("Batalkan verifikasi? Berita ini akan kembali ke status Pending dan bisa diedit.")) {
-      try {
-        await axios.patch(`http://localhost:5000/beritas/${uuid}/cancel-verify`, {}, { 
-          withCredentials: true 
-        });
-        getBeritas();
-      } catch (error) {
-        alert("Gagal membatalkan verifikasi");
-      }
-    }
-  };
-
-  const cancelRejectBerita = async (uuid) => {
-    if (window.confirm("Batalkan penolakan? Berita ini akan kembali ke status Pending")) {
-      try {
-        await axios.patch(`http://localhost:5000/beritas/${uuid}/cancel-reject`, {}, { 
-          withCredentials: true 
-        });
-        getBeritas();
-      } catch (error) {
-        alert("Gagal membatalkan penolakan");
-      }
-    }
-  };
-
-  const filteredRows = beritas.filter((item) => {
+  const filteredRows = pengurus.filter((item) => {
     const matchesTab = filter === "all" || item.status === filter;
-    const matchesSearch = item.judul_berita.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (item.user?.username || "").toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // Logika akses: Admin lihat semua, Humas lihat miliknya sendiri
-    const canSee = authuser?.role === "admin" || authuser?.uuid === item.user?.uuid;
+    const matchesSearch = item.nama_lengkap.toLowerCase().includes(searchTerm.toLowerCase())      || item.jabatan.toLowerCase().includes(searchTerm.toLowerCase()) || item.instansi.toLowerCase().includes(searchTerm.toLowerCase());
+    const canSee = authuser?.role === "admin" || authuser?.role === "ketua_forum";
     
     return matchesTab && matchesSearch && canSee;
   });
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
-      {/* SIDEBAR DESKTOP */}
       <div className="hidden lg:block">
-        {authuser?.role === "admin" ? <SidebarAdmin /> : <SidebarHumas />}
+        {authuser?.role === "admin" ? <SidebarAdmin /> : <SidebarKetuaForum />}
       </div>
 
-      {/* DRAWER MOBILE */}
       <Drawer open={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} className="p-0">
         <div className="flex items-center justify-between p-4 border-b">
-          <Typography variant="h5" color="blue-gray">Menu Berita</Typography>
+          <Typography variant="h5" color="blue-gray">Menu pengurus</Typography>
           <IconButton variant="text" color="blue-gray" onClick={() => setIsDrawerOpen(false)}>
             <XMarkOutline className="h-5 w-5" />
           </IconButton>
         </div>
-        {authuser?.role === "admin" ? <SidebarAdmin /> : <SidebarHumas />}
+        {authuser?.role === "admin" ? <SidebarAdmin /> : <SidebarKetuaForum />}
       </Drawer>
 
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        {/* TOPBAR */}
         <div className="flex items-center bg-white lg:bg-transparent">
           <IconButton 
             variant="text" 
@@ -162,38 +124,25 @@ export default function DaftarBeritaAdmin() {
             <DashboardNavbar />
           </div>
         </div>
-
-        {/* CONTENT AREA */}
         <div className="flex-1 overflow-auto p-4 lg:p-8">
           <Card className="w-full shadow-md border border-gray-200 rounded-xl">
             <CardHeader floated={false} shadow={false} className="rounded-none p-4">
               <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
                 <div>
-                  <Typography variant="h5" color="blue-gray">Manajemen Berita</Typography>
+                  <Typography variant="h5" color="blue-gray">Manajemen Pengurus</Typography>
                   <Typography color="gray" className="mt-1 font-normal text-sm">
-                    Kelola publikasi, verifikasi, dan konten berita instansi
+                    Kelola data pengurus forum, termasuk tambah, edit, dan hapus.
                   </Typography>
                 </div>
-                <Link to="/dashboard/berita/tambah" className="w-full sm:w-auto">
-                  <Button className="flex items-center gap-3 w-full justify-center" size="sm">
-                    <PlusIcon strokeWidth={2} className="h-4 w-4" /> Tambah Berita
+                  <Button onClick={handleOpenAdd} className="w-full sm:w-auto flex items-center gap-3 w-full justify-center" size="sm">
+                    <PlusIcon strokeWidth={2} className="h-4 w-4" /> Tambah Pengurus
                   </Button>
-                </Link>
               </div>
 
               <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-                <Tabs value={filter} className="w-full md:w-max">
-                  <TabsHeader className="overflow-x-auto">
-                    {TABS.map(({ label, value }) => (
-                      <Tab key={value} value={value} onClick={() => setFilter(value)} className="whitespace-nowrap px-4 text-xs lg:text-sm">
-                        {label}
-                      </Tab>
-                    ))}
-                  </TabsHeader>
-                </Tabs>
                 <div className="w-full md:w-72">
                   <Input 
-                    label="Cari Berita..." 
+                    label="Cari pengurus..." 
                     icon={<MagnifyingGlassIcon className="h-5 w-5" />} 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -216,21 +165,21 @@ export default function DaftarBeritaAdmin() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredRows.map((berita, index) => {
+                  {filteredRows.map((pengurus, index) => {
                     const classes = index === filteredRows.length - 1 ? "p-4" : "p-4 border-b border-blue-gray-50";
 
                     return (
-                      <tr key={berita.uuid} className="hover:bg-gray-50 transition-colors">
+                      <tr key={pengurus.uuid} className="hover:bg-gray-50 transition-colors">
                         <td className={classes}>
                           <div className="flex items-center gap-3">
                             <Tooltip content="Klik untuk lihat gambar">
                               <div 
                                 className="relative h-12 w-12 cursor-pointer group overflow-hidden rounded-lg shadow-sm border border-blue-gray-100 shrink-0"
-                                onClick={() => handleOpenImage(berita.url, berita.image, berita.judul_berita)}
+                                onClick={() => handleOpenImage(pengurus.url, pengurus.image, pengurus.judul_pengurus)}
                               >
                                 <img 
-                                  src={berita.url} 
-                                  alt={berita.judul_berita} 
+                                  src={pengurus.url} 
+                                  alt={pengurus.judul_pengurus} 
                                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                                   onError={(e) => { e.target.src = "https://via.placeholder.com/150?text=No+Image" }}
                                 />
@@ -240,86 +189,35 @@ export default function DaftarBeritaAdmin() {
                               </div>
                             </Tooltip>
                             
-                            <div className="flex flex-col max-w-[180px] lg:max-w-[250px]">
+                            <div className="max-w-[180px] lg:max-w-[250px]">
                               <Typography variant="small" color="blue-gray" className="font-bold leading-tight truncate">
-                                {berita.judul_berita}
+                                {pengurus.nama_lengkap}
                               </Typography>
-                              <Typography className="text-[10px] text-gray-500 font-mono truncate">
-                                UUID: {berita.uuid.split('-')[0]}...
-                              </Typography>
+                              {/* <Typography className="text-[10px] text-gray-500 font-mono truncate">
+                                UUID: {pengurus.uuid.split('-')[0]}...
+                              </Typography> */}
                             </div>
                           </div>
                         </td>
                         <td className={classes}>
-                          <div className="flex gap-1 flex-wrap max-w-[120px]">
-                            {berita.kategoris?.map((cat) => (
-                              <Chip key={cat.uuid} variant="outlined" size="sm" value={cat.nama_kategori} className="lowercase rounded-full text-[10px]" />
-                            )) || "-"}
-                          </div>
-                        </td>
-                        <td className={classes}>
                           <Typography variant="small" color="blue-gray" className="font-normal text-xs">
-                            {new Date(berita.createdAt).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}
+                            {pengurus.jabatan}
                           </Typography>
                         </td>
                         <td className={classes}>
-                          <Typography variant="small" color="blue-gray" className="font-normal text-xs">{berita.user?.username || "Admin"}</Typography>
-                        </td>
-                        <td className={classes}>
-                          <Chip variant="ghost" size="sm" value={berita.status} className="text-[10px]" color={berita.status === "verified" ? "green" : berita.status === "pending" ? "amber" : "red"} />
+                          <Typography variant="small" color="blue-gray" className="font-normal text-xs">
+                            {pengurus.instansi}
+                          </Typography>
                         </td>
                         <td className={classes}>
                           <div className="flex gap-1">
-                            {/* ACTIONS KHUSUS ADMIN */}
-                            {authuser?.role === "admin" && (
-                              <>
-                                {berita.status === "verified" && (
-                                  <Tooltip content="Batalkan Verifikasi">
-                                    <IconButton variant="text" color="amber" size="sm" onClick={() => cancelVerifyBerita(berita.uuid)}>
-                                      <ArrowPathIcon className="h-4 w-4" />
-                                    </IconButton>
-                                  </Tooltip>
-                                )}
-                                {berita.status === "rejected" && (
-                                  <Tooltip content="Batalkan Penolakan">
-                                    <IconButton variant="text" color="amber" size="sm" onClick={() => cancelRejectBerita(berita.uuid)}>
-                                      <ArrowPathIcon className="h-4 w-4" />
-                                    </IconButton>
-                                  </Tooltip>
-                                )}
-                                {berita.status === "pending" && (
-                                  <>
-                                    <Tooltip content="Setujui Berita">
-                                      <IconButton variant="text" color="green" size="sm" onClick={() => verifyBerita(berita.uuid)}>
-                                        <CheckIcon className="h-4 w-4" />
-                                      </IconButton>
-                                    </Tooltip>
-                                    <Tooltip content="Tolak">
-                                      <IconButton variant="text" color="red" size="sm" onClick={() => rejectBerita(berita.uuid)}>
-                                        <XMarkSolid className="h-4 w-4" />
-                                      </IconButton>
-                                    </Tooltip>
-                                  </>
-                                )}
-                              </>
-                            )}
-
-                            <Tooltip content="Baca Detail">
-                              <IconButton variant="text" color="blue-gray" size="sm" onClick={() => navigate(`/dashboard/berita/${berita.uuid}`)}>
-                                <EyeIcon className="h-4 w-4" />
-                              </IconButton>
-                            </Tooltip>
-
-                            {berita.status !== "verified" && (
-                              <Tooltip content="Edit">
-                                <IconButton variant="text" color="blue-gray" size="sm" onClick={() => navigate(`/dashboard/berita/edit/${berita.uuid}`)}>
+                              <Tooltip content="Edit Pengurus">
+                                <IconButton variant="text" size="sm" onClick={() => handleEditClick(pengurus)}>
                                   <PencilIcon className="h-4 w-4" />
                                 </IconButton>
                               </Tooltip>
-                            )}
-
                             <Tooltip content="Hapus">
-                              <IconButton variant="text" color="red" size="sm" onClick={() => deleteBerita(berita.uuid)}>
+                              <IconButton variant="text" color="red" size="sm" onClick={() => deletePengurus(pengurus.uuid)}>
                                 <TrashIcon className="h-4 w-4" />
                               </IconButton>
                             </Tooltip>
@@ -347,7 +245,7 @@ export default function DaftarBeritaAdmin() {
         <DialogHeader className="flex shrink-0 justify-between items-center border-b border-gray-100 bg-gray-50 py-3 px-5">
           <div className="flex flex-col min-w-0"> {/* min-w-0 penting agar truncate jalan */}
             <Typography variant="h6" color="blue-gray" className="leading-tight text-sm md:text-base">
-              Preview Gambar Berita
+              Preview Gambar pengurus
             </Typography>
             <Typography 
               variant="small" 
@@ -384,6 +282,17 @@ export default function DaftarBeritaAdmin() {
           </div>
         </DialogBody>
       </Dialog>
+      <CreatePengurusModal 
+              open={openAdd} 
+              handler={handleOpenAdd} 
+              refreshData={getPengurus}
+            />
+      <EditPengurusModal 
+              open={openEdit} 
+              handler={() => setOpenEdit(false)} 
+              pengurus={selectedPengurus} 
+              refreshData={getPengurus}
+            />
     </div>
   );
 }

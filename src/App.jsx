@@ -20,6 +20,9 @@ import DetailBeritaDashboardPage from "./pages/detailberitadashboard.jsx";
 import EditberitaPage from "./pages/editberita.jsx";
 import TambahAgendaPage from "./pages/tambahagenda.jsx";
 import EditProfilUserPage from "./pages/editprofil.jsx";
+import BeritaPengunjungPage from "./pages/beritapengunjung.jsx";
+import DetailBeritaPengunjungPage from "./pages/detailberitapengunjung.jsx";
+import DaftarPengurus from "./pages/daftarpengurusdashboard.jsx";
 
 function App() {
   const dispatch = useDispatch();
@@ -51,6 +54,9 @@ function App() {
         <Route path="/dashboard/berita/tag" element={<DaftarTag/>}></Route>
         <Route path="/dashboard/berita/kategori" element={<DaftarKategori/>}></Route>
         <Route path="/dashboard/laporan" element={<Daftarlaporan/>}></Route>
+        <Route path="/dashboard/pengurus" element={<DaftarPengurus/>}></Route>
+        <Route path="/berita" element={<BeritaPengunjungPage/>}></Route>
+        <Route path="/berita/:uuid" element={<DetailBeritaPengunjungPage/>}></Route>
         <Route path="/masuk" element={
           <GuestRoute>
             <Login />

@@ -7,14 +7,22 @@ import {
   Avatar,
   Tooltip,
   Button,
+  IconButton,
+  Drawer,
 } from "@material-tailwind/react";
+import { 
+  EyeIcon, 
+  Bars3Icon, 
+  XMarkIcon, 
+  UserCircleIcon 
+} from "@heroicons/react/24/solid";
+import { Link } from "react-router-dom";
 import SidebarAnggota from "./sidebarAnggota";
 import DashboardNavbar from "../dashboardNavbar";
-import { EyeIcon } from "@heroicons/react/24/solid";
-import { Link } from "react-router-dom";
 
 export default function DashboardAnggota() {
   const [user, setUser] = useState(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   useEffect(() => {
     const getMe = async () => {
@@ -30,88 +38,160 @@ export default function DashboardAnggota() {
     getMe();
   }, []);
 
-  if (!user) return <div className="p-6 text-center text-gray-600">Memuat Data Profil...</div>;
+  if (!user) return (
+    <div className="flex h-screen w-full items-center justify-center bg-gray-50">
+      <div className="flex flex-col items-center gap-2">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-black"></div>
+        <Typography color="gray" className="font-medium">Memuat Dashboard...</Typography>
+      </div>
+    </div>
+  );
 
   const profil = user.anggotas && user.anggotas[0];
 
-  const formatTanggal = (dateString) => {
-    if (!dateString) return "-";
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString('id-ID', options);
-  };
-
   return (
     <div className="flex h-screen w-full bg-gray-50 overflow-hidden font-sans">
-      <SidebarAnggota />
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto">
-        <DashboardNavbar />
+      {/* SIDEBAR DESKTOP */}
+      <div className="hidden lg:block">
+        <SidebarAnggota />
+      </div>
 
-        <div className="p-8 flex justify-center">
-          <Card className="w-full max-w-6xl shadow-sm border border-gray-100 bg-white rounded-lg">
-            <CardBody className="p-10">
-              
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-gray-100 mb-8">
-                <div className="flex items-center gap-6">
-                  <Avatar
-                    src={profil?.url || "https://via.placeholder.com/150"}
-                    alt="foto-profil"
-                    size="xl"
-                    className="border-2 border-black-50 shadow-sm"
-                  />
-                  <div>
-                    <Typography variant="h4" color="blue-gray" className="font-bold">
-                      {profil?.nama_lengkap}{profil?.gelar ? `, ${profil.gelar}` : ""}
-                    </Typography>
-                    <Typography variant="paragraph" color="gray" className="font-medium">
-                      {profil?.jabatan || "Anggota"}
-                    </Typography>
-                  </div>
-                </div>
-                <Link to="/dashboard/profil">
-                <Tooltip content="Lihat Detail Profil">
-                <Button size="sm" className="flex items-center gap-2 rounded-full normal-case px-6 py-2.5">
-                  <EyeIcon className="h-4 w-4" />
-                  Lihat Detail
-                </Button>
-                </Tooltip>
-                </Link>                             
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+      {/* DRAWER MOBILE */}
+      <Drawer open={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} className="p-0">
+        <div className="flex items-center justify-between p-4 border-b">
+          <Typography variant="h5" color="blue-gray">Menu Anggota</Typography>
+          <IconButton variant="text" color="blue-gray" onClick={() => setIsDrawerOpen(false)}>
+            <XMarkIcon className="h-5 w-5" />
+          </IconButton>
+        </div>
+        <SidebarAnggota />
+      </Drawer>
+
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        {/* NAVBAR */}
+        <div className="flex items-center bg-white lg:bg-transparent shrink-0">
+          <IconButton
+            variant="text"
+            color="blue-gray"
+            className="lg:hidden mr-2"
+            onClick={() => setIsDrawerOpen(true)}
+          >
+            <Bars3Icon className="h-6 w-6" />
+          </IconButton>
+          <div className="flex-1">
+            <DashboardNavbar />
+          </div>
+        </div>
+
+        {/* MAIN CONTENT Area */}
+        <div className="flex-1 overflow-y-auto p-4 md:p-8">
+          <div className="flex justify-center pb-10">
+            <Card className="w-full max-w-5xl shadow-sm border border-gray-100 bg-white rounded-xl">
+              <CardBody className="p-6 md:p-10">
                 
-                <div>
-                  <Typography variant="h6" color="blue-gray" className="font-semibold mb-5">
-                    Informasi Akun
-                  </Typography>
-                  <div className="space-y-5">
-                    <div className="flex gap-4">
-                      <ReadOnlyField label="Role" value={user.role} isChip color="blue" />
-                      <ReadOnlyField label="Status" value={user.status} isChip color={user.status === 'verified' ? 'green' : user.status === 'pending' ? 'amber' : 'red'} />
+                {/* Header Profil */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-gray-100 mb-8">
+                  <div className="flex flex-col sm:flex-row items-center gap-4 md:gap-6 text-center sm:text-left">
+                    {profil?.url ? (
+                      <Avatar
+                        src={profil.url}
+                        alt="foto-profil"
+                        size="xl"
+                        variant="circular"
+                        className="border-2 border-gray-200 shadow-sm"
+                      />
+                    ) : (
+                      <div className="h-20 w-20 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
+                        <UserCircleIcon className="h-14 w-14 text-gray-400" />
+                      </div>
+                    )}
+                    <div>
+                      <Typography variant="h4" color="blue-gray" className="font-bold text-xl md:text-2xl">
+                        {profil?.nama_lengkap}{profil?.gelar ? `, ${profil.gelar}` : ""}
+                        {!profil?.nama_lengkap && user.username}
+                      </Typography>
+                      <Typography variant="paragraph" color="gray" className="font-medium opacity-70">
+                        {profil?.jabatan || "Anggota Forum"}
+                      </Typography>
                     </div>
-                    <ReadOnlyField label="Email" value={user.email || "-"} />
-                    <ReadOnlyField label="Username" value={user.username || "-"} />
+                  </div>
+
+                  <div className="flex justify-center">
+                    <Link to="/dashboard/profil" className="w-full sm:w-auto">
+                      <Tooltip content="Lihat Detail Profil">
+                        <Button 
+                          color="black" // Mengganti blue ke black
+                          size="md" 
+                          className="flex items-center justify-center gap-2 rounded-lg normal-case w-full sm:px-6 shadow-none hover:shadow-md"
+                        >
+                          <EyeIcon className="h-4 w-4" />
+                          Lihat Detail
+                        </Button>
+                      </Tooltip>
+                    </Link>
                   </div>
                 </div>
-              </div>
-            </CardBody>
-          </Card>
+
+                {/* Dashboard Stats / Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <div>
+                    <Typography variant="h6" color="blue-gray" className="font-bold mb-5 flex items-center gap-2">
+                      <div className="h-2 w-2 bg-black rounded-full"></div>
+                      Informasi Akun
+                    </Typography>
+                    <div className="space-y-5">
+                      <div className="flex flex-wrap gap-4">
+                        <ReadOnlyField label="Role" value={user.role} isChip color="gray" />
+                        <ReadOnlyField 
+                          label="Status" 
+                          value={user.status} 
+                          isChip 
+                          color={user.status === 'verified' ? 'green' : user.status === 'pending' ? 'amber' : 'red'} 
+                        />
+                      </div>
+                      <ReadOnlyField label="Email Terdaftar" value={user.email || "-"} />
+                      <ReadOnlyField label="ID Pengguna" value={user.username || "-"} />
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 flex flex-col justify-center">
+                    <Typography variant="h6" color="blue-gray" className="mb-2">
+                      Halo, {user.username}!
+                    </Typography>
+                    <Typography variant="small" color="gray" className="leading-relaxed">
+                      Selamat datang di dashboard Anggota P3M. Di sini Anda dapat memantau status verifikasi akun Anda dan mengakses data personal. Pastikan data profil Anda selalu diperbarui.
+                    </Typography>
+                  </div>
+                </div>
+              </CardBody>
+            </Card>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
+// Komponen Helper Field
 function ReadOnlyField({ label, value, isChip, color }) {
+  const colorMap = {
+    gray: "bg-gray-100 text-gray-700 border-gray-200",
+    green: "bg-green-50 text-green-700 border-green-100",
+    amber: "bg-amber-50 text-amber-700 border-amber-100",
+    red: "bg-red-50 text-red-700 border-red-100",
+  };
+
   return (
     <div className="w-full">
-      <Typography variant="small" color="blue-gray" className="font-medium mb-1.5 text-gray-700">
+      <Typography variant="small" color="blue-gray" className="font-bold mb-1.5 opacity-60 text-[11px] uppercase tracking-wider">
         {label}
       </Typography>
       {isChip ? (
-        <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium uppercase bg-${color}-50 text-${color}-700 border border-${color}-100`}>
+        <div className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase border ${colorMap[color] || colorMap.gray}`}>
           {value}
         </div>
       ) : (
-        <div className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-md text-sm text-gray-900 shadow-inner font-normal">
+        <div className="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-lg text-sm text-blue-gray-900 font-medium shadow-sm">
           {value}
         </div>
       )}
