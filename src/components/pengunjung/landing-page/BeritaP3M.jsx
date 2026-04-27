@@ -44,11 +44,11 @@ export default function BeritaP3M() {
 
   return (
     <div className="px-10 py-10">
-      <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-12 gap-6">
+      <div className="flex flex-col md:flex-row items-center md:items-end justify-between mb-12 gap-6">
         <div className="inline-block pb-2">
-          <h2 className="text-5xl font-bold text-gray-900 leading-tight">
+          <h1 className="text-4xl font-bold text-gray-900 leading-tight">
             Berita & Pembaruan P3M
-          </h2>
+          </h1>
           <div className="h-1.5 w-48 md:w-72 bg-gray-900 mt-4 rounded-full"></div>
         </div>
         <Button 

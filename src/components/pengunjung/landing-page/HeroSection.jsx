@@ -1,4 +1,5 @@
 import { Button } from "@material-tailwind/react";
+import { Link } from "react-router-dom";
 
 export default function HeroSection() {
   return (
@@ -11,18 +12,19 @@ export default function HeroSection() {
           className="rounded-[15px] w-full aspect-video object-cover"
         />
       </div>
-      <div className="w-full md:w-1/2 flex flex-col justify-between items-start py-2">
-        <p className="text-gray-800 text-xl leading-relaxed text-justify font-medium">
+      <div className="w-full md:w-1/2 flex flex-col justify-around items-start py-2">
+        <p className="text-gray-800 text-lg leading-relaxed text-justify font-medium">
           P3M merupakan pusat pengelolaan kegiatan penelitian dan pengabdian 
           kepada masyarakat yang mendukung inovasi, pengembangan ilmu 
           pengetahuan, serta kontribusi nyata bagi masyarakat secara 
           terstruktur dan berkelanjutan.
         </p>
-
+        <Link to="/profil-p3m">
         <Button>
           Baca Selengkapnya 
-          <span className="text-lg">→</span>
+          <span className="text-md">→</span>
         </Button>
+        </Link>
       </div>
 
     </div>

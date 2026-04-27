@@ -139,6 +139,14 @@ export default function SidebarAdmin() {
             Daftar Laporan
           </ListItem>
         </Link>
+        <Link to={'/dashboard/pengurus'}>
+          <ListItem>
+            <ListItemPrefix>
+              <UserCircleIcon className="h-5 w-5" />
+            </ListItemPrefix>
+            Daftar Pengurus
+          </ListItem>
+        </Link>
       </List>
 
       <List className="mt-auto border-t border-blue-gray-50 pt-2">

@@ -62,21 +62,19 @@ return (
           {/* RENDER KATEGORI (Featured) */}
           <div className="flex gap-2 mb-3">
             {article.kategoris?.map((kat) => (
-              <Chip variant="outlined" value={kat.nama_kategori} key={kat.uuid}>
+              <Chip variant="outlined" size="sm" value={kat.nama_kategori} key={kat.uuid}>
               </Chip>
             ))}
           </div>
 
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-4">
+          <h1 className="text-2xl md:text-2xl font-bold text-gray-900 leading-tight mb-4">
             {article.judul_berita}
           </h1>
           
           <div 
-            className="text-gray-600 text-base leading-relaxed text-justify mb-4 line-clamp-3 [&>p]:inline [&>div]:inline"
+            className="text-gray-600 text-base leading-relaxed text-justify mb-4 line-clamp-3 [&>p]:inline [&>div]:inline text-md"
             dangerouslySetInnerHTML={{ __html: article.isi_berita }}
           />
-          
-          {/* RENDER TAGS (Featured - Opsional jika ingin ditampilkan) */}
           <div className="flex flex-wrap gap-1 mb-4">
             {article.tags?.map((tag) => (
               <span key={tag.uuid} className="text-[10px] text-gray-500 italic">
