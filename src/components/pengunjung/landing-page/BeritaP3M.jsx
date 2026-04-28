@@ -59,8 +59,6 @@ export default function BeritaP3M() {
           Lihat Berita Lain <ArrowRightIcon />
         </Button>
       </div>
-
-      {/* Render Featured Card jika ada datanya */}
       {featuredArticle ? (
         <div className="mb-6">
           <FeaturedCard article={featuredArticle} />

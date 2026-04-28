@@ -10,6 +10,7 @@ import {
   IconButton,
 } from "@material-tailwind/react";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
+import { ComplexNavbar } from "./pengunjung/navbar";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -66,6 +67,8 @@ export default function RegisterPage() {
   const toggleShowPassword = () => setShowPassword(!showPassword);
 
   return (
+    <div className="w-full">
+      <ComplexNavbar/>
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <Card color="transparent" shadow={true} className="p-8 w-full max-w-[48rem] mx-auto bg-white">
         <Typography variant="h4" color="blue-gray">
@@ -77,7 +80,6 @@ export default function RegisterPage() {
 
         <form onSubmit={handleSubmit} className="mt-8 mb-2">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* KOLOM KIRI: AKUN & SOSMED */}
             <div className="flex flex-col gap-4">
               <Typography variant="h6" color="blue-gray" className="-mb-2">
                 Informasi Akun
@@ -184,6 +186,7 @@ export default function RegisterPage() {
           </Typography>
         </form>
       </Card>
+    </div>
     </div>
   );
 }

@@ -62,7 +62,9 @@ export default function PengurusSection() {
                     alt={item.nama_lengkap}
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                     onError={(e) => {
-                      e.target.src = "https://via.placeholder.com/300x400?text=No+Image";
+                      // Jika gambar dari API error/tidak ditemukan, ganti ke avatar inisial
+                      e.target.onerror = null; 
+                      e.target.src = `https://ui-avatars.com/api/?name=${item.nama}&background=random`;
                     }}
                   />
                   <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />

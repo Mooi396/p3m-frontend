@@ -28,6 +28,7 @@ export default function DaftarBeritaP3M() {
     try {
       const response = await axios.get("http://localhost:5000/beritas", { withCredentials: true });
       const verified = response.data.filter(b => b.status === "verified");
+      verified.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
       setBeritas(verified);
     } catch (error) {
       console.error("Gagal ambil data:", error);
@@ -36,7 +37,6 @@ export default function DaftarBeritaP3M() {
     }
   };
 
-  // --- LOGIKA FILTERING ---
   const filteredBerita = beritas.filter(b => {
     const matchesSearch = b.judul_berita.toLowerCase().includes(search.toLowerCase());
     const matchesKategori = filterKategori ? b.kategoris?.some(k => k.uuid === filterKategori) : true;
@@ -44,18 +44,14 @@ export default function DaftarBeritaP3M() {
     return matchesSearch && matchesKategori && matchesTag;
   });
 
-  // --- LOGIKA PAGINATION ---
   const indexOfLastPost = currentPage * postsPerPage;
   const indexOfFirstPost = indexOfLastPost - postsPerPage;
   const currentPosts = filteredBerita.slice(indexOfFirstPost, indexOfLastPost);
 
-  // Perbaikan Logika Featured & List
   const featured = currentPage === 1 && !search && !filterKategori && !filterTag ? currentPosts[0] : null;
   const listBerita = featured ? currentPosts.slice(1) : currentPosts;
-
   const totalPages = Math.ceil(filteredBerita.length / postsPerPage);
 
-  // --- DATA SIDEBAR ---
   const kategoriCounts = beritas.reduce((acc, berita) => {
     berita.kategoris?.forEach((kat) => {
       if (!acc[kat.uuid]) acc[kat.uuid] = { nama: kat.nama_kategori, count: 0, uuid: kat.uuid };
@@ -69,10 +65,17 @@ export default function DaftarBeritaP3M() {
     new Set(beritas.flatMap((b) => b.tags?.map((t) => JSON.stringify(t)) || []))
   ).map((t) => JSON.parse(t));
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "Sedang memuat...";
+    const date = new Date(dateString);
+    return isNaN(date.getTime()) ? "Tanggal tidak valid" : date.toLocaleDateString("id-ID");
+  };
+
   if (loading) return <div className="h-screen flex justify-center items-center"><Spinner className="h-12 w-12" /></div>;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10">
+    <div className="max-w-7xl mx-auto px-4 py-10 overflow-x-hidden">
+      {/* Header Section */}
       <div className="mb-10">
         <h1 className="text-4xl font-bold text-gray-900 mb-2">Berita P3M</h1>
         <p className="text-gray-600 mb-6">Dapatkan semua berita terbaru seputar forum di sini!</p>
@@ -104,100 +107,90 @@ export default function DaftarBeritaP3M() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-10">
-        <div className="flex-1">
-          {/* Perbaikan Kondisi Tampilan: Cek apakah ada data di currentPosts atau featured */}
+        <div className="flex-1 min-w-0"> {/* min-w-0 penting untuk mencegah flex item meluap */}
           {currentPosts.length > 0 ? (
             <>
+              {/* Featured News */}
               {featured && (
-                <div className="flex flex-col md:flex-row gap-8 items-stretch bg-white rounded-[30px] px-10 py-10 mx-auto shadow-none border border-gray-50 mb-10">
-                  <div className="w-full md:w-2/5">
-                    <img src={featured.url} className="rounded-[15px] w-full aspect-[4/3] object-cover shadow-sm" alt={featured.judul_berita} />
-                  </div>
-                  <div className="w-full md:w-3/5 flex flex-col justify-between py-1">
-                    <div>
-                      <div className="flex gap-2 mb-3">
-                        {featured.kategoris?.map((kat) => (
-                          <Chip variant="outlined" value={kat.nama_kategori} key={kat.uuid} className="text-[10px]">
-                          </Chip>
-                        ))}
-                      </div>
-                      <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-4">{featured.judul_berita}</h1>
-                      <div className="text-gray-600 text-base leading-relaxed text-justify mb-4 line-clamp-3 [&>p]:inline" dangerouslySetInnerHTML={{ __html: featured.isi_berita }} />
-                      <div className="flex flex-col justify-between mt-auto pt-2 gap-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 bg-black rounded-full flex items-center justify-center text-white text-[9px]">{featured.user?.username?.charAt(0)}</div>
-                        <p className="text-xs font-bold text-gray-800">{featured.user?.username} <span className="text-gray-400 mx-1">•</span> {new Date(featured.createdAt).toLocaleDateString("id-ID")}</p>
-                      </div>
-                      <Link to={`/berita/${featured.uuid}`} className="text-blue-500 font-bold text-sm flex items-center gap-2">
-                        Baca Selengkapnya{" "}
-                        <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={2}
-                        stroke="currentColor"
-                        className="h-5 w-5"
-                        >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3"
-                        />
-                        </svg>
-                      </Link>
+                <div className="flex flex-col md:flex-row gap-8 items-start bg-white rounded-[30px] p-6 md:p-10 shadow-none border border-gray-50 mb-10 overflow-hidden">
+                  <div className="w-full md:w-2/5 shrink-0">
+                    <div className="aspect-[4/3] w-full overflow-hidden rounded-[15px]">
+                      <img 
+                        src={featured.url} 
+                        className="w-full h-full object-cover shadow-sm" 
+                        alt={featured.judul_berita} 
+                      />
                     </div>
+                  </div>
+                  <div className="w-full md:w-3/5 flex flex-col min-w-0">
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {featured.kategoris?.map((kat) => (
+                        <Chip variant="outlined" value={kat.nama_kategori} key={kat.uuid} className="text-[10px]" />
+                      ))}
+                    </div>
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-4 break-words">
+                      {featured.judul_berita}
+                    </h1>
+                    <div 
+                      className="text-gray-600 text-sm md:text-base leading-relaxed text-justify mb-6 line-clamp-3 break-words" 
+                      dangerouslySetInnerHTML={{ __html: featured.isi_berita }} 
+                    />
+                    <div className="mt-auto pt-4 border-t border-gray-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-black rounded-full flex shrink-0 items-center justify-center text-white text-[10px]">
+                          {featured.user?.username?.charAt(0)}
+                        </div>
+                        <p className="text-xs font-bold text-gray-800 truncate">
+                          {featured.user?.username} <span className="text-gray-400 mx-1">•</span> {formatDate(featured?.updatedAt)}
+                        </p>
+                      </div>
+                      <Link to={`/berita/${featured.uuid}`} className="text-blue-900 font-bold text-sm flex items-center gap-2 shrink-0">
+                        Baca Selengkapnya <ArrowRightIcon />
+                      </Link>
                     </div>
                   </div>
                 </div>
               )}
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {listBerita.map((item) => (
-                  <div key={item.uuid} className="flex flex-col gap-4 bg-white rounded-[30px] p-4 shadow-none border border-gray-50">
-                    <div className="relative">
-                      <img src={item.url} className="rounded-[15px] w-full aspect-video object-cover mb-2" alt={item.judul_berita} />
-                      {/* Pembungkus absolute di luar map agar posisi tetap di pojok kiri atas */}
-                    <div className="absolute top-2 left-2 flex flex-wrap gap-1">
-                    {item.kategoris?.map((kat) => (
-                        <Chip 
-                        key={kat.uuid} 
-                        value={kat.nama_kategori} 
-                        className="text-[10px] py-1 px-2 rounded-md shadow-sm"
-                        />
-                    ))}
-                    </div>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <p className="text-[10px] text-gray-500 font-bold uppercase">{new Date(item.createdAt).toLocaleDateString("id-ID")}</p>
-                      <h3 className="text-xl font-bold text-gray-900 leading-snug line-clamp-2">{item.judul_berita}</h3>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {item.tags?.map((tag) => (
-                          <span key={tag.uuid} className="bg-gray-100 text-gray-600 text-[9px] px-2 py-0.5 rounded-full font-medium border border-gray-200">#{tag.nama_tag}</span>
+                  <div key={item.uuid} className="flex flex-col bg-white rounded-[30px] p-5 shadow-none border border-gray-50 overflow-hidden">
+                    <div className="relative w-full aspect-video overflow-hidden rounded-[15px] mb-4">
+                      <img 
+                        src={item.url} 
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" 
+                        alt={item.judul_berita} 
+                      />
+                      <div className="absolute top-2 left-2 flex flex-wrap gap-1 max-w-[90%]">
+                        {item.kategoris?.map((kat) => (
+                          <Chip key={kat.uuid} value={kat.nama_kategori} className="text-[9px] py-0.5 px-2 bg-white/90 text-black backdrop-blur-sm" />
                         ))}
                       </div>
                     </div>
-                    <div className="flex flex-col justify-between mt-auto pt-2 gap-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 bg-black rounded-full flex items-center justify-center text-white text-[9px]">{item.user?.username?.charAt(0)}</div>
-                        <p className="text-xs font-bold text-gray-800">{item.user?.username}</p>
+                    <div className="flex flex-col flex-grow min-w-0">
+                      <p className="text-[10px] text-gray-500 font-bold uppercase mb-1">
+                            {formatDate(item?.updatedAt)}
+                      </p>
+                      <h3 className="text-lg font-bold text-gray-900 leading-snug line-clamp-2 mb-2 break-words">
+                        {item.judul_berita}
+                      </h3>
+                      <div className="flex flex-wrap gap-1 mb-4">
+                        {item.tags?.map((tag) => (
+                          <span key={tag.uuid} className="bg-gray-100 text-gray-600 text-[9px] px-2 py-0.5 rounded-full border border-gray-200 truncate max-w-[100px]">
+                            #{tag.nama_tag}
+                          </span>
+                        ))}
                       </div>
-                      <Link to={`/berita/${item.uuid}`} className="text-blue-500 font-bold text-sm flex items-center gap-2">
-                        Baca Selengkapnya{" "}
-                        <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={2}
-                        stroke="currentColor"
-                        className="h-5 w-5"
-                        >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3"
-                        />
-                        </svg>
-                      </Link>
+                      <div className="mt-auto pt-4 border-t border-gray-50 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-6 h-6 bg-black rounded-full flex shrink-0 items-center justify-center text-white text-[8px]">
+                            {item.user?.username?.charAt(0)}
+                          </div>
+                          <p className="text-xs font-bold text-gray-800 truncate">{item.user?.username}</p>
+                        </div>
+                        <Link to={`/berita/${item.uuid}`} className="text-blue-900 font-bold text-[13px] flex items-center gap-1 shrink-0">
+                          Baca Selengkapnya<ArrowRightIcon />
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -207,52 +200,46 @@ export default function DaftarBeritaP3M() {
             <Typography className="text-center py-20 text-gray-500">Tidak ada berita yang sesuai pencarian.</Typography>
           )}
 
+          {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex justify-center items-center mt-12 gap-4">
+            <div className="flex flex-wrap justify-center items-center mt-12 gap-2 md:gap-4">
               <Button
                 variant="text"
+                size="sm"
                 className="flex items-center gap-2 rounded-full"
-                onClick={() => {
-                  setCurrentPage((prev) => Math.max(prev - 1, 1));
-                  window.scrollTo(0, 0); // Opsional: scroll ke atas tiap pindah page
-                }}
+                onClick={() => { setCurrentPage((prev) => Math.max(prev - 1, 1)); window.scrollTo(0, 0); }}
                 disabled={currentPage === 1}
               >
-                <ArrowLeftIcon strokeWidth={2} className="h-4 w-4" /> Sebelumnya
+                <ArrowLeftIcon className="h-4 w-4" /> <span className="hidden sm:inline">Sebelumnya</span>
               </Button>
-
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 {[...Array(totalPages)].map((_, index) => (
                   <IconButton
                     key={index + 1}
+                    size="sm"
                     variant={currentPage === index + 1 ? "filled" : "text"}
                     color="gray"
-                    onClick={() => {
-                      setCurrentPage(index + 1);
-                      window.scrollTo(0, 0);
-                    }}
+                    onClick={() => { setCurrentPage(index + 1); window.scrollTo(0, 0); }}
                     className="rounded-full"
                   >
                     {index + 1}
                   </IconButton>
                 ))}
               </div>
-
               <Button
                 variant="text"
+                size="sm"
                 className="flex items-center gap-2 rounded-full"
-                onClick={() => {
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-                  window.scrollTo(0, 0);
-                }}
+                onClick={() => { setCurrentPage((prev) => Math.min(prev + 1, totalPages)); window.scrollTo(0, 0); }}
                 disabled={currentPage === totalPages}
               >
-                Selanjutnya <ArrowRightIcon />
+                <span className="hidden sm:inline">Selanjutnya</span> <ArrowRightIcon />
               </Button>
             </div>
           )}
         </div>
 
+        {/* Sidebar */}
         <div className="w-full lg:w-80 flex flex-col gap-8">
           <div className="bg-gray-50 p-6 rounded-[20px] border border-gray-100">
             <h4 className="font-bold mb-4 text-gray-900">Semua Kategori</h4>
@@ -260,15 +247,11 @@ export default function DaftarBeritaP3M() {
               {masterKategoris.map((kat) => (
                 <button 
                   key={kat.uuid} 
-                  onClick={() => { 
-                    setFilterKategori(kat.uuid); 
-                    setFilterTag(null); 
-                    setCurrentPage(1); // RESET KE HALAMAN 1
-                  }}
+                  onClick={() => { setFilterKategori(kat.uuid); setFilterTag(null); setCurrentPage(1); }}
                   className={`flex justify-between items-center text-sm transition-colors w-full text-left group ${filterKategori === kat.uuid ? "text-blue-600 font-bold" : "text-gray-700 hover:text-blue-600"}`}
                 >
-                  <span className="group-hover:underline">{kat.nama}</span>
-                  <span className="text-gray-400 font-mono text-xs">({kat.count})</span>
+                  <span className="group-hover:underline truncate">{kat.nama}</span>
+                  <span className="text-gray-400 font-mono text-xs shrink-0">({kat.count})</span>
                 </button>
               ))}
             </div>
@@ -278,13 +261,13 @@ export default function DaftarBeritaP3M() {
             <h4 className="font-bold mb-4 text-gray-900">Berita Terbaru</h4>
             <div className="flex flex-col gap-5">
               {beritas.slice(0, 4).map((b) => (
-                <Link key={b.uuid} to={`/berita/${b.uuid}`} className="flex gap-3 items-center group cursor-pointer">
+                <Link key={b.uuid} to={`/berita/${b.uuid}`} className="flex gap-3 items-center group cursor-pointer min-w-0">
                   <div className="w-16 h-16 shrink-0 overflow-hidden rounded-lg">
                     <img src={b.url} className="w-full h-full object-cover group-hover:scale-110 transition-transform" alt="" />
                   </div>
-                  <div>
-                    <p className="text-[10px] text-gray-400">{new Date(b.createdAt).toLocaleDateString("id-ID")}</p>
-                    <p className="text-xs font-bold line-clamp-2 leading-snug group-hover:text-blue-600">{b.judul_berita}</p>
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-gray-400">{formatDate(b?.updatedAt)}</p>
+                    <p className="text-xs font-bold line-clamp-2 leading-snug group-hover:text-blue-600 break-words">{b.judul_berita}</p>
                   </div>
                 </Link>
               ))}
@@ -299,12 +282,8 @@ export default function DaftarBeritaP3M() {
                   key={tag.uuid}
                   value={tag.nama_tag}
                   variant={filterTag === tag.uuid ? "filled" : "white"}
-                  onClick={() => { 
-                    setFilterTag(tag.uuid); 
-                    setFilterKategori(null); 
-                    setCurrentPage(1); // RESET KE HALAMAN 1
-                  }}
-                  className={`lowercase shadow-sm border border-gray-200 cursor-pointer transition-colors ${filterTag === tag.uuid ? "bg-blue-500 text-white" : "text-gray-600 hover:bg-blue-50"}`}
+                  onClick={() => { setFilterTag(tag.uuid); setFilterKategori(null); setCurrentPage(1); }}
+                  className={`lowercase shadow-sm border border-gray-200 cursor-pointer transition-colors max-w-full truncate ${filterTag === tag.uuid ? "bg-blue-900 text-white" : "text-gray-600 hover:bg-blue-50"}`}
                 />
               ))}
             </div>

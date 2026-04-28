@@ -5,20 +5,24 @@ import {
   PhotoIcon, 
   MagnifyingGlassIcon, 
   Bars3Icon, 
-  XMarkIcon as XMarkOutline 
+  XMarkIcon as XMarkOutline,
+  Squares2X2Icon,
+  ListBulletIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  BuildingOfficeIcon,
+  UserCircleIcon,
+  BriefcaseIcon
 } from "@heroicons/react/24/outline";
 import { 
   Card, CardHeader, Input, Typography, Button, CardBody, 
   Chip, Tabs, TabsHeader, Tab, IconButton, Tooltip, 
-  Dialog, DialogBody, DialogHeader, Drawer 
+  Dialog, DialogBody, DialogHeader, Drawer, Select, Option, CardFooter 
 } from "@material-tailwind/react";
 import { 
   PencilIcon, PlusIcon, TrashIcon, CheckIcon, 
   XMarkIcon as XMarkSolid 
 } from "@heroicons/react/24/solid";
-import {
-  EyeIcon, ArrowPathIcon
-} from "@heroicons/react/24/outline";
 import { Link, useNavigate } from "react-router-dom";
 import DashboardNavbar from "../../dashboardNavbar";
 import { useSelector } from "react-redux";
@@ -26,23 +30,21 @@ import SidebarKetuaForum from "../sidebarKetuaForum";
 import CreatePengurusModal from "./buatPengurus";
 import EditPengurusModal from "./editPengurus";
 
-const TABS = [
-  { label: "Semua", value: "all" },
-  { label: "Terverifikasi", value: "verified" },
-  { label: "Menunggu", value: "pending" },
-  { label: "Ditolak", value: "rejected" },
-];
-
 const TABLE_HEAD = ["Pengurus", "Jabatan", "Instansi", "Actions"];
 
 export default function DaftarPengurusComponent() {
   const [pengurus, setPengurus] = useState([]);
-  const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [viewMode, setViewMode] = useState("table"); // 'table' or 'card'
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const navigate = useNavigate();
+  
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   const [openImageModal, setOpenImageModal] = useState(false);
-  const [selectedImage, setSelectedImage] = useState({ url: "", image: "", title: ""  });
+  const [selectedImage, setSelectedImage] = useState({ url: "", image: "", title: "" });
   const { user: authuser } = useSelector((state) => state.auth);
   const [openAdd, setOpenAdd] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
@@ -81,18 +83,45 @@ export default function DaftarPengurusComponent() {
     }
   };
 
-  const handleEditClick = (pengurus) => {
-    setSelectedPengurus(pengurus);
+  const handleEditClick = (p) => {
+    setSelectedPengurus(p);
     setOpenEdit(true);
   };
 
+  // Reset ke halaman 1 jika mencari sesuatu
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, rowsPerPage]);
+
   const filteredRows = pengurus.filter((item) => {
-    const matchesTab = filter === "all" || item.status === filter;
-    const matchesSearch = item.nama_lengkap.toLowerCase().includes(searchTerm.toLowerCase())      || item.jabatan.toLowerCase().includes(searchTerm.toLowerCase()) || item.instansi.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = item.nama_lengkap.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          item.jabatan.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          item.instansi.toLowerCase().includes(searchTerm.toLowerCase());
     const canSee = authuser?.role === "admin" || authuser?.role === "ketua_forum";
-    
-    return matchesTab && matchesSearch && canSee;
+    return matchesSearch && canSee;
   });
+
+  // Pagination Logic
+  const indexOfLastItem = currentPage * rowsPerPage;
+  const indexOfFirstItem = indexOfLastItem - rowsPerPage;
+  const currentItems = filteredRows.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+
+  // Sub-component Action Buttons
+  const ActionButtons = ({ item }) => (
+    <div className="flex gap-1">
+      <Tooltip content="Edit Pengurus">
+        <IconButton variant="text" size="sm" onClick={() => handleEditClick(item)}>
+          <PencilIcon className="h-4 w-4" />
+        </IconButton>
+      </Tooltip>
+      <Tooltip content="Hapus">
+        <IconButton variant="text" color="red" size="sm" onClick={() => deletePengurus(item.uuid)}>
+          <TrashIcon className="h-4 w-4" />
+        </IconButton>
+      </Tooltip>
+    </div>
+  );
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
@@ -124,22 +153,33 @@ export default function DaftarPengurusComponent() {
             <DashboardNavbar />
           </div>
         </div>
+
         <div className="flex-1 overflow-auto p-4 lg:p-8">
-          <Card className="w-full shadow-md border border-gray-200 rounded-xl">
+          <Card className="w-full shadow-md border border-gray-200 rounded-xl overflow-hidden">
             <CardHeader floated={false} shadow={false} className="rounded-none p-4">
-              <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+              <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                   <Typography variant="h5" color="blue-gray">Manajemen Pengurus</Typography>
                   <Typography color="gray" className="mt-1 font-normal text-sm">
-                    Kelola data pengurus forum, termasuk tambah, edit, dan hapus.
+                    Tampilan: {viewMode === 'table' ? 'Tabel' : 'Kartu'} ({filteredRows.length} total)
                   </Typography>
                 </div>
-                  <Button onClick={handleOpenAdd} className="w-full sm:w-auto flex items-center gap-3 w-full justify-center" size="sm">
-                    <PlusIcon strokeWidth={2} className="h-4 w-4" /> Tambah Pengurus
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <div className="flex bg-gray-100 p-1 rounded-lg">
+                    <IconButton variant={viewMode === "table" ? "white" : "text"} size="sm" onClick={() => setViewMode("table")}>
+                      <ListBulletIcon className="h-4 w-4" />
+                    </IconButton>
+                    <IconButton variant={viewMode === "card" ? "white" : "text"} size="sm" onClick={() => setViewMode("card")}>
+                      <Squares2X2Icon className="h-4 w-4" />
+                    </IconButton>
+                  </div>
+                  <Button onClick={handleOpenAdd} className="flex items-center gap-3" size="sm">
+                    <PlusIcon strokeWidth={2} className="h-4 w-4" /> Tambah
                   </Button>
+                </div>
               </div>
 
-              <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+              <div className="flex flex-col md:flex-row gap-4">
                 <div className="w-full md:w-72">
                   <Input 
                     label="Cari pengurus..." 
@@ -151,148 +191,173 @@ export default function DaftarPengurusComponent() {
               </div>
             </CardHeader>
 
-            <CardBody className="overflow-x-auto px-0 pt-0">
-              <table className="w-full min-w-max table-auto text-left">
-                <thead>
-                  <tr>
-                    {TABLE_HEAD.map((head) => (
-                      <th key={head} className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-4">
-                        <Typography variant="small" color="blue-gray" className="font-bold leading-none opacity-70 uppercase text-[11px]">
-                          {head}
-                        </Typography>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredRows.map((pengurus, index) => {
-                    const classes = index === filteredRows.length - 1 ? "p-4" : "p-4 border-b border-blue-gray-50";
-
-                    return (
-                      <tr key={pengurus.uuid} className="hover:bg-gray-50 transition-colors">
-                        <td className={classes}>
-                          <div className="flex items-center gap-3">
-                            <Tooltip content="Klik untuk lihat gambar">
-                              <div 
-                                className="relative h-12 w-12 cursor-pointer group overflow-hidden rounded-lg shadow-sm border border-blue-gray-100 shrink-0"
-                                onClick={() => handleOpenImage(pengurus.url, pengurus.image, pengurus.judul_pengurus)}
-                              >
-                                <img 
-                                  src={pengurus.url} 
-                                  alt={pengurus.judul_pengurus} 
-                                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
-                                  onError={(e) => { e.target.src = "https://via.placeholder.com/150?text=No+Image" }}
-                                />
-                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <PhotoIcon className="h-5 w-5 text-white" />
-                                </div>
-                              </div>
-                            </Tooltip>
-                            
-                            <div className="max-w-[180px] lg:max-w-[250px]">
-                              <Typography variant="small" color="blue-gray" className="font-bold leading-tight truncate">
-                                {pengurus.nama_lengkap}
-                              </Typography>
-                              {/* <Typography className="text-[10px] text-gray-500 font-mono truncate">
-                                UUID: {pengurus.uuid.split('-')[0]}...
-                              </Typography> */}
-                            </div>
-                          </div>
-                        </td>
-                        <td className={classes}>
-                          <Typography variant="small" color="blue-gray" className="font-normal text-xs">
-                            {pengurus.jabatan}
-                          </Typography>
-                        </td>
-                        <td className={classes}>
-                          <Typography variant="small" color="blue-gray" className="font-normal text-xs">
-                            {pengurus.instansi}
-                          </Typography>
-                        </td>
-                        <td className={classes}>
-                          <div className="flex gap-1">
-                              <Tooltip content="Edit Pengurus">
-                                <IconButton variant="text" size="sm" onClick={() => handleEditClick(pengurus)}>
-                                  <PencilIcon className="h-4 w-4" />
-                                </IconButton>
-                              </Tooltip>
-                            <Tooltip content="Hapus">
-                              <IconButton variant="text" color="red" size="sm" onClick={() => deletePengurus(pengurus.uuid)}>
-                                <TrashIcon className="h-4 w-4" />
-                              </IconButton>
-                            </Tooltip>
-                          </div>
-                        </td>
+            <CardBody className="px-0 pt-0 pb-2">
+              {viewMode === "table" ? (
+                /* --- TABLE VIEW --- */
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-max table-auto text-left">
+                    <thead>
+                      <tr>
+                        {TABLE_HEAD.map((head) => (
+                          <th key={head} className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-4 font-bold text-[11px] uppercase opacity-70">
+                            {head}
+                          </th>
+                        ))}
                       </tr>
+                    </thead>
+                    <tbody>
+                      {currentItems.map((item, index) => {
+                        const isLast = index === currentItems.length - 1;
+                        const classes = isLast ? "p-4" : "p-4 border-b border-blue-gray-50";
+                        return (
+                          <tr key={item.uuid} className="hover:bg-gray-50 transition-colors">
+                            <td className={classes}>
+                              <div className="flex items-center gap-3">
+                                <div 
+                                  className="relative h-10 w-10 cursor-pointer overflow-hidden rounded-full border border-blue-gray-100 shadow-sm"
+                                  onClick={() => handleOpenImage(item.url, item.image, item.nama_lengkap)}
+                                >
+                                  <img src={item.url} alt="" className="h-full w-full object-cover" onError={(e) => { e.target.src = "https://via.placeholder.com/150" }} />
+                                </div>
+                                <Typography variant="small" className="font-bold">{item.nama_lengkap}</Typography>
+                              </div>
+                            </td>
+                            <td className={classes}>
+                              <Typography variant="small" className="text-xs">{item.jabatan}</Typography>
+                            </td>
+                            <td className={classes}>
+                              <Typography variant="small" className="text-xs">{item.instansi}</Typography>
+                            </td>
+                            <td className={classes}>
+                              <ActionButtons item={item} />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                /* --- CARD VIEW --- */
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 p-6">
+                  {currentItems.map((item) => (
+                    <Card key={item.uuid} className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow rounded-xl">
+                      <CardBody className="flex flex-col items-center p-6">
+                        <div 
+                          className="h-24 w-24 mb-4 rounded-full overflow-hidden border-4 border-blue-50 shadow-inner cursor-pointer"
+                          onClick={() => handleOpenImage(item.url, item.image, item.nama_lengkap)}
+                        >
+                          <img src={item.url} className="w-full h-full object-cover" alt={item.nama_lengkap} onError={(e) => e.target.src = "https://via.placeholder.com/150"} />
+                        </div>
+                        <Typography variant="h6" color="blue-gray" className="text-center">{item.nama_lengkap}</Typography>
+                        <div className="mt-4 w-full space-y-2 border-t pt-4">
+                           <div className="flex items-center gap-2 text-xs text-gray-600">
+                             <BriefcaseIcon className="h-4 w-4 text-blue-500" /> <span className="font-medium">Jabatan:</span> {item.jabatan}
+                           </div>
+                           <div className="flex items-center gap-2 text-xs text-gray-600">
+                             <BuildingOfficeIcon className="h-4 w-4 text-blue-500" /> <span className="font-medium">Instansi:</span> {item.instansi}
+                           </div>
+                        </div>
+                        <div className="mt-6 flex justify-center w-full">
+                           <ActionButtons item={item} />
+                        </div>
+                      </CardBody>
+                    </Card>
+                  ))}
+                </div>
+              )}
+
+              {filteredRows.length === 0 && (
+                <div className="py-20 text-center">
+                  <Typography color="gray">Data pengurus tidak ditemukan.</Typography>
+                </div>
+              )}
+            </CardBody>
+
+            {/* --- PAGINATION FOOTER --- */}
+            <CardFooter className="flex flex-col sm:flex-row items-center justify-between border-t border-blue-gray-50 p-4 gap-4">
+              <div className="flex items-center gap-4">
+                <Typography variant="small" color="blue-gray" className="font-normal whitespace-nowrap">
+                  Halaman {currentPage} dari {totalPages || 1}
+                </Typography>
+                <div className="w-24">
+                  <Select
+                    label="Baris"
+                    value={rowsPerPage.toString()}
+                    onChange={(val) => setRowsPerPage(Number(val))}
+                    size="sm"
+                  >
+                    <Option value="10">10</Option>
+                    <Option value="15">15</Option>
+                    <Option value="20">20</Option>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outlined"
+                  size="sm"
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="flex items-center gap-2"
+                >
+                  <ChevronLeftIcon strokeWidth={2} className="h-3 w-3" /> Prev
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
+                    // Logic sederhana untuk nomor halaman jika total besar (opsional)
+                    return (
+                      <IconButton
+                        key={i}
+                        size="sm"
+                        variant={currentPage === i + 1 ? "filled" : "text"}
+                        onClick={() => setCurrentPage(i + 1)}
+                      >
+                        {i + 1}
+                      </IconButton>
                     );
                   })}
-                </tbody>
-              </table>
-            </CardBody>
+                </div>
+                <Button
+                  variant="outlined"
+                  size="sm"
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  className="flex items-center gap-2"
+                >
+                  Next <ChevronRightIcon strokeWidth={2} className="h-3 w-3" />
+                </Button>
+              </div>
+            </CardFooter>
           </Card>
         </div>
       </div>
 
       {/* IMAGE PREVIEW MODAL */}
-      <Dialog 
-        size="md" 
-        open={openImageModal} 
-        handler={() => setOpenImageModal(false)}
-        // Tambahkan w-full sm:w-auto agar di HP lebarnya penuh, 
-        // dan max-h-screen agar dialog tidak melebihi tinggi layar
-        className="shadow-2xl overflow-hidden flex flex-col max-h-[95vh] w-[95vw] md:w-full"
-      >
+      <Dialog size="md" open={openImageModal} handler={() => setOpenImageModal(false)} className="shadow-2xl overflow-hidden flex flex-col max-h-[95vh] w-[95vw] md:w-full">
         <DialogHeader className="flex shrink-0 justify-between items-center border-b border-gray-100 bg-gray-50 py-3 px-5">
-          <div className="flex flex-col min-w-0"> {/* min-w-0 penting agar truncate jalan */}
-            <Typography variant="h6" color="blue-gray" className="leading-tight text-sm md:text-base">
-              Preview Gambar pengurus
-            </Typography>
-            <Typography 
-              variant="small" 
-              color="gray" 
-              className="font-normal truncate max-w-[200px] sm:max-w-[300px] lg:max-w-[400px] text-xs"
-            >
-              {selectedImage.title}
-            </Typography>
+          <div className="flex flex-col min-w-0">
+            <Typography variant="h6" color="blue-gray" className="leading-tight text-sm md:text-base">Foto Profil Pengurus</Typography>
+            <Typography variant="small" color="gray" className="font-normal truncate max-w-[200px] text-xs">{selectedImage.title}</Typography>
           </div>
           <IconButton variant="text" color="blue-gray" onClick={() => setOpenImageModal(false)} size="sm">
             <XMarkSolid className="h-5 w-5" />
           </IconButton>
         </DialogHeader>
-
-        {/* Tambahkan overflow-y-auto di sini agar jika gambar sangat panjang, dialog bisa di-scroll */}
-        <DialogBody className="p-0 bg-gray-100 overflow-y-auto flex-1 custom-scrollbar">
-          <div className="flex items-center justify-center p-2 sm:p-4 min-h-[200px]">
-            <img
-              alt={selectedImage.title}
-              // max-h-[60vh] menjaga agar gambar tidak mendorong dialog keluar layar
-              className="max-h-[60vh] w-full h-auto rounded-lg shadow-lg object-contain bg-white"
-              src={selectedImage.url}
-            />
-          </div>
-          
-          {/* Footer diletakkan di dalam Body atau di bawah sebagai info tambahan */}
-          <div className="bg-white p-4 border-t border-gray-100 sticky bottom-0">
-            <div className="flex items-center gap-2">
-              <PhotoIcon className="h-4 w-4 text-gray-400 shrink-0" />
-              <Typography variant="small" color="blue-gray" className="font-mono text-[10px] md:text-[11px] break-all leading-tight">
-                Filename: {selectedImage.image}
-              </Typography>
-            </div>
+        <DialogBody className="p-0 bg-gray-100 overflow-y-auto flex-1">
+          <div className="flex items-center justify-center p-4">
+            <img alt={selectedImage.title} className="max-h-[60vh] w-full h-auto rounded-lg shadow-lg object-contain bg-white" src={selectedImage.url} />
           </div>
         </DialogBody>
       </Dialog>
-      <CreatePengurusModal 
-              open={openAdd} 
-              handler={handleOpenAdd} 
-              refreshData={getPengurus}
-            />
+
+      <CreatePengurusModal open={openAdd} handler={handleOpenAdd} refreshData={getPengurus} />
       <EditPengurusModal 
-              open={openEdit} 
-              handler={() => setOpenEdit(false)} 
-              pengurus={selectedPengurus} 
-              refreshData={getPengurus}
-            />
+        open={openEdit} 
+        handler={() => setOpenEdit(false)} 
+        pengurus={selectedPengurus} 
+        refreshData={getPengurus} 
+      />
     </div>
   );
 }

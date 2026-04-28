@@ -52,15 +52,6 @@ export default function SidebarAnggota() {
           </ListItem>
         </Link>
       </List>
-
-      <List className="mt-auto border-t border-blue-gray-50 pt-2">
-        <ListItem onClick={Logout} className="text-red-500 hover:text-red-700 hover:bg-red-50">
-          <ListItemPrefix>
-            <PowerIcon className="h-5 w-5 text-red-500" />
-          </ListItemPrefix>
-          Log Out
-        </ListItem>
-      </List>
     </Card>
   );
 }

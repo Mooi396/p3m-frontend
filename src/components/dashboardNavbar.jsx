@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import { LogOut, reset } from "../features/authSlice";
 import {
   Navbar,
   Typography,
@@ -10,12 +11,15 @@ import {
   MenuList,
   MenuItem,
   Avatar,
+  ListItemPrefix,
 } from "@material-tailwind/react";
 import {
   UserCircleIcon,
   ChevronDownIcon,
   PencilIcon,
+  PowerIcon,
 } from "@heroicons/react/24/solid";
+import { useDispatch } from "react-redux";
 
 const profileMenuItems = [
   {
@@ -31,6 +35,7 @@ const profileMenuItems = [
 ];
 
 function ProfileMenu() {
+  const dispatch = useDispatch();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -63,6 +68,18 @@ function ProfileMenu() {
 };
 
   if (!user) return <div className="h-8 w-8 animate-pulse rounded-full bg-gray-200" />;
+  const Logout = async () => {
+    const isConfirmed = window.confirm("Anda yakin ingin keluar?");
+    if (isConfirmed) {
+      try {
+        await dispatch(LogOut()).unwrap();
+        dispatch(reset());
+        navigate("/");
+      } catch (error) {
+        console.error("Gagal logout:", error);
+      }
+    }
+  };
 
   return (
     <Menu open={isMenuOpen} handler={setIsMenuOpen} placement="bottom-end">
@@ -120,7 +137,17 @@ function ProfileMenu() {
             </MenuItem>
           );
         })}
+        <MenuItem onClick={Logout} className=" flex items-center gap-2 hover:bg-red-50">
+          <PowerIcon className="h-4 w-4 text-red-500" />
+          <Typography 
+            variant="small" 
+            className="font-normal text-red-500 hover:text-red-700 "
+          >
+            Log Out
+          </Typography>
+          </MenuItem>
       </MenuList>
+      
     </Menu>
   );
 }
