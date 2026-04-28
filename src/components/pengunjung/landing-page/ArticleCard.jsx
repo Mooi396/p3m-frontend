@@ -59,9 +59,9 @@ return (
         <p className="text-xs font-bold text-gray-800">{article.user?.username}</p>
       </div>
       
-      <a href={`/berita/${article.uuid}`} className="text-blue-500 font-bold text-sm flex items-center gap-2 mt-2">
+      <Link to={`/berita/${article.uuid}`} className="text-blue-900 font-bold text-sm flex items-center gap-2 mt-2 hover:translate-x-1 transition-transform">
         Baca Selengkapnya <ArrowRightIcon />
-      </a>
+      </Link>
     </div>
   );
 }

@@ -5,12 +5,18 @@ import {
   PhotoIcon, 
   MagnifyingGlassIcon, 
   Bars3Icon, 
-  XMarkIcon as XMarkOutline 
+  XMarkIcon as XMarkOutline,
+  Squares2X2Icon,
+  ListBulletIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CalendarDaysIcon,
+  UserCircleIcon
 } from "@heroicons/react/24/outline";
 import { 
   Card, CardHeader, Input, Typography, Button, CardBody, 
   Chip, Tabs, TabsHeader, Tab, IconButton, Tooltip, 
-  Dialog, DialogBody, DialogHeader, Drawer 
+  Dialog, DialogBody, DialogHeader, Drawer, Select, Option, CardFooter 
 } from "@material-tailwind/react";
 import { 
   PencilIcon, PlusIcon, TrashIcon, CheckIcon, 
@@ -37,20 +43,25 @@ export default function DaftarBeritaAdmin() {
   const [beritas, setBeritas] = useState([]);
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false); // State untuk Drawer
+  const [viewMode, setViewMode] = useState("table"); // State untuk mode tampilan
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const navigate = useNavigate();
   const [openImageModal, setOpenImageModal] = useState(false);
-  const [selectedImage, setSelectedImage] = useState({ url: "", image: "", title: ""  });
+  const [selectedImage, setSelectedImage] = useState({ url: "", image: "", title: "" });
   const { user: authuser } = useSelector((state) => state.auth);
 
-  const handleOpenImage = (url, image, title) => {
-    setSelectedImage({ url, image, title });
-    setOpenImageModal(true);
-  };
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
     getBeritas();
   }, []);
+
+  // Reset ke halaman 1 jika filter atau search berubah
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, searchTerm, rowsPerPage]);
 
   const getBeritas = async () => {
     try {
@@ -63,14 +74,33 @@ export default function DaftarBeritaAdmin() {
     }
   };
 
+  // Logika Filter & Search
+  const filteredRows = beritas.filter((item) => {
+    const matchesTab = filter === "all" || item.status === filter;
+    const matchesSearch = item.judul_berita.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          (item.user?.username || "").toLowerCase().includes(searchTerm.toLowerCase());
+    const canSee = authuser?.role === "admin" || authuser?.uuid === item.user?.uuid;
+    return matchesTab && matchesSearch && canSee;
+  });
+
+  // Logika Pagination
+  const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+  const indexOfLastItem = currentPage * rowsPerPage;
+  const indexOfFirstItem = indexOfLastItem - rowsPerPage;
+  const currentItems = filteredRows.slice(indexOfFirstItem, indexOfLastItem);
+
+  const handleOpenImage = (url, image, title) => {
+    setSelectedImage({ url, image, title });
+    setOpenImageModal(true);
+  };
+
+  // Handler Actions (Delete, Verify, Reject, dll tetap sama)
   const deleteBerita = async (uuid) => {
     if (window.confirm("Yakin ingin menghapus berita ini?")) {
       try {
         await axios.delete(`http://localhost:5000/beritas/${uuid}`, { withCredentials: true });
         getBeritas();
-      } catch (error) {
-        alert(error.response?.data?.msg || "Gagal menghapus");
-      }
+      } catch (error) { alert(error.response?.data?.msg || "Gagal menghapus"); }
     }
   };
 
@@ -78,65 +108,95 @@ export default function DaftarBeritaAdmin() {
     try {
       await axios.patch(`http://localhost:5000/beritas/${uuid}/verify`, {}, { withCredentials: true });
       getBeritas();
-    } catch (error) {
-      alert("Gagal memverifikasi berita");
-    }
+    } catch (error) { alert("Gagal memverifikasi berita"); }
   };
 
   const rejectBerita = async (uuid) => {
     try {
       await axios.patch(`http://localhost:5000/beritas/${uuid}/reject`, {}, { withCredentials: true });
       getBeritas();
-    } catch (error) {
-      alert("Gagal menolak berita");
-    }
+    } catch (error) { alert("Gagal menolak berita"); }
   };
 
   const cancelVerifyBerita = async (uuid) => {
-    if (window.confirm("Batalkan verifikasi? Berita ini akan kembali ke status Pending dan bisa diedit.")) {
+    if (window.confirm("Batalkan verifikasi?")) {
       try {
-        await axios.patch(`http://localhost:5000/beritas/${uuid}/cancel-verify`, {}, { 
-          withCredentials: true 
-        });
+        await axios.patch(`http://localhost:5000/beritas/${uuid}/cancel-verify`, {}, { withCredentials: true });
         getBeritas();
-      } catch (error) {
-        alert("Gagal membatalkan verifikasi");
-      }
+      } catch (error) { alert("Gagal membatalkan verifikasi"); }
     }
   };
 
   const cancelRejectBerita = async (uuid) => {
-    if (window.confirm("Batalkan penolakan? Berita ini akan kembali ke status Pending")) {
+    if (window.confirm("Batalkan penolakan?")) {
       try {
-        await axios.patch(`http://localhost:5000/beritas/${uuid}/cancel-reject`, {}, { 
-          withCredentials: true 
-        });
+        await axios.patch(`http://localhost:5000/beritas/${uuid}/cancel-reject`, {}, { withCredentials: true });
         getBeritas();
-      } catch (error) {
-        alert("Gagal membatalkan penolakan");
-      }
+      } catch (error) { alert("Gagal membatalkan penolakan"); }
     }
   };
 
-  const filteredRows = beritas.filter((item) => {
-    const matchesTab = filter === "all" || item.status === filter;
-    const matchesSearch = item.judul_berita.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (item.user?.username || "").toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // Logika akses: Admin lihat semua, Humas lihat miliknya sendiri
-    const canSee = authuser?.role === "admin" || authuser?.uuid === item.user?.uuid;
-    
-    return matchesTab && matchesSearch && canSee;
-  });
+  // Sub-component untuk Actions (dipakai di Table & Card)
+  const ActionButtons = ({ berita }) => (
+    <div className="flex gap-1">
+      {authuser?.role === "admin" && (
+        <>
+          {berita.status === "verified" && (
+            <Tooltip content="Batal Verifikasi">
+              <IconButton variant="text" color="amber" size="sm" onClick={() => cancelVerifyBerita(berita.uuid)}>
+                <ArrowPathIcon className="h-4 w-4" />
+              </IconButton>
+            </Tooltip>
+          )}
+          {berita.status === "rejected" && (
+            <Tooltip content="Batal Penolakan">
+              <IconButton variant="text" color="amber" size="sm" onClick={() => cancelRejectBerita(berita.uuid)}>
+                <ArrowPathIcon className="h-4 w-4" />
+              </IconButton>
+            </Tooltip>
+          )}
+          {berita.status === "pending" && (
+            <>
+              <Tooltip content="Setujui">
+                <IconButton variant="text" color="green" size="sm" onClick={() => verifyBerita(berita.uuid)}>
+                  <CheckIcon className="h-4 w-4" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip content="Tolak">
+                <IconButton variant="text" color="red" size="sm" onClick={() => rejectBerita(berita.uuid)}>
+                  <XMarkSolid className="h-4 w-4" />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
+        </>
+      )}
+      <Tooltip content="Baca Detail">
+        <IconButton variant="text" color="blue-gray" size="sm" onClick={() => navigate(`/dashboard/berita/${berita.uuid}`)}>
+          <EyeIcon className="h-4 w-4" />
+        </IconButton>
+      </Tooltip>
+      {berita.status !== "verified" && berita.status !== "rejected" && (
+        <Tooltip content="Edit">
+          <IconButton variant="text" color="blue-gray" size="sm" onClick={() => navigate(`/dashboard/berita/edit/${berita.uuid}`)}>
+            <PencilIcon className="h-4 w-4" />
+          </IconButton>
+        </Tooltip>
+      )}
+      <Tooltip content="Hapus">
+        <IconButton variant="text" color="red" size="sm" onClick={() => deleteBerita(berita.uuid)}>
+          <TrashIcon className="h-4 w-4" />
+        </IconButton>
+      </Tooltip>
+    </div>
+  );
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
-      {/* SIDEBAR DESKTOP */}
       <div className="hidden lg:block">
         {authuser?.role === "admin" ? <SidebarAdmin /> : <SidebarHumas />}
       </div>
 
-      {/* DRAWER MOBILE */}
       <Drawer open={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} className="p-0">
         <div className="flex items-center justify-between p-4 border-b">
           <Typography variant="h5" color="blue-gray">Menu Berita</Typography>
@@ -148,44 +208,45 @@ export default function DaftarBeritaAdmin() {
       </Drawer>
 
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        {/* TOPBAR */}
         <div className="flex items-center bg-white lg:bg-transparent">
-          <IconButton 
-            variant="text" 
-            color="blue-gray" 
-            className="lg:hidden mr-2" 
-            onClick={() => setIsDrawerOpen(true)}
-          >
+          <IconButton variant="text" color="blue-gray" className="lg:hidden mr-2" onClick={() => setIsDrawerOpen(true)}>
             <Bars3Icon className="h-6 w-6" />
           </IconButton>
-          <div className="flex-1">
-            <DashboardNavbar />
-          </div>
+          <div className="flex-1"><DashboardNavbar /></div>
         </div>
 
-        {/* CONTENT AREA */}
         <div className="flex-1 overflow-auto p-4 lg:p-8">
-          <Card className="w-full shadow-md border border-gray-200 rounded-xl">
+          <Card className="w-full shadow-md border border-gray-200 rounded-xl overflow-hidden">
             <CardHeader floated={false} shadow={false} className="rounded-none p-4">
-              <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+              <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                   <Typography variant="h5" color="blue-gray">Manajemen Berita</Typography>
                   <Typography color="gray" className="mt-1 font-normal text-sm">
-                    Kelola publikasi, verifikasi, dan konten berita instansi
+                    Tampilan saat ini: {viewMode === 'table' ? 'Tabel' : 'Card'} ({filteredRows.length} Berita)
                   </Typography>
                 </div>
-                <Link to="/dashboard/berita/tambah" className="w-full sm:w-auto">
-                  <Button className="flex items-center gap-3 w-full justify-center" size="sm">
-                    <PlusIcon strokeWidth={2} className="h-4 w-4" /> Tambah Berita
-                  </Button>
-                </Link>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <div className="flex bg-gray-100 p-1 rounded-lg">
+                    <IconButton variant={viewMode === "table" ? "white" : "text"} size="sm" onClick={() => setViewMode("table")}>
+                      <ListBulletIcon className="h-4 w-4" />
+                    </IconButton>
+                    <IconButton variant={viewMode === "card" ? "white" : "text"} size="sm" onClick={() => setViewMode("card")}>
+                      <Squares2X2Icon className="h-4 w-4" />
+                    </IconButton>
+                  </div>
+                  <Link to="/dashboard/berita/tambah" className="flex-1">
+                    <Button className="flex items-center gap-3 w-full justify-center" size="sm">
+                      <PlusIcon className="h-4 w-4" /> Tambah Berita
+                    </Button>
+                  </Link>
+                </div>
               </div>
 
               <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
                 <Tabs value={filter} className="w-full md:w-max">
-                  <TabsHeader className="overflow-x-auto">
+                  <TabsHeader>
                     {TABS.map(({ label, value }) => (
-                      <Tab key={value} value={value} onClick={() => setFilter(value)} className="whitespace-nowrap px-4 text-xs lg:text-sm">
+                      <Tab key={value} value={value} onClick={() => setFilter(value)} className="text-xs lg:text-sm whitespace-nowrap">
                         {label}
                       </Tab>
                     ))}
@@ -193,7 +254,7 @@ export default function DaftarBeritaAdmin() {
                 </Tabs>
                 <div className="w-full md:w-72">
                   <Input 
-                    label="Cari Berita..." 
+                    label="Cari Berita/Penulis..." 
                     icon={<MagnifyingGlassIcon className="h-5 w-5" />} 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -202,185 +263,177 @@ export default function DaftarBeritaAdmin() {
               </div>
             </CardHeader>
 
-            <CardBody className="overflow-x-auto px-0 pt-0">
-              <table className="w-full min-w-max table-auto text-left">
-                <thead>
-                  <tr>
-                    {TABLE_HEAD.map((head) => (
-                      <th key={head} className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-4">
-                        <Typography variant="small" color="blue-gray" className="font-bold leading-none opacity-70 uppercase text-[11px]">
-                          {head}
-                        </Typography>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredRows.map((berita, index) => {
-                    const classes = index === filteredRows.length - 1 ? "p-4" : "p-4 border-b border-blue-gray-50";
-
-                    return (
-                      <tr key={berita.uuid} className="hover:bg-gray-50 transition-colors">
-                        <td className={classes}>
-                          <div className="flex items-center gap-3">
-                            <Tooltip content="Klik untuk lihat gambar">
-                              <div 
-                                className="relative h-12 w-12 cursor-pointer group overflow-hidden rounded-lg shadow-sm border border-blue-gray-100 shrink-0"
-                                onClick={() => handleOpenImage(berita.url, berita.image, berita.judul_berita)}
-                              >
-                                <img 
-                                  src={berita.url} 
-                                  alt={berita.judul_berita} 
-                                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
-                                  onError={(e) => { e.target.src = "https://via.placeholder.com/150?text=No+Image" }}
-                                />
-                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <PhotoIcon className="h-5 w-5 text-white" />
+            <CardBody className="px-0 pt-0">
+              {viewMode === "table" ? (
+                /* --- TABLE VIEW --- */
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-max table-auto text-left">
+                    <thead>
+                      <tr>
+                        {TABLE_HEAD.map((head) => (
+                          <th key={head} className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-4 font-bold text-[11px] uppercase opacity-70">
+                            {head}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {currentItems.map((berita, index) => {
+                        const isLast = index === currentItems.length - 1;
+                        const classes = isLast ? "p-4" : "p-4 border-b border-blue-gray-50";
+                        return (
+                          <tr key={berita.uuid} className="hover:bg-gray-50 transition-colors">
+                            <td className={classes}>
+                              <div className="flex items-center gap-3">
+                                <div className="relative h-10 w-10 cursor-pointer overflow-hidden rounded-lg shadow-sm" onClick={() => handleOpenImage(berita.url, berita.image, berita.judul_berita)}>
+                                  <img src={berita.url} alt="" className="h-full w-full object-cover" onError={(e) => { e.target.src = "https://via.placeholder.com/150" }} />
+                                </div>
+                                <div className="flex flex-col max-w-[200px]">
+                                  <Typography variant="small" className="font-bold truncate">{berita.judul_berita}</Typography>
+                                  <Typography className="text-[10px] text-gray-400">ID: {berita.uuid.split('-')[0]}</Typography>
                                 </div>
                               </div>
-                            </Tooltip>
-                            
-                            <div className="flex flex-col max-w-[180px] lg:max-w-[250px]">
-                              <Typography variant="small" color="blue-gray" className="font-bold leading-tight truncate">
-                                {berita.judul_berita}
-                              </Typography>
-                              <Typography className="text-[10px] text-gray-500 font-mono truncate">
-                                UUID: {berita.uuid.split('-')[0]}...
-                              </Typography>
-                            </div>
+                            </td>
+                            <td className={classes}>
+                              <div className="flex gap-1 flex-wrap max-w-[120px]">
+                                {berita.kategoris?.map((cat) => (
+                                  <Chip key={cat.uuid} variant="outlined" size="sm" value={cat.nama_kategori} className="rounded-full text-[9px]" />
+                                ))}
+                              </div>
+                            </td>
+                            <td className={classes}>
+                              <Typography className="text-xs">{new Date(berita.createdAt).toLocaleDateString("id-ID")}</Typography>
+                            </td>
+                            <td className={classes}>
+                              <Typography className="text-xs font-medium">{berita.user?.username || "Admin"}</Typography>
+                            </td>
+                            <td className={classes}>
+                              <Chip size="sm" variant="ghost" value={berita.status} color={berita.status === "verified" ? "green" : berita.status === "pending" ? "amber" : "red"} className="text-center"/>
+                            </td>
+                            <td className={classes}>
+                              <ActionButtons berita={berita} />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                /* --- CARD VIEW --- */
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 p-4">
+                  {currentItems.map((berita) => (
+                    <Card key={berita.uuid} className="border border-gray-200 shadow-sm rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                      <div className="relative h-40 group cursor-pointer" onClick={() => handleOpenImage(berita.url, berita.image, berita.judul_berita)}>
+                        <img src={berita.url} className="w-full h-full object-cover" alt="" onError={(e) => e.target.src = "https://via.placeholder.com/400x200"} />
+                        <div className="absolute top-2 right-2">
+                          <Chip size="sm" value={berita.status} color={berita.status === "verified" ? "green" : berita.status === "pending" ? "amber" : "red"} />
+                        </div>
+                      </div>
+                      <CardBody className="p-4">
+                        <Typography variant="h6" color="blue-gray" className="mb-2 line-clamp-2 min-h-[48px] leading-snug">
+                          {berita.judul_berita}
+                        </Typography>
+                        <div className="space-y-2 mb-4">
+                          <div className="flex items-center gap-2 text-xs text-gray-600">
+                            <CalendarDaysIcon className="h-4 w-4" /> {new Date(berita.createdAt).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })}
                           </div>
-                        </td>
-                        <td className={classes}>
-                          <div className="flex gap-1 flex-wrap max-w-[120px]">
-                            {berita.kategoris?.map((cat) => (
-                              <Chip key={cat.uuid} variant="outlined" size="sm" value={cat.nama_kategori} className="lowercase rounded-full text-[10px]" />
-                            )) || "-"}
+                          <div className="flex items-center gap-2 text-xs text-gray-600">
+                            <UserCircleIcon className="h-4 w-4" /> {berita.user?.username || "Admin"}
                           </div>
-                        </td>
-                        <td className={classes}>
-                          <Typography variant="small" color="blue-gray" className="font-normal text-xs">
-                            {new Date(berita.createdAt).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}
-                          </Typography>
-                        </td>
-                        <td className={classes}>
-                          <Typography variant="small" color="blue-gray" className="font-normal text-xs">{berita.user?.username || "Admin"}</Typography>
-                        </td>
-                        <td className={classes}>
-                          <Chip variant="ghost" size="sm" value={berita.status} className="text-[10px]" color={berita.status === "verified" ? "green" : berita.status === "pending" ? "amber" : "red"} />
-                        </td>
-                        <td className={classes}>
-                          <div className="flex gap-1">
-                            {/* ACTIONS KHUSUS ADMIN */}
-                            {authuser?.role === "admin" && (
-                              <>
-                                {berita.status === "verified" && (
-                                  <Tooltip content="Batalkan Verifikasi">
-                                    <IconButton variant="text" color="amber" size="sm" onClick={() => cancelVerifyBerita(berita.uuid)}>
-                                      <ArrowPathIcon className="h-4 w-4" />
-                                    </IconButton>
-                                  </Tooltip>
-                                )}
-                                {berita.status === "rejected" && (
-                                  <Tooltip content="Batalkan Penolakan">
-                                    <IconButton variant="text" color="amber" size="sm" onClick={() => cancelRejectBerita(berita.uuid)}>
-                                      <ArrowPathIcon className="h-4 w-4" />
-                                    </IconButton>
-                                  </Tooltip>
-                                )}
-                                {berita.status === "pending" && (
-                                  <>
-                                    <Tooltip content="Setujui Berita">
-                                      <IconButton variant="text" color="green" size="sm" onClick={() => verifyBerita(berita.uuid)}>
-                                        <CheckIcon className="h-4 w-4" />
-                                      </IconButton>
-                                    </Tooltip>
-                                    <Tooltip content="Tolak">
-                                      <IconButton variant="text" color="red" size="sm" onClick={() => rejectBerita(berita.uuid)}>
-                                        <XMarkSolid className="h-4 w-4" />
-                                      </IconButton>
-                                    </Tooltip>
-                                  </>
-                                )}
-                              </>
-                            )}
+                        </div>
+                        <div className="flex flex-wrap gap-1 mb-4">
+                          {berita.kategoris?.slice(0, 2).map((cat) => (
+                            <Chip key={cat.uuid} variant="outlined" size="sm" value={cat.nama_kategori} className="text-[9px] rounded-full" />
+                          ))}
+                        </div>
+                        <div className="flex justify-between items-center border-t pt-3">
+                           <ActionButtons berita={berita} />
+                        </div>
+                      </CardBody>
+                    </Card>
+                  ))}
+                </div>
+              )}
 
-                            <Tooltip content="Baca Detail">
-                              <IconButton variant="text" color="blue-gray" size="sm" onClick={() => navigate(`/dashboard/berita/${berita.uuid}`)}>
-                                <EyeIcon className="h-4 w-4" />
-                              </IconButton>
-                            </Tooltip>
-
-                            {berita.status !== "verified" && (
-                              <Tooltip content="Edit">
-                                <IconButton variant="text" color="blue-gray" size="sm" onClick={() => navigate(`/dashboard/berita/edit/${berita.uuid}`)}>
-                                  <PencilIcon className="h-4 w-4" />
-                                </IconButton>
-                              </Tooltip>
-                            )}
-
-                            <Tooltip content="Hapus">
-                              <IconButton variant="text" color="red" size="sm" onClick={() => deleteBerita(berita.uuid)}>
-                                <TrashIcon className="h-4 w-4" />
-                              </IconButton>
-                            </Tooltip>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              {/* TAMPILAN JIKA KOSONG */}
+              {filteredRows.length === 0 && (
+                <div className="py-20 text-center">
+                  <Typography color="gray">Berita tidak ditemukan.</Typography>
+                </div>
+              )}
             </CardBody>
+
+            {/* --- PAGINATION FOOTER --- */}
+            <CardFooter className="flex flex-col sm:flex-row items-center justify-between border-t border-blue-gray-50 p-4 gap-4">
+              <div className="flex items-center gap-4">
+                <Typography variant="small" color="blue-gray" className="font-normal whitespace-nowrap">
+                  Halaman {currentPage} dari {totalPages || 1}
+                </Typography>
+                <div className="w-24">
+                  <Select
+                    label="Baris"
+                    value={rowsPerPage.toString()}
+                    onChange={(val) => setRowsPerPage(Number(val))}
+                    size="sm"
+                  >
+                    <Option value="10">10</Option>
+                    <Option value="15">15</Option>
+                    <Option value="20">20</Option>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outlined"
+                  size="sm"
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="flex items-center gap-2"
+                >
+                  <ChevronLeftIcon strokeWidth={2} className="h-3 w-3" /> Prev
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => (
+                    <IconButton
+                      key={i}
+                      size="sm"
+                      variant={currentPage === i + 1 ? "filled" : "text"}
+                      onClick={() => setCurrentPage(i + 1)}
+                    >
+                      {i + 1}
+                    </IconButton>
+                  ))}
+                </div>
+                <Button
+                  variant="outlined"
+                  size="sm"
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  className="flex items-center gap-2"
+                >
+                  Next <ChevronRightIcon strokeWidth={2} className="h-3 w-3" />
+                </Button>
+              </div>
+            </CardFooter>
           </Card>
         </div>
       </div>
 
-      {/* IMAGE PREVIEW MODAL */}
-      <Dialog 
-        size="md" 
-        open={openImageModal} 
-        handler={() => setOpenImageModal(false)}
-        // Tambahkan w-full sm:w-auto agar di HP lebarnya penuh, 
-        // dan max-h-screen agar dialog tidak melebihi tinggi layar
-        className="shadow-2xl overflow-hidden flex flex-col max-h-[95vh] w-[95vw] md:w-full"
-      >
+      {/* IMAGE PREVIEW MODAL (Tetap sama) */}
+      <Dialog size="md" open={openImageModal} handler={() => setOpenImageModal(false)} className="shadow-2xl overflow-hidden flex flex-col max-h-[95vh] w-[95vw] md:w-full">
         <DialogHeader className="flex shrink-0 justify-between items-center border-b border-gray-100 bg-gray-50 py-3 px-5">
-          <div className="flex flex-col min-w-0"> {/* min-w-0 penting agar truncate jalan */}
-            <Typography variant="h6" color="blue-gray" className="leading-tight text-sm md:text-base">
-              Preview Gambar Berita
-            </Typography>
-            <Typography 
-              variant="small" 
-              color="gray" 
-              className="font-normal truncate max-w-[200px] sm:max-w-[300px] lg:max-w-[400px] text-xs"
-            >
-              {selectedImage.title}
-            </Typography>
+          <div className="flex flex-col min-w-0">
+            <Typography variant="h6" color="blue-gray" className="leading-tight text-sm md:text-base">Preview Gambar</Typography>
+            <Typography variant="small" color="gray" className="font-normal truncate max-w-[200px] text-xs">{selectedImage.title}</Typography>
           </div>
           <IconButton variant="text" color="blue-gray" onClick={() => setOpenImageModal(false)} size="sm">
             <XMarkSolid className="h-5 w-5" />
           </IconButton>
         </DialogHeader>
-
-        {/* Tambahkan overflow-y-auto di sini agar jika gambar sangat panjang, dialog bisa di-scroll */}
-        <DialogBody className="p-0 bg-gray-100 overflow-y-auto flex-1 custom-scrollbar">
-          <div className="flex items-center justify-center p-2 sm:p-4 min-h-[200px]">
-            <img
-              alt={selectedImage.title}
-              // max-h-[60vh] menjaga agar gambar tidak mendorong dialog keluar layar
-              className="max-h-[60vh] w-full h-auto rounded-lg shadow-lg object-contain bg-white"
-              src={selectedImage.url}
-            />
-          </div>
-          
-          {/* Footer diletakkan di dalam Body atau di bawah sebagai info tambahan */}
-          <div className="bg-white p-4 border-t border-gray-100 sticky bottom-0">
-            <div className="flex items-center gap-2">
-              <PhotoIcon className="h-4 w-4 text-gray-400 shrink-0" />
-              <Typography variant="small" color="blue-gray" className="font-mono text-[10px] md:text-[11px] break-all leading-tight">
-                Filename: {selectedImage.image}
-              </Typography>
-            </div>
+        <DialogBody className="p-0 bg-gray-100 overflow-y-auto flex-1">
+          <div className="flex items-center justify-center p-4">
+            <img alt={selectedImage.title} className="max-h-[60vh] w-full h-auto rounded-lg shadow-lg object-contain bg-white" src={selectedImage.url} />
           </div>
         </DialogBody>
       </Dialog>

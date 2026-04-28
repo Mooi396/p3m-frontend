@@ -1,7 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { LogOut, reset } from "../../features/authSlice";
+import { useSelector } from "react-redux";
 import {
   Card,
   Typography,
@@ -21,27 +20,14 @@ import {
   TagIcon,
   RectangleStackIcon,
   NewspaperIcon,
-  ClipboardDocumentListIcon
+  ClipboardDocumentListIcon,
+  IdentificationIcon
 } from "@heroicons/react/24/solid";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 
 export default function SidebarHumas() {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const [open, setOpen] = React.useState(0);
-
-  const Logout = async () => {
-    const isConfirmed = window.confirm("Anda yakin ingin keluar?");
-    if (isConfirmed) {
-      try {
-        await dispatch(LogOut()).unwrap();
-        dispatch(reset());
-        navigate("/");
-      } catch (error) {
-        console.error("Gagal logout:", error);
-      }
-    }
-  };
 
   const handleOpen = (value) => {
     setOpen(open === value ? 0 : value);
@@ -113,7 +99,14 @@ export default function SidebarHumas() {
             </List>
           </AccordionBody>
         </Accordion>
-
+        <Link to={'/dashboard/profil-p3m'}>
+          <ListItem>
+            <ListItemPrefix>
+              <IdentificationIcon className="h-5 w-5" />
+            </ListItemPrefix>
+            Profil Organisasi
+          </ListItem>
+        </Link>
         <Link to={'/dashboard/agenda'}>
           <ListItem>
             <ListItemPrefix>
@@ -122,15 +115,6 @@ export default function SidebarHumas() {
             Daftar Agenda
           </ListItem>
         </Link>
-      </List>
-
-      <List className="mt-auto border-t border-blue-gray-50 pt-2">
-        <ListItem onClick={Logout} className="text-red-500 hover:text-red-700 hover:bg-red-50">
-          <ListItemPrefix>
-            <PowerIcon className="h-5 w-5 text-red-500" />
-          </ListItemPrefix>
-          Log Out
-        </ListItem>
       </List>
     </Card>
   );

@@ -14,6 +14,7 @@ import GuestRoute from "./components/guestRoute";
 import { useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { GetMe } from "./features/authSlice.js";
+import ScrollToTop from "./components/scrollToTop.jsx";
 import DetailProfilUserPage from "./pages/detailprofiladmin.jsx";
 import TambahBeritaPage from "./pages/tambahberita.jsx";
 import DetailBeritaDashboardPage from "./pages/detailberitadashboard.jsx";
@@ -23,6 +24,11 @@ import EditProfilUserPage from "./pages/editprofil.jsx";
 import BeritaPengunjungPage from "./pages/beritapengunjung.jsx";
 import DetailBeritaPengunjungPage from "./pages/detailberitapengunjung.jsx";
 import DaftarPengurus from "./pages/daftarpengurusdashboard.jsx";
+import ProfilOrganisasiDashboardPage from "./pages/profilorganisasidashboard.jsx";
+import DaftarAnggotaPengunjungPage from "./pages/daftaranggotapengunjung.jsx";
+import DaftarPengurusPengunjungPage from "./pages/daftarpenguruspengunjung.jsx";
+import ProfilP3MPengunjungPage from "./pages/profilP3MPengunjung.jsx";
+import DaftarAgendaPengunjungPage from "./pages/daftaragendapengunjung.jsx";
 
 function App() {
   const dispatch = useDispatch();
@@ -33,6 +39,7 @@ function App() {
   return ( 
   <div>
     <BrowserRouter>
+    <ScrollToTop />
       <Routes>
         <Route path="/" element={<Home/>}/>
         <Route path="/daftar" element={
@@ -55,8 +62,13 @@ function App() {
         <Route path="/dashboard/berita/kategori" element={<DaftarKategori/>}></Route>
         <Route path="/dashboard/laporan" element={<Daftarlaporan/>}></Route>
         <Route path="/dashboard/pengurus" element={<DaftarPengurus/>}></Route>
+        <Route path="/dashboard/profil-p3m" element={<ProfilOrganisasiDashboardPage/>}></Route>
         <Route path="/berita" element={<BeritaPengunjungPage/>}></Route>
+        <Route path="/daftar-anggota" element={<DaftarAnggotaPengunjungPage/>}></Route>
+        <Route path="/daftar-pengurus" element={<DaftarPengurusPengunjungPage/>}></Route>
         <Route path="/berita/:uuid" element={<DetailBeritaPengunjungPage/>}></Route>
+        <Route path="/profil-p3m" element={<ProfilP3MPengunjungPage/>}></Route>
+        <Route path="/agenda" element={<DaftarAgendaPengunjungPage/>}></Route>
         <Route path="/masuk" element={
           <GuestRoute>
             <Login />

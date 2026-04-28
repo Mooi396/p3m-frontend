@@ -13,46 +13,54 @@ import {
   IconButton,
 } from "@material-tailwind/react";
 import {
-  ChevronDownIcon,
   Bars2Icon,
   NewspaperIcon,
   CalendarDateRangeIcon,
   DocumentTextIcon,
-  UserGroupIcon
+  UserGroupIcon,
+  ChevronDownIcon
 } from "@heroicons/react/24/solid";
 
-function NavMenu({ label, icon: Icon, items }) {
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+export function NavMenu({ label, icon: Icon, items }) {
+  const [openMenu, setOpenMenu] = React.useState(false);
+
   return (
-    <Menu open={isMenuOpen} handler={setIsMenuOpen} placement="bottom-start">
+    <Menu open={openMenu} handler={setOpenMenu} allowHover>
       <MenuHandler>
-        <Button
-          variant="text"
-          color="black"
-          className="flex items-center gap-1 py-1.5 px-2 font-medium capitalize"
+        <Typography
+          as="div"
+          variant="small"
+          className="flex items-center gap-2 py-1 px-3 font-medium text-black cursor-pointer hover:bg-gray-100 rounded-lg transition-all duration-200"
         >
-          <Icon className="h-[24px] w-[24px]" />
-          <p className="text-lg">{label}</p>
+          <Icon className="h-5 w-5 text-gray-700" />
+          {label}
           <ChevronDownIcon
             strokeWidth={2.5}
-            className={`h-3 w-3 transition-transform ${isMenuOpen ? "rotate-180" : ""}`}
+            className={`h-3 w-3 transition-transform ${openMenu ? "rotate-180" : ""}`}
           />
-        </Button>
+        </Typography>
       </MenuHandler>
-      <MenuList>
-        {items.map((item, idx) => (
-          <MenuItem key={idx} className="p-0">
-            {item.url ? (
-              <a 
-                href={item.url} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="block w-full h-full px-3 py-2 text-black"
-              >
-                {item.label}
+      <MenuList className="hidden lg:block border-none shadow-xl rounded-xl z-[9999]">
+        {items.map((item, index) => (
+          <MenuItem key={index} className="p-0 focus:bg-transparent active:bg-transparent">
+            {item.link ? (
+              <Link to={item.link} className="flex w-full h-full px-4 py-2.5 outline-none hover:bg-gray-50 hover:text-gray-700 rounded-lg transition-colors">
+                <Typography variant="small" className="font-semibold">
+                  {item.label || item}
+                </Typography>
+              </Link>
+            ) : item.url ? (
+              <a href={item.url} target="_blank" rel="noreferrer" className="flex w-full h-full px-4 py-2.5 outline-none hover:bg-gray-50 hover:text-gray-700 rounded-lg transition-colors">
+                <Typography variant="small" className="font-semibold">
+                  {item.label}
+                </Typography>
               </a>
             ) : (
-              <span className="block w-full h-full px-3 py-2 text-black">{item}</span>
+              <div className="px-4 py-2.5">
+                <Typography variant="small" className="font-medium text-gray-400 italic text-[11px]">
+                  {item.label || item}
+                </Typography>
+              </div>
             )}
           </MenuItem>
         ))}
@@ -67,29 +75,36 @@ function NavList({ laporanData }) {
       <NavMenu 
         label="Profil" 
         icon={UserGroupIcon} 
-        items={["Anggota P3M", "Daftar Pengurus P3M", "Profil P3M"]} 
+        items={[
+          { label: "Anggota P3M", link: "/daftar-anggota" },
+          { label: "Daftar Pengurus P3M", link: "/daftar-pengurus" },
+          { label: "Profil P3M", link: "/profil-p3m" }
+        ]} 
       />
+      
       <Link to="/berita">
-        <Button variant="text" color="black" className="flex text-lg items-center gap-2 py-1.5 px-2 font-medium capitalize justify-start lg:justify-center">
-          <NewspaperIcon className="h-[24px] w-[24px]" />
+        <div className="flex items-center gap-2 py-1 px-3 font-medium text-black hover:bg-gray-100 rounded-lg transition-all duration-200 text-sm">
+          <NewspaperIcon className="h-5 w-5 text-gray-700" />
           Berita
-        </Button>
+        </div>
       </Link>
 
-      <NavMenu 
-        label="Agenda" 
-        icon={CalendarDateRangeIcon} 
-        items={["Agenda Nasional", "Agenda Wilayah", "Agenda Kampus"]} 
-      />
+      <Link to="/agenda">
+        <div className="flex items-center gap-2 py-1 px-3 font-medium text-black hover:bg-gray-100 rounded-lg transition-all duration-200 text-sm">
+          <CalendarDateRangeIcon className="h-5 w-5 text-gray-700" />
+          Agenda
+        </div>
+      </Link>
+
       <NavMenu 
         label="Laporan" 
         icon={DocumentTextIcon} 
         items={laporanData.length > 0 ? laporanData : ["Tidak ada laporan tersedia"]} 
       />
 
-      <div className="lg:hidden mt-4">
+      <div className="lg:hidden mt-4 px-2">
         <Link to="/daftar">
-          <Button fullWidth size="md" className="bg-black text-white text-lg">
+          <Button fullWidth size="md" color="black" className="rounded-lg capitalize shadow-none">
             Bergabung
           </Button>
         </Link>
@@ -103,37 +118,34 @@ export function ComplexNavbar() {
   const [laporanData, setLaporanData] = React.useState([]);
 
   React.useEffect(() => {
-    // Ambil data laporan dari backend
     const fetchLaporan = async () => {
       try {
         const response = await axios.get("http://localhost:5000/laporans", { withCredentials: true });
-        // Map data agar sesuai dengan format { label, url }
         const formattedData = response.data.map(item => ({
-          label: item.keterangan, // Sesuaikan dengan field di DB kamu
-          url: item.url // URL file PDF
+          label: item.keterangan,
+          url: item.url
         }));
         setLaporanData(formattedData);
       } catch (error) {
-        console.error("Gagal mengambil data laporan:", error);
+        console.error(error);
       }
     };
-
     fetchLaporan();
-    window.addEventListener("resize", () => window.innerWidth >= 960 && setIsNavOpen(false));
+    const handleResize = () => window.innerWidth >= 960 && setIsNavOpen(false);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return (
-    <Navbar className="max-w-screen-3xl py-2 px-6 shadow-none border-b border-gray-100 rounded-none">
-      <div className="relative mx-auto flex items-center justify-between">
-        <Typography className="cursor-pointer py-1.5">
-          <Link to="/" className="flex items-center gap-3">
-            <img src="/logo.png" alt="logo" className="w-14 h-14 md:w-16 md:h-16 object-contain" />
-            <div className="text-black font-bold leading-tight hidden sm:block">
-              <div className="text-sm md:text-base">Forum Kepala P3M</div>
-              <div className="text-xs md:text-sm text-gray-700">POLITEKNIK SE-INDONESIA</div>
-            </div>
-          </Link>
-        </Typography>
+    <Navbar className="max-w-full py-2 px-6 shadow-none border-b border-gray-100 rounded-none sticky top-0 z-[999] bg-white/90 backdrop-blur-md">
+      <div className="flex items-center justify-between text-blue-gray-900">
+        <Link to="/" className="flex items-center gap-3">
+          <img src="/logo.png" alt="logo" className="w-12 h-12 md:w-14 md:h-14 object-contain" />
+          <div className="text-black font-bold leading-tight hidden sm:block">
+            <div className="text-sm md:text-base uppercase tracking-tight">Forum Kepala P3M</div>
+            <div className="text-[10px] md:text-[11px] text-gray-600 tracking-wider">POLITEKNIK SE-INDONESIA</div>
+          </div>
+        </Link>
         
         <div className="hidden lg:block">
           <NavList laporanData={laporanData} />
@@ -142,15 +154,14 @@ export function ComplexNavbar() {
         <div className="flex items-center gap-2">
           <div className="hidden lg:block">
             <Link to="/daftar">
-              <Button size="md" className="bg-black text-white hover:bg-gray-900 rounded-lg">
+              <Button size="sm" color="black" className="rounded-lg capitalize px-6 shadow-none hover:shadow-lg transition-all">
                 Bergabung
               </Button>
             </Link>
           </div>
           <IconButton
-            size="sm"
-            color="blue-gray"
             variant="text"
+            color="blue-gray"
             onClick={() => setIsNavOpen(!isNavOpen)}
             className="lg:hidden"
           >
@@ -158,8 +169,8 @@ export function ComplexNavbar() {
           </IconButton>
         </div>
       </div>
-      <MobileNav open={isNavOpen} className="mt-2">
-        <div className="py-4 border-t border-gray-100">
+      <MobileNav open={isNavOpen}>
+        <div className="py-4 border-t border-gray-50 mt-2">
           <NavList laporanData={laporanData} />
         </div>
       </MobileNav>

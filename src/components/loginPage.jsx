@@ -11,6 +11,7 @@ import {
   IconButton,
 } from "@material-tailwind/react";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
+import { ComplexNavbar } from "./pengunjung/navbar";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -43,6 +44,8 @@ export default function LoginPage() {
   const toggleShowPassword = () => setShowPassword(!showPassword);
 
   return (
+    <div className="w-full">
+          <ComplexNavbar/>
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <Head title={"Masuk"} />
       <Card color="transparent" shadow={true} className="p-8 w-full max-w-[28rem] bg-white border border-blue-gray-50">
@@ -123,6 +126,7 @@ export default function LoginPage() {
           © {new Date().getFullYear()} Forum Kepala P3M Politeknik Se-Indonesia. All Rights Reserved
         </Typography>
       </footer>
+    </div>
     </div>
   );
 }

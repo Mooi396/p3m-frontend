@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 import {
   Card,
@@ -17,13 +16,12 @@ import Head from "../../head";
 export default function DetailBeritaPengunjung() {
   const { uuid } = useParams();
   const [berita, setBerita] = useState(null);
-  const [allBeritas, setAllBeritas] = useState([]); // Untuk sidebar
+  const [allBeritas, setAllBeritas] = useState([]); 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Ambil detail berita & semua berita untuk sidebar secara paralel
         const [resDetail, resAll] = await Promise.all([
           axios.get(`http://localhost:5000/beritas/${uuid}`, { withCredentials: true }),
           axios.get(`http://localhost:5000/beritas`, { withCredentials: true })
@@ -40,7 +38,6 @@ export default function DetailBeritaPengunjung() {
     fetchData();
   }, [uuid]);
 
-  // --- LOGIKA SIDEBAR ---
   const kategoriCounts = allBeritas.reduce((acc, b) => {
     b.kategoris?.forEach((kat) => {
       if (!acc[kat.uuid]) acc[kat.uuid] = { nama: kat.nama_kategori, count: 0, uuid: kat.uuid };
@@ -67,15 +64,16 @@ export default function DetailBeritaPengunjung() {
   if (!berita) return <Typography className="text-center py-20">Berita tidak ditemukan</Typography>;
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 min-h-screen overflow-x-hidden">
       <Head title={berita?.judul_berita} />
       
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-10">
         <div className="flex flex-col lg:flex-row gap-10">
           
           {/* --- MAIN CONTENT (LEFT) --- */}
-          <div className="flex-1 min-w-0">
-            <Card className="p-6 md:p-10 bg-white shadow-sm border border-gray-100 rounded-2xl">
+          <div className="flex-1 min-w-0"> {/* min-w-0 penting untuk mencegah flex meluap */}
+            <Card className="p-5 md:p-10 bg-white shadow-sm border border-gray-100 rounded-2xl overflow-hidden">
+              
               {/* Category Chips */}
               <div className="flex flex-wrap gap-2 mb-6">
                 {(berita.kategoris || berita.Kategoris)?.map((cat) => (
@@ -83,7 +81,7 @@ export default function DetailBeritaPengunjung() {
                 ))}
               </div>
               
-              <Typography variant="h1" color="blue-gray" className="mb-6 text-3xl md:text-4xl font-extrabold leading-tight">
+              <Typography color="blue-gray" className="mb-6 text-2xl md:text-4xl font-extrabold leading-tight break-words">
                 {berita.judul_berita}
               </Typography>
 
@@ -92,17 +90,18 @@ export default function DetailBeritaPengunjung() {
                 <div className="flex items-center gap-3">
                   <Avatar 
                     size="sm" 
+                    className="shrink-0"
                     src={`https://ui-avatars.com/api/?name=${(berita.user || berita.User)?.username}&background=random&color=fff`} 
                   />
-                  <div>
-                    <Typography variant="small" color="blue-gray" className="font-bold leading-none">
+                  <div className="min-w-0">
+                    <Typography variant="small" color="blue-gray" className="font-bold leading-none truncate">
                       {(berita.user || berita.User)?.username}
                     </Typography>
                     <Typography className="text-[10px] opacity-60 uppercase font-bold tracking-tighter">Penulis</Typography>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-50 rounded-lg">
+                  <div className="p-2 bg-blue-50 rounded-lg shrink-0">
                     <CalendarIcon className="h-4 w-4 text-blue-500" />
                   </div>
                   <div>
@@ -114,15 +113,19 @@ export default function DetailBeritaPengunjung() {
                 </div>
               </div>
 
-              {/* Main Image */}
-              <div className="mb-10 rounded-2xl overflow-hidden shadow-md">
-                <img src={berita.url} alt={berita.judul_berita} className="w-full h-auto object-cover" />
+              {/* Main Image - Fixed Aspect Ratio */}
+              <div className="mb-10 rounded-2xl overflow-hidden shadow-md bg-gray-100 aspect-video md:aspect-[21/9]">
+                <img 
+                    src={berita.url} 
+                    alt={berita.judul_berita} 
+                    className="w-full h-full object-cover" 
+                />
               </div>
 
-              {/* Content */}
-              <div className="prose prose-blue max-w-none">
+              {/* Content - Anti Overflow */}
+              <div className="rich-text-container w-full overflow-hidden">
                 <div 
-                  className="rich-text-content text-blue-gray-800 leading-relaxed text-lg"
+                  className="rich-text-content text-blue-gray-800 leading-relaxed text-lg break-words"
                   dangerouslySetInnerHTML={{ __html: berita.isi_berita }}
                 />
               </div>
@@ -132,7 +135,7 @@ export default function DetailBeritaPengunjung() {
                 <div className="mt-12 pt-8 border-t border-gray-100">
                   <div className="flex gap-2 flex-wrap">
                     {(berita.tags || berita.Tags).map((tag) => (
-                      <span key={tag.uuid} className="bg-gray-100 text-gray-700 px-4 py-1.5 rounded-lg text-xs font-bold">
+                      <span key={tag.uuid} className="bg-gray-100 text-gray-700 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-50 hover:text-blue-600 transition-colors cursor-default">
                         #{tag.nama_tag}
                       </span>
                     ))}
@@ -143,7 +146,7 @@ export default function DetailBeritaPengunjung() {
           </div>
 
           {/* --- SIDEBAR (RIGHT) --- */}
-          <div className="w-full lg:w-80 flex flex-col gap-8">
+          <div className="w-full lg:w-80 flex flex-col gap-8 shrink-0">
             
             {/* Kategori Sidebar */}
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
@@ -153,10 +156,10 @@ export default function DetailBeritaPengunjung() {
                   <Link 
                     key={kat.uuid} 
                     to={`/berita?kategori=${kat.uuid}`}
-                    className="flex justify-between items-center text-sm text-gray-600 hover:text-blue-600 transition-colors"
+                    className="flex justify-between items-center text-sm text-gray-600 hover:text-blue-600 transition-colors group"
                   >
-                    <span>{kat.nama}</span>
-                    <span className="bg-gray-50 px-2 py-0.5 rounded text-[10px] font-bold">({kat.count})</span>
+                    <span className="truncate group-hover:underline">{kat.nama}</span>
+                    <span className="bg-gray-50 px-2 py-0.5 rounded text-[10px] font-bold shrink-0">({kat.count})</span>
                   </Link>
                 ))}
               </div>
@@ -167,11 +170,13 @@ export default function DetailBeritaPengunjung() {
               <h4 className="font-bold mb-4 text-gray-900 border-b pb-2">Berita Terbaru</h4>
               <div className="flex flex-col gap-5">
                 {beritaTerbaru.map((b) => (
-                  <Link key={b.uuid} to={`/berita/${b.uuid}`} className="flex gap-3 items-center group">
-                    <img src={b.url} className="w-14 h-14 shrink-0 object-cover rounded-lg" alt="" />
-                    <div>
+                  <Link key={b.uuid} to={`/berita/${b.uuid}`} className="flex gap-3 items-center group min-w-0">
+                    <div className="w-14 h-14 shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                        <img src={b.url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" alt="" />
+                    </div>
+                    <div className="min-w-0">
                       <p className="text-[10px] text-gray-400">{new Date(b.createdAt).toLocaleDateString("id-ID")}</p>
-                      <p className="text-xs font-bold line-clamp-2 leading-tight group-hover:text-blue-600">{b.judul_berita}</p>
+                      <p className="text-xs font-bold line-clamp-2 leading-tight group-hover:text-blue-600 break-words">{b.judul_berita}</p>
                     </div>
                   </Link>
                 ))}
@@ -186,7 +191,7 @@ export default function DetailBeritaPengunjung() {
                   <Link 
                     key={tag.uuid} 
                     to={`/berita?tag=${tag.uuid}`}
-                    className="bg-gray-50 hover:bg-blue-50 text-gray-600 hover:text-blue-600 px-3 py-1 rounded-md text-[11px] font-medium border border-gray-100 transition-colors"
+                    className="bg-gray-50 hover:bg-blue-50 text-gray-600 hover:text-blue-600 px-3 py-1 rounded-md text-[11px] font-medium border border-gray-100 transition-colors max-w-full truncate"
                   >
                     #{tag.nama_tag}
                   </Link>
@@ -199,9 +204,23 @@ export default function DetailBeritaPengunjung() {
       </div>
 
       <style>{`
-        .rich-text-content p { margin-bottom: 1.5rem; }
-        .rich-text-content h2 { font-size: 1.5rem; font-weight: bold; margin-top: 2rem; margin-bottom: 1rem; }
+        /* Mengamankan konten dari Rich Text Editor */
+        .rich-text-content p { margin-bottom: 1.5rem; word-wrap: break-word; }
+        .rich-text-content h1, .rich-text-content h2 { 
+            font-size: 1.5rem; font-weight: bold; margin-top: 2rem; margin-bottom: 1rem; color: #263238;
+        }
         .rich-text-content ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1.5rem; }
+        .rich-text-content img { 
+            max-width: 100%; height: auto; border-radius: 12px; margin: 1rem 0; 
+        }
+        /* Mengamankan tabel agar tidak merusak layout mobile */
+        .rich-text-content table { 
+            display: block; width: 100%; overflow-x: auto; border-collapse: collapse; 
+        }
+        /* Mengamankan video/iframe */
+        .rich-text-content iframe {
+            width: 100% !important; aspect-ratio: 16/9; height: auto !important; border-radius: 12px;
+        }
       `}</style>
     </div>
   );

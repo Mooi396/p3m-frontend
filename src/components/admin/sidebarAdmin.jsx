@@ -21,7 +21,9 @@ import {
   TagIcon,
   RectangleStackIcon,
   NewspaperIcon,
-  ClipboardDocumentListIcon
+  ClipboardDocumentListIcon,
+  IdentificationIcon,
+  UserGroupIcon
 } from "@heroicons/react/24/solid";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 
@@ -73,7 +75,14 @@ export default function SidebarAdmin() {
             Daftar Pengguna
           </ListItem>
         </Link>
-        
+        <Link to={'/dashboard/pengurus'}>
+          <ListItem>
+            <ListItemPrefix>
+              <UserGroupIcon className="h-5 w-5" />
+            </ListItemPrefix>
+            Daftar Pengurus
+          </ListItem>
+        </Link>
         <Accordion
           open={open === 1}
           icon={
@@ -122,7 +131,14 @@ export default function SidebarAdmin() {
             </List>
           </AccordionBody>
         </Accordion>
-
+        <Link to={'/dashboard/profil-p3m'}>
+          <ListItem>
+            <ListItemPrefix>
+              <IdentificationIcon className="h-5 w-5" />
+            </ListItemPrefix>
+            Profil Organisasi
+          </ListItem>
+        </Link>
         <Link to={'/dashboard/agenda'}>
           <ListItem>
             <ListItemPrefix>
@@ -139,23 +155,6 @@ export default function SidebarAdmin() {
             Daftar Laporan
           </ListItem>
         </Link>
-        <Link to={'/dashboard/pengurus'}>
-          <ListItem>
-            <ListItemPrefix>
-              <UserCircleIcon className="h-5 w-5" />
-            </ListItemPrefix>
-            Daftar Pengurus
-          </ListItem>
-        </Link>
-      </List>
-
-      <List className="mt-auto border-t border-blue-gray-50 pt-2">
-        <ListItem onClick={Logout} className="text-red-500 hover:text-red-700 hover:bg-red-50">
-          <ListItemPrefix>
-            <PowerIcon className="h-5 w-5 text-red-500" />
-          </ListItemPrefix>
-          Log Out
-        </ListItem>
       </List>
     </Card>
   );

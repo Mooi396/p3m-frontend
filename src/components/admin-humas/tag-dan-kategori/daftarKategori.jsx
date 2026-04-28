@@ -128,7 +128,6 @@ export default function DaftarKategoriAdmin() {
       </Drawer>
 
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        {/* NAVBAR */}
         <div className="flex items-center bg-white lg:bg-transparent">
           <IconButton 
             variant="text" 
