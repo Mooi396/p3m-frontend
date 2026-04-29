@@ -200,6 +200,7 @@ export default function ProfilOrganisasiComponent() {
                     )}
                   </div>
                 )}
+                {profilOrganisasi.status !== "verified" && profilOrganisasi.status !== "rejected" && (
                 <Button 
                   size="sm" 
                   variant={isEdit ? "outlined" : "filled"} 
@@ -211,6 +212,7 @@ export default function ProfilOrganisasiComponent() {
                    profilOrganisasi ? <><PencilIcon className="h-4 w-4" /> Edit</> : 
                    <><PlusIcon className="h-4 w-4" /> Buat Baru</>}
                 </Button>
+                )}
               </div>
             </div>
 

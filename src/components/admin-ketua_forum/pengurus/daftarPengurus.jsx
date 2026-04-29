@@ -17,11 +17,11 @@ import {
 import { 
   Card, CardHeader, Input, Typography, Button, CardBody, 
   Chip, Tabs, TabsHeader, Tab, IconButton, Tooltip, 
-  Dialog, DialogBody, DialogHeader, Drawer, Select, Option, CardFooter 
+  Dialog, DialogBody, DialogHeader, Drawer, Select, Option, CardFooter  
 } from "@material-tailwind/react";
 import { 
   PencilIcon, PlusIcon, TrashIcon, CheckIcon, 
-  XMarkIcon as XMarkSolid 
+  XMarkIcon as XMarkSolid  
 } from "@heroicons/react/24/solid";
 import { Link, useNavigate } from "react-router-dom";
 import DashboardNavbar from "../../dashboardNavbar";
@@ -35,7 +35,7 @@ const TABLE_HEAD = ["Pengurus", "Jabatan", "Instansi", "Actions"];
 export default function DaftarPengurusComponent() {
   const [pengurus, setPengurus] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState("table"); // 'table' or 'card'
+  const [viewMode, setViewMode] = useState("table"); 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const navigate = useNavigate();
   
@@ -88,7 +88,6 @@ export default function DaftarPengurusComponent() {
     setOpenEdit(true);
   };
 
-  // Reset ke halaman 1 jika mencari sesuatu
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, rowsPerPage]);
@@ -102,12 +101,34 @@ export default function DaftarPengurusComponent() {
   });
 
   // Pagination Logic
+  const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
   const indexOfLastItem = currentPage * rowsPerPage;
   const indexOfFirstItem = indexOfLastItem - rowsPerPage;
   const currentItems = filteredRows.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
 
-  // Sub-component Action Buttons
+  const paginate = (pageNumber) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
+
+  // LOGIKA ELLIPSIS PAGINATION
+  const getPageNumbers = () => {
+    const pages = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push("...");
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (currentPage < totalPages - 2) pages.push("...");
+      pages.push(totalPages);
+    }
+    return pages;
+  };
+
   const ActionButtons = ({ item }) => (
     <div className="flex gap-1">
       <Tooltip content="Edit Pengurus">
@@ -161,7 +182,7 @@ export default function DaftarPengurusComponent() {
                 <div>
                   <Typography variant="h5" color="blue-gray">Manajemen Pengurus</Typography>
                   <Typography color="gray" className="mt-1 font-normal text-sm">
-                    Tampilan: {viewMode === 'table' ? 'Tabel' : 'Kartu'} ({filteredRows.length} total)
+                    Total {filteredRows.length} pengurus ditemukan
                   </Typography>
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">
@@ -191,54 +212,50 @@ export default function DaftarPengurusComponent() {
               </div>
             </CardHeader>
 
-            <CardBody className="px-0 pt-0 pb-2">
+            <CardBody className={`px-0 pt-0 pb-2 ${viewMode === 'table' ? 'overflow-x-auto' : ''}`}>
               {viewMode === "table" ? (
-                /* --- TABLE VIEW --- */
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-max table-auto text-left">
-                    <thead>
-                      <tr>
-                        {TABLE_HEAD.map((head) => (
-                          <th key={head} className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-4 font-bold text-[11px] uppercase opacity-70">
-                            {head}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {currentItems.map((item, index) => {
-                        const isLast = index === currentItems.length - 1;
-                        const classes = isLast ? "p-4" : "p-4 border-b border-blue-gray-50";
-                        return (
-                          <tr key={item.uuid} className="hover:bg-gray-50 transition-colors">
-                            <td className={classes}>
-                              <div className="flex items-center gap-3">
-                                <div 
-                                  className="relative h-10 w-10 cursor-pointer overflow-hidden rounded-full border border-blue-gray-100 shadow-sm"
-                                  onClick={() => handleOpenImage(item.url, item.image, item.nama_lengkap)}
-                                >
-                                  <img src={item.url} alt="" className="h-full w-full object-cover" onError={(e) => { e.target.src = "https://via.placeholder.com/150" }} />
-                                </div>
-                                <Typography variant="small" className="font-bold">{item.nama_lengkap}</Typography>
+                <table className="w-full min-w-max table-auto text-left">
+                  <thead>
+                    <tr>
+                      {TABLE_HEAD.map((head) => (
+                        <th key={head} className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-4 font-bold text-[11px] uppercase opacity-70 text-blue-gray-700">
+                          {head}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentItems.map((item, index) => {
+                      const isLast = index === currentItems.length - 1;
+                      const classes = isLast ? "p-4" : "p-4 border-b border-blue-gray-50";
+                      return (
+                        <tr key={item.uuid} className="hover:bg-gray-50 transition-colors">
+                          <td className={classes}>
+                            <div className="flex items-center gap-3">
+                              <div 
+                                className="relative h-10 w-10 cursor-pointer overflow-hidden rounded-full border border-blue-gray-100 shadow-sm"
+                                onClick={() => handleOpenImage(item.url, item.image, item.nama_lengkap)}
+                              >
+                                <img src={item.url} alt="" className="h-full w-full object-cover" onError={(e) => { e.target.src = "https://via.placeholder.com/150" }} />
                               </div>
-                            </td>
-                            <td className={classes}>
-                              <Typography variant="small" className="text-xs">{item.jabatan}</Typography>
-                            </td>
-                            <td className={classes}>
-                              <Typography variant="small" className="text-xs">{item.instansi}</Typography>
-                            </td>
-                            <td className={classes}>
-                              <ActionButtons item={item} />
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                              <Typography variant="small" className="font-bold">{item.nama_lengkap}</Typography>
+                            </div>
+                          </td>
+                          <td className={classes}>
+                            <Typography variant="small" className="text-xs">{item.jabatan}</Typography>
+                          </td>
+                          <td className={classes}>
+                            <Typography variant="small" className="text-xs">{item.instansi}</Typography>
+                          </td>
+                          <td className={classes}>
+                            <ActionButtons item={item} />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               ) : (
-                /* --- CARD VIEW --- */
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 p-6">
                   {currentItems.map((item) => (
                     <Card key={item.uuid} className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow rounded-xl">
@@ -274,18 +291,18 @@ export default function DaftarPengurusComponent() {
               )}
             </CardBody>
 
-            {/* --- PAGINATION FOOTER --- */}
-            <CardFooter className="flex flex-col sm:flex-row items-center justify-between border-t border-blue-gray-50 p-4 gap-4">
-              <div className="flex items-center gap-4">
-                <Typography variant="small" color="blue-gray" className="font-normal whitespace-nowrap">
-                  Halaman {currentPage} dari {totalPages || 1}
+            <CardFooter className="flex flex-wrap items-center justify-between border-t border-blue-gray-50 p-4 gap-4">
+              <div className="flex items-center flex-wrap gap-4">
+                <Typography variant="small" color="blue-gray" className="font-normal whitespace-nowrap text-xs">
+                  Halaman <b>{currentPage}</b> dari <b>{totalPages || 1}</b>
                 </Typography>
-                <div className="w-24">
+                <div className="w-20">
                   <Select
                     label="Baris"
                     value={rowsPerPage.toString()}
                     onChange={(val) => setRowsPerPage(Number(val))}
                     size="sm"
+                    containerProps={{ className: "min-w-[70px]" }}
                   >
                     <Option value="10">10</Option>
                     <Option value="15">15</Option>
@@ -293,39 +310,47 @@ export default function DaftarPengurusComponent() {
                   </Select>
                 </div>
               </div>
-              <div className="flex gap-2">
+              
+              <div className="flex items-center gap-1 sm:gap-2">
                 <Button
                   variant="outlined"
                   size="sm"
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  onClick={() => paginate(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="flex items-center gap-2"
+                  className="p-2 sm:px-3 flex items-center gap-2 capitalize"
                 >
-                  <ChevronLeftIcon strokeWidth={2} className="h-3 w-3" /> Prev
+                  <ChevronLeftIcon strokeWidth={3} className="h-4 w-4" /> 
+                  <span className="hidden sm:block text-[11px]">Sebelumnya</span>
                 </Button>
+
                 <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
-                    // Logic sederhana untuk nomor halaman jika total besar (opsional)
-                    return (
+                  {getPageNumbers().map((page, index) => (
+                    page === "..." ? (
+                      <span key={`dots-${index}`} className="px-1 text-blue-gray-500 text-xs">...</span>
+                    ) : (
                       <IconButton
-                        key={i}
+                        key={page}
                         size="sm"
-                        variant={currentPage === i + 1 ? "filled" : "text"}
-                        onClick={() => setCurrentPage(i + 1)}
+                        variant={currentPage === page ? "filled" : "text"}
+                        color={currentPage === page ? null : "blue-gray"}
+                        onClick={() => paginate(page)}
+                        className="rounded-md h-8 w-8 text-xs"
                       >
-                        {i + 1}
+                        {page}
                       </IconButton>
-                    );
-                  })}
+                    )
+                  ))}
                 </div>
+
                 <Button
                   variant="outlined"
                   size="sm"
-                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  onClick={() => paginate(currentPage + 1)}
                   disabled={currentPage === totalPages || totalPages === 0}
-                  className="flex items-center gap-2"
+                  className="p-2 sm:px-3 flex items-center gap-2 capitalize"
                 >
-                  Next <ChevronRightIcon strokeWidth={2} className="h-3 w-3" />
+                  <span className="hidden sm:block text-[11px]">Berikutnya</span>
+                  <ChevronRightIcon strokeWidth={3} className="h-4 w-4" />
                 </Button>
               </div>
             </CardFooter>
@@ -333,7 +358,6 @@ export default function DaftarPengurusComponent() {
         </div>
       </div>
 
-      {/* IMAGE PREVIEW MODAL */}
       <Dialog size="md" open={openImageModal} handler={() => setOpenImageModal(false)} className="shadow-2xl overflow-hidden flex flex-col max-h-[95vh] w-[95vw] md:w-full">
         <DialogHeader className="flex shrink-0 justify-between items-center border-b border-gray-100 bg-gray-50 py-3 px-5">
           <div className="flex flex-col min-w-0">
