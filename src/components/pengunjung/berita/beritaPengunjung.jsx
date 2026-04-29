@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Input, Button, Spinner, Chip, Typography, IconButton } from "@material-tailwind/react";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { MagnifyingGlassIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
-import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 
 const ArrowRightIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
@@ -51,6 +50,28 @@ export default function DaftarBeritaP3M() {
   const featured = currentPage === 1 && !search && !filterKategori && !filterTag ? currentPosts[0] : null;
   const listBerita = featured ? currentPosts.slice(1) : currentPosts;
   const totalPages = Math.ceil(filteredBerita.length / postsPerPage);
+
+  const paginate = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // --- LOGIKA ELLIPSIS PAGINATION ---
+  const getPageNumbers = () => {
+    const pages = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push("...");
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (currentPage < totalPages - 2) pages.push("...");
+      pages.push(totalPages);
+    }
+    return pages;
+  };
 
   const kategoriCounts = beritas.reduce((acc, berita) => {
     berita.kategoris?.forEach((kat) => {
@@ -107,7 +128,7 @@ export default function DaftarBeritaP3M() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-10">
-        <div className="flex-1 min-w-0"> {/* min-w-0 penting untuk mencegah flex item meluap */}
+        <div className="flex-1 min-w-0">
           {currentPosts.length > 0 ? (
             <>
               {/* Featured News */}
@@ -151,6 +172,7 @@ export default function DaftarBeritaP3M() {
                   </div>
                 </div>
               )}
+              {/* List News */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {listBerita.map((item) => (
                   <div key={item.uuid} className="flex flex-col bg-white rounded-[30px] p-5 shadow-none border border-gray-50 overflow-hidden">
@@ -200,40 +222,48 @@ export default function DaftarBeritaP3M() {
             <Typography className="text-center py-20 text-gray-500">Tidak ada berita yang sesuai pencarian.</Typography>
           )}
 
-          {/* Pagination */}
+          {/* --- PAGINATION SECTION --- */}
           {totalPages > 1 && (
-            <div className="flex flex-wrap justify-center items-center mt-12 gap-2 md:gap-4">
+            <div className="flex flex-wrap justify-center items-center mt-16 gap-2 sm:gap-4">
               <Button
-                variant="text"
+                variant="outlined"
                 size="sm"
-                className="flex items-center gap-2 rounded-full"
-                onClick={() => { setCurrentPage((prev) => Math.max(prev - 1, 1)); window.scrollTo(0, 0); }}
+                className="flex items-center gap-2 rounded-full capitalize border-gray-300"
+                onClick={() => paginate(currentPage - 1)}
                 disabled={currentPage === 1}
               >
-                <ArrowLeftIcon className="h-4 w-4" /> <span className="hidden sm:inline">Sebelumnya</span>
+                <ChevronLeftIcon strokeWidth={3} className="h-4 w-4" /> 
+                <span className="hidden sm:inline">Sebelumnya</span>
               </Button>
+
               <div className="flex items-center gap-1">
-                {[...Array(totalPages)].map((_, index) => (
-                  <IconButton
-                    key={index + 1}
-                    size="sm"
-                    variant={currentPage === index + 1 ? "filled" : "text"}
-                    color="gray"
-                    onClick={() => { setCurrentPage(index + 1); window.scrollTo(0, 0); }}
-                    className="rounded-full"
-                  >
-                    {index + 1}
-                  </IconButton>
+                {getPageNumbers().map((page, index) => (
+                  page === "..." ? (
+                    <span key={`dots-${index}`} className="px-2 text-gray-400">...</span>
+                  ) : (
+                    <IconButton
+                      key={page}
+                      size="sm"
+                      variant={currentPage === page ? "filled" : "text"}
+                      color={currentPage === page ? null : "blue-gray"}
+                      onClick={() => paginate(page)}
+                      className="rounded-full h-8 w-8 sm:h-10 sm:w-10"
+                    >
+                      {page}
+                    </IconButton>
+                  )
                 ))}
               </div>
+
               <Button
-                variant="text"
+                variant="outlined"
                 size="sm"
-                className="flex items-center gap-2 rounded-full"
-                onClick={() => { setCurrentPage((prev) => Math.min(prev + 1, totalPages)); window.scrollTo(0, 0); }}
+                className="flex items-center gap-2 rounded-full capitalize border-gray-300"
+                onClick={() => paginate(currentPage + 1)}
                 disabled={currentPage === totalPages}
               >
-                <span className="hidden sm:inline">Selanjutnya</span> <ArrowRightIcon />
+                <span className="hidden sm:inline">Berikutnya</span>
+                <ChevronRightIcon strokeWidth={3} className="h-4 w-4" />
               </Button>
             </div>
           )}

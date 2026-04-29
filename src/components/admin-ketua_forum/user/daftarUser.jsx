@@ -57,7 +57,6 @@ const TABS = [
 
 const TABLE_HEAD = ["Member", "Instansi / Jabatan", "Status", "Role", "Actions"];
 
-// Komponen Pembantu untuk Detail Profil
 const InfoItem = ({ icon, label, value }) => (
   <div className="flex items-start gap-3 text-black">
     <div className="mt-1 p-1 bg-gray-200 rounded text-black">{icon}</div>
@@ -91,7 +90,7 @@ export default function DaftarUserAdmin() {
   const [users, setUsers] = useState([]);
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState("table"); // 'table' atau 'card'
+  const [viewMode, setViewMode] = useState("table"); 
   
   // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
@@ -112,7 +111,6 @@ export default function DaftarUserAdmin() {
     getUsers();
   }, []);
 
-  // Reset ke halaman 1 jika filter atau search berubah
   useEffect(() => {
     setCurrentPage(1);
   }, [filter, searchTerm, rowsPerPage]);
@@ -196,13 +194,35 @@ export default function DaftarUserAdmin() {
     return matchesTab && matchesSearch && isNotMe;
   });
 
-  // Logika Pagination
+  // Logic Pagination
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const indexOfLastItem = currentPage * rowsPerPage;
   const indexOfFirstItem = indexOfLastItem - rowsPerPage;
   const currentRows = filteredData.slice(indexOfFirstItem, indexOfLastItem);
 
-  // Komponen Tombol Aksi (Reusable)
+  const paginate = (pageNumber) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
+
+  // Logic Ellipsis Pagination
+  const getPageNumbers = () => {
+    const pages = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push("...");
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (currentPage < totalPages - 2) pages.push("...");
+      pages.push(totalPages);
+    }
+    return pages;
+  };
+
   const ActionButtons = ({ item }) => (
     <div className="flex gap-1">
       {item.status === "verified" && (
@@ -306,61 +326,58 @@ export default function DaftarUserAdmin() {
               </div>
             </CardHeader>
 
-            <CardBody className="px-0 pt-0">
+            <CardBody className={`px-0 pt-0 ${viewMode === 'table' ? 'overflow-x-auto' : ''}`}>
               {viewMode === "table" ? (
-                /* --- TAMPILAN TABEL --- */
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-max table-auto text-left">
-                    <thead>
-                      <tr>
-                        {TABLE_HEAD.map((head) => (
-                          <th key={head} className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-4">
-                            <Typography variant="small" color="blue-gray" className="font-bold opacity-70 uppercase text-[11px]">{head}</Typography>
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {currentRows.map((item, index) => {
-                        const isLast = index === currentRows.length - 1;
-                        const classes = isLast ? "p-4" : "p-4 border-b border-blue-gray-50";
-                        const info = item.anggotas?.[0] || {};
-                        return (
-                          <tr key={item.uuid} className="hover:bg-gray-50/50 transition-colors">
-                            <td className={classes}>
-                              <div className="flex items-center gap-3">
-                                <div className="relative cursor-pointer" onClick={() => info.url && handleOpenPhotoPreview(info.url, info.nama_lengkap || item.username)}>
-                                  {info.url ? (
-                                    <Avatar src={info.url} size="sm" className="border border-gray-200" />
-                                  ) : (
-                                    <div className="h-9 w-9 rounded-full bg-blue-gray-50 flex items-center justify-center"><UserCircleIcon className="h-6 w-6 text-blue-gray-300" /></div>
-                                  )}
-                                </div>
-                                <div className="flex flex-col">
-                                  <Typography variant="small" color="blue-gray" className="font-bold">{item.username}</Typography>
-                                  <Typography variant="small" className="font-normal opacity-70 text-[11px]">{item.email}</Typography>
-                                </div>
+                <table className="w-full min-w-max table-auto text-left">
+                  <thead>
+                    <tr>
+                      {TABLE_HEAD.map((head) => (
+                        <th key={head} className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-4">
+                          <Typography variant="small" color="blue-gray" className="font-bold opacity-70 uppercase text-[11px]">{head}</Typography>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentRows.map((item, index) => {
+                      const isLast = index === currentRows.length - 1;
+                      const classes = isLast ? "p-4" : "p-4 border-b border-blue-gray-50";
+                      const info = item.anggotas?.[0] || {};
+                      return (
+                        <tr key={item.uuid} className="hover:bg-gray-50/50 transition-colors">
+                          <td className={classes}>
+                            <div className="flex items-center gap-3">
+                              <div className="relative cursor-pointer" onClick={() => info.url && handleOpenPhotoPreview(info.url, info.nama_lengkap || item.username)}>
+                                {info.url ? (
+                                  <Avatar src={info.url} size="sm" className="border border-gray-200" />
+                                ) : (
+                                  <div className="h-9 w-9 rounded-full bg-blue-gray-50 flex items-center justify-center"><UserCircleIcon className="h-6 w-6 text-blue-gray-300" /></div>
+                                )}
                               </div>
-                            </td>
-                            <td className={classes}>
-                              <Typography variant="small" color="blue-gray" className="font-normal">{info.instansi || "-"}</Typography>
-                              <Typography variant="small" className="font-normal opacity-70 text-xs">{info.jabatan || "-"}</Typography>
-                            </td>
-                            <td className={classes}>
-                              <Chip size="sm" variant="ghost" value={item.status} color={item.status === "verified" ? "green" : item.status === "pending" ? "yellow" : "red"}  className="text-center"/>
-                            </td>
-                            <td className={classes}>
-                              <Typography variant="small" className="font-normal">{item.role}</Typography>
-                            </td>
-                            <td className={classes}>
-                              <ActionButtons item={item} />
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                              <div className="flex flex-col">
+                                <Typography variant="small" color="blue-gray" className="font-bold">{item.username}</Typography>
+                                <Typography variant="small" className="font-normal opacity-70 text-[11px]">{item.email}</Typography>
+                              </div>
+                            </div>
+                          </td>
+                          <td className={classes}>
+                            <Typography variant="small" color="blue-gray" className="font-normal">{info.instansi || "-"}</Typography>
+                            <Typography variant="small" className="font-normal opacity-70 text-xs">{info.jabatan || "-"}</Typography>
+                          </td>
+                          <td className={classes}>
+                            <Chip size="sm" variant="ghost" value={item.status} color={item.status === "verified" ? "green" : item.status === "pending" ? "amber" : "red"}  className="text-center"/>
+                          </td>
+                          <td className={classes}>
+                            <Typography variant="small" className="font-normal">{item.role}</Typography>
+                          </td>
+                          <td className={classes}>
+                            <ActionButtons item={item} />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
                   {currentRows.map((item) => {
@@ -399,17 +416,11 @@ export default function DaftarUserAdmin() {
                           <div className="space-y-2 mb-4 bg-gray-50 p-3 rounded-lg">
                             <div className="flex items-center gap-2 text-xs">
                               <BuildingOfficeIcon className="h-3.5 w-3.5 text-gray-500" />
-                              <span className="truncate">
-                                {/* Sesuaikan property instansi di response kamu */}
-                                {item.instansi || "Instansi belum diatur"}
-                              </span>
+                              <span className="truncate">{info.instansi || "Instansi belum diatur"}</span>
                             </div>
                             <div className="flex items-center gap-2 text-xs">
                               <BriefcaseIcon className="h-3.5 w-3.5 text-gray-500" />
-                              <span className="truncate">
-                                {/* Sesuaikan property jabatan di response kamu */}
-                                {item.jabatan || "Jabatan belum diatur"}
-                              </span>
+                              <span className="truncate">{info.jabatan || "Jabatan belum diatur"}</span>
                             </div>
                           </div>
 
@@ -428,52 +439,67 @@ export default function DaftarUserAdmin() {
                   })}
                 </div>
               )}
+              {filteredData.length === 0 && (
+                <div className="py-20 text-center">
+                  <Typography color="gray">User tidak ditemukan.</Typography>
+                </div>
+              )}
             </CardBody>
 
-            {/* --- PAGINATION FOOTER --- */}
-            <CardFooter className="flex flex-col sm:flex-row items-center justify-between border-t border-blue-gray-50 p-4 gap-4">
-              <div className="flex items-center gap-4">
-                <Typography variant="small" color="blue-gray" className="font-normal whitespace-nowrap">
-                  Halaman {currentPage} dari {totalPages || 1}
+            <CardFooter className="flex flex-wrap items-center justify-between border-t border-blue-gray-50 p-4 gap-4">
+              <div className="flex items-center flex-wrap gap-4">
+                <Typography variant="small" color="blue-gray" className="font-normal whitespace-nowrap text-xs">
+                  Halaman <b>{currentPage}</b> dari <b>{totalPages || 1}</b>
                 </Typography>
-                <div className="w-24">
-                  <Select label="Baris" value={rowsPerPage.toString()} onChange={(val) => setRowsPerPage(Number(val))} size="sm">
+                <div className="w-20">
+                  <Select label="Baris" value={rowsPerPage.toString()} onChange={(val) => setRowsPerPage(Number(val))} size="sm" containerProps={{ className: "min-w-[70px]" }}>
                     <Option value="10">10</Option>
                     <Option value="15">15</Option>
                     <Option value="20">20</Option>
                   </Select>
                 </div>
               </div>
-              <div className="flex gap-2">
+              
+              <div className="flex items-center gap-1 sm:gap-2">
                 <Button
                   variant="outlined"
                   size="sm"
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  onClick={() => paginate(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="flex items-center gap-2"
+                  className="p-2 sm:px-3 flex items-center gap-2 capitalize"
                 >
-                  <ChevronLeftIcon strokeWidth={2} className="h-3 w-3" /> Prev
+                  <ChevronLeftIcon strokeWidth={3} className="h-4 w-4" /> 
+                  <span className="hidden sm:block text-[11px]">Sebelumnya</span>
                 </Button>
+
                 <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => (
-                    <IconButton
-                      key={i}
-                      size="sm"
-                      variant={currentPage === i + 1 ? "filled" : "text"}
-                      onClick={() => setCurrentPage(i + 1)}
-                    >
-                      {i + 1}
-                    </IconButton>
+                  {getPageNumbers().map((page, index) => (
+                    page === "..." ? (
+                      <span key={`dots-${index}`} className="px-1 text-blue-gray-500 text-xs">...</span>
+                    ) : (
+                      <IconButton
+                        key={page}
+                        size="sm"
+                        variant={currentPage === page ? "filled" : "text"}
+                        color={currentPage === page ? null : "blue-gray"}
+                        onClick={() => paginate(page)}
+                        className="rounded-md h-8 w-8 text-xs"
+                      >
+                        {page}
+                      </IconButton>
+                    )
                   ))}
                 </div>
+
                 <Button
                   variant="outlined"
                   size="sm"
-                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  onClick={() => paginate(currentPage + 1)}
                   disabled={currentPage === totalPages || totalPages === 0}
-                  className="flex items-center gap-2"
+                  className="p-2 sm:px-3 flex items-center gap-2 capitalize"
                 >
-                  Next <ChevronRightIcon strokeWidth={2} className="h-3 w-3" />
+                  <span className="hidden sm:block text-[11px]">Berikutnya</span>
+                  <ChevronRightIcon strokeWidth={3} className="h-4 w-4" />
                 </Button>
               </div>
             </CardFooter>
@@ -481,7 +507,6 @@ export default function DaftarUserAdmin() {
         </div>
       </div>
 
-      {/* MODAL DETAIL PROFIL */}
       <Dialog open={open} handler={() => handleOpen(null)} size="md" className="max-h-[90vh] overflow-y-auto rounded-xl">
         <DialogHeader className="flex justify-between items-center border-b border-gray-100">
           <Typography variant="h5" color="blue-gray">Detail Profil Pengguna</Typography>
@@ -489,17 +514,17 @@ export default function DaftarUserAdmin() {
             <XMarkIcon className="h-5 w-5" />
           </IconButton>
         </DialogHeader>
-        <DialogBody className="p-4 md:p-6">
+        <DialogBody className="p-4 md:p-6 text-black">
           {selectedUser && (
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
               <div className="md:col-span-4 flex flex-col items-center border-b md:border-b-0 md:border-r border-gray-100 pb-6 md:pb-0 md:pr-4">
-{selectedUser.url ? (
-                                    <Avatar src={selectedUser.url} size="sm" className="border border-gray-200" />
-                                  ) : (
-                                    <div className="h-24 w-24 rounded-full bg-blue-gray-50 flex items-center justify-center"><UserCircleIcon className="h-16 w-16 text-blue-gray-300" /></div>
-                                  )}
-                <Typography variant="h6" className="text-center">{selectedUser.anggotas?.[0]?.nama_lengkap || selectedUser.username}</Typography>
-                <Chip variant="ghost" size="sm" value={selectedUser.status} color={selectedUser.status === "pending" ? "yellow" : selectedUser.status === "verified" ? "green" : "red"} className="mt-2" />
+                {selectedUser.anggotas?.[0]?.url ? (
+                  <Avatar src={selectedUser.anggotas[0].url} size="xl" className="border border-gray-200 h-24 w-24" />
+                ) : (
+                  <div className="h-24 w-24 rounded-full bg-blue-gray-50 flex items-center justify-center"><UserCircleIcon className="h-16 w-16 text-blue-gray-300" /></div>
+                )}
+                <Typography variant="h6" className="text-center mt-3">{selectedUser.anggotas?.[0]?.nama_lengkap || selectedUser.username}</Typography>
+                <Chip variant="ghost" size="sm" value={selectedUser.status} color={selectedUser.status === "pending" ? "amber" : selectedUser.status === "verified" ? "green" : "red"} className="mt-2" />
               </div>
               <div className="md:col-span-8 space-y-4">
                 <InfoItem icon={<BuildingOfficeIcon className="h-4 w-4" />} label="Instansi" value={selectedUser.anggotas?.[0]?.instansi} />
@@ -519,7 +544,6 @@ export default function DaftarUserAdmin() {
         <DialogFooter><Button color="black" onClick={() => handleOpen(null)}>Tutup</Button></DialogFooter>
       </Dialog>
 
-      {/* MODAL FOTO PREVIEW */}
       <Dialog size="md" open={openPhotoPreview} handler={() => setOpenPhotoPreview(false)} className="shadow-2xl overflow-hidden rounded-xl">
         <DialogHeader className="flex justify-between items-center bg-gray-50 py-3 px-5 border-b">
           <Typography variant="h6">Preview Foto Profil</Typography>

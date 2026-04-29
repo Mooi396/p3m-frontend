@@ -59,9 +59,8 @@ export default function DaftarAgendaAdmin() {
   const [agendas, setAgendas] = useState([]);
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState("table"); // 'table' or 'card'
+  const [viewMode, setViewMode] = useState("table"); 
   
-  // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -88,7 +87,6 @@ export default function DaftarAgendaAdmin() {
     }
   };
 
-  // Logika Filter
   const filteredData = agendas.filter((item) => {
     const matchesTab = filter === "all" || item.status === filter;
     const matchesSearch = item.nama_kegiatan.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -97,20 +95,45 @@ export default function DaftarAgendaAdmin() {
     return matchesTab && matchesSearch && canSee;
   });
 
-  // Logika Pagination
   const indexOfLastItem = currentPage * rowsPerPage;
   const indexOfFirstItem = indexOfLastItem - rowsPerPage;
   const currentRows = filteredData.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  const paginate = (pageNumber) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
 
-  // Reset page ke 1 jika filter atau search berubah
   useEffect(() => {
     setCurrentPage(1);
   }, [filter, searchTerm, rowsPerPage]);
 
-  // Actions (Hapus, Verify, Reject) tetap sama seperti kode Anda sebelumnya
+  const getPageNumbers = () => {
+    const pages = [];
+    const showMax = 1;
+
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push("...");
+      
+      const start = Math.max(2, currentPage - showMax);
+      const end = Math.min(totalPages - 1, currentPage + showMax);
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+
+      if (currentPage < totalPages - 2) pages.push("...");
+      pages.push(totalPages);
+    }
+    return pages;
+  };
+
+  // API Actions
   const deleteAgenda = async (uuid) => {
     if (window.confirm("Yakin ingin menghapus agenda ini?")) {
       try {
@@ -158,7 +181,6 @@ export default function DaftarAgendaAdmin() {
     setOpenEdit(true);
   };
 
-  // Helper Formatter Tanggal
   const formatTgl = (tgl) => new Date(tgl).toLocaleDateString("id-ID", {
     day: "2-digit", month: "long", year: "numeric"
   });
@@ -229,7 +251,6 @@ export default function DaftarAgendaAdmin() {
 
             <CardBody className={`px-4 pt-0 pb-4 ${viewMode === "table" ? "overflow-x-auto" : ""}`}>
               {viewMode === "table" ? (
-                /* VIEW TABLE */
                 <table className="w-full min-w-max table-auto text-left">
                   <thead>
                     <tr>
@@ -279,16 +300,12 @@ export default function DaftarAgendaAdmin() {
                   </tbody>
                 </table>
               ) : (
-                /* VIEW CARD */
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {currentRows.map((agenda) => (
                     <Card key={agenda.uuid} className="border border-gray-200 shadow-sm rounded-xl hover:border-blue-300 transition-all">
                       <CardBody className="p-4">
                         <div className="flex justify-between items-start mb-3">
                           <Chip size="sm" variant="ghost" value={agenda.status} color={agenda.status === "verified" ? "green" : agenda.status === "pending" ? "amber" : "red"} />
-                          <div className="flex gap-1">
-                             <IconButton variant="text" size="sm" onClick={() => window.open(agenda.url, "_blank")}><DocumentIcon className="h-4 w-4 text-blue-500"/></IconButton>
-                          </div>
                         </div>
                         <Typography variant="h6" color="blue-gray" className="mb-3 line-clamp-1">{agenda.nama_kegiatan}</Typography>
                         
@@ -323,17 +340,19 @@ export default function DaftarAgendaAdmin() {
               )}
             </CardBody>
 
-            <CardFooter className="flex flex-col sm:flex-row items-center justify-between border-t border-blue-gray-50 p-4 gap-4">
-              <div className="flex items-center gap-4">
+            <CardFooter className="flex flex-wrap items-center justify-between border-t border-blue-gray-50 p-4 gap-4">
+              {/* Bagian Kiri: Info Halaman & Rows per Page */}
+              <div className="flex items-center flex-wrap gap-4">
                 <Typography variant="small" color="blue-gray" className="font-normal whitespace-nowrap">
-                  Halaman {currentPage} dari {totalPages || 1}
+                  Halaman <b>{currentPage}</b> dari <b>{totalPages || 1}</b>
                 </Typography>
-                <div className="w-24">
+                <div className="w-20">
                   <Select
                     label="Baris"
                     value={rowsPerPage.toString()}
                     onChange={(val) => setRowsPerPage(Number(val))}
                     size="sm"
+                    containerProps={{ className: "min-w-[70px]" }}
                   >
                     <Option value="10">10</Option>
                     <Option value="15">15</Option>
@@ -341,37 +360,48 @@ export default function DaftarAgendaAdmin() {
                   </Select>
                 </div>
               </div>
-              <div className="flex gap-2">
+              
+              {/* Bagian Kanan: Kontrol Navigasi */}
+              <div className="flex items-center gap-1 sm:gap-2">
                 <Button
                   variant="outlined"
                   size="sm"
                   onClick={() => paginate(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="flex items-center gap-2"
+                  className="p-2 sm:px-3 flex items-center gap-2 capitalize"
                 >
-                  <ChevronLeftIcon strokeWidth={2} className="h-3 w-3" /> Prev
+                  <ChevronLeftIcon strokeWidth={3} className="h-4 w-4" /> 
+                  <span className="hidden sm:block text-[11px]">Sebelumnya</span>
                 </Button>
+
                 <div className="flex items-center gap-1">
-                   {[...Array(totalPages)].map((_, i) => (
-                      <IconButton 
-                        key={i} 
-                        size="sm" 
-                        variant={currentPage === i + 1 ? "filled" : "text"}
-                        onClick={() => paginate(i + 1)}
-                        className="hidden sm:inline-flex"
+                  {getPageNumbers().map((page, index) => (
+                    page === "..." ? (
+                      <span key={`dots-${index}`} className="px-1 text-blue-gray-500 text-xs">...</span>
+                    ) : (
+                      <IconButton
+                        key={page}
+                        size="sm"
+                        variant={currentPage === page ? "filled" : "text"}
+                        color={currentPage === page ? null : "blue-gray"}
+                        onClick={() => paginate(page)}
+                        className="rounded-md h-8 w-8 text-xs"
                       >
-                        {i + 1}
+                        {page}
                       </IconButton>
-                   ))}
+                    )
+                  ))}
                 </div>
+
                 <Button
                   variant="outlined"
                   size="sm"
                   onClick={() => paginate(currentPage + 1)}
                   disabled={currentPage === totalPages || totalPages === 0}
-                  className="flex items-center gap-2"
+                  className="p-2 sm:px-3 flex items-center gap-2 capitalize"
                 >
-                  Next <ChevronRightIcon strokeWidth={2} className="h-3 w-3" />
+                  <span className="hidden sm:block text-[11px]">Berikutnya</span>
+                  <ChevronRightIcon strokeWidth={3} className="h-4 w-4" />
                 </Button>
               </div>
             </CardFooter>
@@ -385,10 +415,14 @@ export default function DaftarAgendaAdmin() {
   );
 }
 
-// Sub-component untuk tombol aksi agar rapi
 function ActionButtons({ agenda, authuser, handleEdit, deleteAgenda, verifyAgenda, rejectAgenda, cancelVerify, cancelReject }) {
   return (
     <div className="flex gap-1">
+      <Tooltip content="Lihat Dokumen">
+        <IconButton variant="text" size="sm" onClick={() => window.open(agenda.url, "_blank")}>
+          <DocumentIcon className="h-4 w-4 text-gray-800" />
+        </IconButton>
+      </Tooltip>
       {authuser?.role === "admin" && (
         <>
           {agenda.status === "verified" ? (

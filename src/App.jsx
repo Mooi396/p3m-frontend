@@ -29,6 +29,7 @@ import DaftarAnggotaPengunjungPage from "./pages/daftaranggotapengunjung.jsx";
 import DaftarPengurusPengunjungPage from "./pages/daftarpenguruspengunjung.jsx";
 import ProfilP3MPengunjungPage from "./pages/profilP3MPengunjung.jsx";
 import DaftarAgendaPengunjungPage from "./pages/daftaragendapengunjung.jsx";
+import NotFoundPage from "./pages/notfound.jsx";
 
 function App() {
   const dispatch = useDispatch();
@@ -74,6 +75,7 @@ function App() {
             <Login />
           </GuestRoute>
         }></Route>
+        <Route path="*" element={<NotFoundPage/>}></Route>
       </Routes>
     </BrowserRouter>
   </div>
