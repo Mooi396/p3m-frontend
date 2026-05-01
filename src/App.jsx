@@ -30,6 +30,7 @@ import DaftarPengurusPengunjungPage from "./pages/daftarpenguruspengunjung.jsx";
 import ProfilP3MPengunjungPage from "./pages/profilP3MPengunjung.jsx";
 import DaftarAgendaPengunjungPage from "./pages/daftaragendapengunjung.jsx";
 import NotFoundPage from "./pages/notfound.jsx";
+import KustomLandingPage from "./pages/kustomlandingpage.jsx";
 
 function App() {
   const dispatch = useDispatch();
@@ -64,6 +65,7 @@ function App() {
         <Route path="/dashboard/laporan" element={<Daftarlaporan/>}></Route>
         <Route path="/dashboard/pengurus" element={<DaftarPengurus/>}></Route>
         <Route path="/dashboard/profil-p3m" element={<ProfilOrganisasiDashboardPage/>}></Route>
+        <Route path="/dashboard/kustom-landing-page" element={<KustomLandingPage/>}></Route>
         <Route path="/berita" element={<BeritaPengunjungPage/>}></Route>
         <Route path="/daftar-anggota" element={<DaftarAnggotaPengunjungPage/>}></Route>
         <Route path="/daftar-pengurus" element={<DaftarPengurusPengunjungPage/>}></Route>

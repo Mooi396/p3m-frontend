@@ -90,7 +90,7 @@ export default function ProfilP3M() {
             <div>
               <Typography className="text-[10px] uppercase font-bold text-gray-400 leading-none">Terakhir Diperbarui</Typography>
               <Typography className="text-sm font-bold text-blue-gray-900">
-                {new Date(profil.createdAt).toLocaleDateString("id-ID", {
+                {new Date(profil.updatedAt).toLocaleDateString("id-ID", {
                   day: "numeric",
                   month: "long",
                   year: "numeric",

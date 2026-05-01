@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import SidebarAdmin from "../../admin/sidebarAdmin";
 import axios from "axios";
-import { 
-  PhotoIcon, 
+import {
   MagnifyingGlassIcon, 
   Bars3Icon, 
   XMarkIcon as XMarkOutline,
@@ -11,19 +10,16 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   BuildingOfficeIcon,
-  UserCircleIcon,
   BriefcaseIcon
 } from "@heroicons/react/24/outline";
 import { 
-  Card, CardHeader, Input, Typography, Button, CardBody, 
-  Chip, Tabs, TabsHeader, Tab, IconButton, Tooltip, 
+  Card, CardHeader, Input, Typography, Button, CardBody, IconButton, Tooltip, 
   Dialog, DialogBody, DialogHeader, Drawer, Select, Option, CardFooter  
 } from "@material-tailwind/react";
 import { 
-  PencilIcon, PlusIcon, TrashIcon, CheckIcon, 
+  PencilIcon, PlusIcon, TrashIcon, 
   XMarkIcon as XMarkSolid  
 } from "@heroicons/react/24/solid";
-import { Link, useNavigate } from "react-router-dom";
 import DashboardNavbar from "../../dashboardNavbar";
 import { useSelector } from "react-redux";
 import SidebarKetuaForum from "../sidebarKetuaForum";
@@ -37,9 +33,7 @@ export default function DaftarPengurusComponent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("table"); 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const navigate = useNavigate();
   
-  // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -100,7 +94,6 @@ export default function DaftarPengurusComponent() {
     return matchesSearch && canSee;
   });
 
-  // Pagination Logic
   const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
   const indexOfLastItem = currentPage * rowsPerPage;
   const indexOfFirstItem = indexOfLastItem - rowsPerPage;
@@ -112,7 +105,6 @@ export default function DaftarPengurusComponent() {
     }
   };
 
-  // LOGIKA ELLIPSIS PAGINATION
   const getPageNumbers = () => {
     const pages = [];
     if (totalPages <= 5) {
@@ -187,10 +179,10 @@ export default function DaftarPengurusComponent() {
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">
                   <div className="flex bg-gray-100 p-1 rounded-lg">
-                    <IconButton variant={viewMode === "table" ? "white" : "text"} size="sm" onClick={() => setViewMode("table")}>
+                    <IconButton variant={viewMode === "table" ? "filled" : "text"} size="sm" onClick={() => setViewMode("table")}>
                       <ListBulletIcon className="h-4 w-4" />
                     </IconButton>
-                    <IconButton variant={viewMode === "card" ? "white" : "text"} size="sm" onClick={() => setViewMode("card")}>
+                    <IconButton variant={viewMode === "card" ? "filled" : "text"} size="sm" onClick={() => setViewMode("card")}>
                       <Squares2X2Icon className="h-4 w-4" />
                     </IconButton>
                   </div>
@@ -293,7 +285,7 @@ export default function DaftarPengurusComponent() {
 
             <CardFooter className="flex flex-wrap items-center justify-between border-t border-blue-gray-50 p-4 gap-4">
               <div className="flex items-center flex-wrap gap-4">
-                <Typography variant="small" color="blue-gray" className="font-normal whitespace-nowrap text-xs">
+                <Typography variant="small" color="blue-gray" className="font-normal whitespace-nowrap">
                   Halaman <b>{currentPage}</b> dari <b>{totalPages || 1}</b>
                 </Typography>
                 <div className="w-20">
@@ -301,7 +293,6 @@ export default function DaftarPengurusComponent() {
                     label="Baris"
                     value={rowsPerPage.toString()}
                     onChange={(val) => setRowsPerPage(Number(val))}
-                    size="sm"
                     containerProps={{ className: "min-w-[70px]" }}
                   >
                     <Option value="10">10</Option>

@@ -3,7 +3,8 @@ import axios from 'axios';
 import { 
   Card, CardHeader, Typography, CardBody, 
   IconButton, Avatar, Chip, Button, Dialog,
-  DialogHeader, DialogBody, DialogFooter, Drawer
+  DialogHeader, DialogBody, DialogFooter, Drawer,
+  Spinner
 } from "@material-tailwind/react";
 import { 
   CalendarDateRangeIcon, NewspaperIcon, UserGroupIcon,
@@ -214,7 +215,7 @@ const DashboardAdmin = () => {
                       <Typography variant="small" className="font-bold text-xs truncate w-24 sm:w-auto">{user.username}</Typography>
                     </div>
                   </td>
-                  <td className={classes}><Chip size="sm" variant="ghost" value="pending" color="amber" className="text-[10px]"/></td>
+                  <td className={classes}><Chip size="sm" variant="ghost" value="pending" color="amber" className="text-[10px] text-center"/></td>
                   <td className={classes}>
                     <div className="flex gap-0">
                       <IconButton variant="text" size="sm" onClick={() => handleOpen(user)}><EyeIcon className="h-4 w-4"/></IconButton>
@@ -235,7 +236,7 @@ const DashboardAdmin = () => {
                   <td className={classes}>
                     <Typography variant="small" className="font-bold truncate w-32 sm:w-48 text-xs">{berita.judul_berita}</Typography>
                   </td>
-                  <td className={classes}><Chip size="sm" variant="ghost" value="pending" color="amber" className="text-[10px]"/></td>
+                  <td className={classes}><Chip size="sm" variant="ghost" value="pending" color="amber" className="text-[10px] text-center"/></td>
                   <td className={classes}>
                     <div className="flex gap-0">
                       <IconButton variant="text" size="sm" onClick={() => navigate(`/dashboard/berita/${berita.uuid}`)}><EyeIcon className="h-4 w-4"/></IconButton>
@@ -256,7 +257,7 @@ const DashboardAdmin = () => {
                   <td className={classes}>
                     <Typography variant="small" className="font-bold truncate w-32 sm:w-48 text-xs">{agenda.nama_kegiatan}</Typography>
                   </td>
-                  <td className={classes}><Chip size="sm" variant="ghost" value="pending" color="amber" className="text-[10px]"/></td>
+                  <td className={classes}><Chip size="sm" variant="ghost" value="pending" color="amber" className="text-[10px] text-center"/></td>
                   <td className={classes}>
                     <div className="flex gap-0">
                       <IconButton variant="text" size="sm" onClick={() => { setSelectedItem(agenda); setOpenDetailAgenda(true); }}><EyeIcon className="h-4 w-4"/></IconButton>
@@ -277,7 +278,7 @@ const DashboardAdmin = () => {
                   <td className={classes}>
                     <Typography variant="small" className="font-bold truncate w-32 sm:w-48 text-xs">{laporan.keterangan}</Typography>
                   </td>
-                  <td className={classes}><Chip size="sm" variant="ghost" value="pending" color="amber" className="text-[10px]"/></td>
+                  <td className={classes}><Chip size="sm" variant="ghost" value="pending" color="amber" className="text-[10px] text-center"/></td>
                   <td className={classes}>
                     <div className="flex gap-0">
                       <IconButton variant="text" size="sm" onClick={() => { setSelectedItem(laporan); setOpenDetailLaporan(true); }}><EyeIcon className="h-4 w-4"/></IconButton>
@@ -301,7 +302,7 @@ const DashboardAdmin = () => {
           </IconButton>
         </DialogHeader>
         <DialogBody className="p-4 lg:p-6">
-          {selectedUser && (
+          {selectedUser ? (
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
               <div className="md:col-span-4 flex flex-col items-center border-b md:border-b-0 md:border-r border-gray-100 pb-6 md:pb-0 md:pr-4">
                 {selectedUser.anggotas?.[0]?.url ? (
@@ -311,7 +312,7 @@ const DashboardAdmin = () => {
                 )}
                 <Typography variant="h6" className="text-center">{selectedUser.anggotas?.[0]?.nama_lengkap || selectedUser.username}</Typography>
                 <Typography variant="small" color="gray" className="italic mb-2">{selectedUser.anggotas?.[0]?.gelar || "-"}</Typography>
-                <Chip variant="ghost" size="sm" value={selectedUser.status} color={selectedUser.status === "verified" ? "green" : "amber"} />
+                <Chip variant="ghost" size="sm" value={selectedUser.status} color={selectedUser.status === "verified" ? "green" : "amber"} className='text-center' />
               </div>
               <div className="md:col-span-8 space-y-4">
                 <div className="grid grid-cols-1 gap-4 text-sm">
@@ -324,9 +325,13 @@ const DashboardAdmin = () => {
                 <div className="grid grid-cols-2 gap-2">
                   <SocialLink label="LinkedIn" value={selectedUser.anggotas?.[0]?.linkedin} />
                   <SocialLink label="Sinta ID" value={selectedUser.anggotas?.[0]?.sinta} />
+                  <SocialLink label="Google Scholar" value={selectedUser.anggotas?.[0]?.google_scholar} />
+                  <SocialLink label="Scopus" value={selectedUser.anggotas?.[0]?.scopus} />
                 </div>
               </div>
             </div>
+          ) : (
+            <div className="flex justify-center p-10"><Spinner /></div> // Fallback agar tidak null
           )}
         </DialogBody>
         <DialogFooter className="p-4 border-t">

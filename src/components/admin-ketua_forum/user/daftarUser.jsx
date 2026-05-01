@@ -3,7 +3,7 @@ import SidebarAdmin from "../../admin/sidebarAdmin";
 import axios from "axios";
 import TambahUserAdmin from "./tambahUser";
 import EditUserComponent from "./editUser";
-import { MagnifyingGlassIcon, PhotoIcon, Squares2X2Icon, ListBulletIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import { MagnifyingGlassIcon, Squares2X2Icon, ListBulletIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import {
   Card,
   CardHeader,
@@ -34,8 +34,7 @@ import {
   TrashIcon,
   CheckIcon,
   XMarkIcon,
-  ArrowPathIcon,
-  MagnifyingGlassPlusIcon,
+  ArrowPathIcon
 } from "@heroicons/react/24/solid";
 import {
   EyeIcon,
@@ -297,10 +296,10 @@ export default function DaftarUserAdmin() {
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">
                   <div className="flex bg-gray-100 p-1 rounded-lg">
-                    <IconButton variant={viewMode === "table" ? "white" : "text"} size="sm" onClick={() => setViewMode("table")}>
+                    <IconButton variant={viewMode === "table" ? "filled" : "text"} size="sm" onClick={() => setViewMode("table")}>
                       <ListBulletIcon className="h-4 w-4" />
                     </IconButton>
-                    <IconButton variant={viewMode === "card" ? "white" : "text"} size="sm" onClick={() => setViewMode("card")}>
+                    <IconButton variant={viewMode === "card" ? "filled" : "text"} size="sm" onClick={() => setViewMode("card")}>
                       <Squares2X2Icon className="h-4 w-4" />
                     </IconButton>
                   </div>
@@ -448,11 +447,11 @@ export default function DaftarUserAdmin() {
 
             <CardFooter className="flex flex-wrap items-center justify-between border-t border-blue-gray-50 p-4 gap-4">
               <div className="flex items-center flex-wrap gap-4">
-                <Typography variant="small" color="blue-gray" className="font-normal whitespace-nowrap text-xs">
+                <Typography variant="small" color="blue-gray" className="font-normal whitespace-nowrap">
                   Halaman <b>{currentPage}</b> dari <b>{totalPages || 1}</b>
                 </Typography>
                 <div className="w-20">
-                  <Select label="Baris" value={rowsPerPage.toString()} onChange={(val) => setRowsPerPage(Number(val))} size="sm" containerProps={{ className: "min-w-[70px]" }}>
+                  <Select label="Baris" value={rowsPerPage.toString()} onChange={(val) => setRowsPerPage(Number(val))} containerProps={{ className: "min-w-[70px]" }}>
                     <Option value="10">10</Option>
                     <Option value="15">15</Option>
                     <Option value="20">20</Option>
@@ -515,15 +514,19 @@ export default function DaftarUserAdmin() {
           </IconButton>
         </DialogHeader>
         <DialogBody className="p-4 md:p-6 text-black">
-          {selectedUser && (
+          {selectedUser ? (
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
               <div className="md:col-span-4 flex flex-col items-center border-b md:border-b-0 md:border-r border-gray-100 pb-6 md:pb-0 md:pr-4">
                 {selectedUser.anggotas?.[0]?.url ? (
                   <Avatar src={selectedUser.anggotas[0].url} size="xl" className="border border-gray-200 h-24 w-24" />
                 ) : (
-                  <div className="h-24 w-24 rounded-full bg-blue-gray-50 flex items-center justify-center"><UserCircleIcon className="h-16 w-16 text-blue-gray-300" /></div>
+                  <div className="h-24 w-24 rounded-full bg-blue-gray-50 flex items-center justify-center">
+                    <UserCircleIcon className="h-16 w-16 text-blue-gray-300" />
+                  </div>
                 )}
-                <Typography variant="h6" className="text-center mt-3">{selectedUser.anggotas?.[0]?.nama_lengkap || selectedUser.username}</Typography>
+                <Typography variant="h6" className="text-center mt-3">
+                  {selectedUser.anggotas?.[0]?.nama_lengkap || selectedUser.username}
+                </Typography>
                 <Chip variant="ghost" size="sm" value={selectedUser.status} color={selectedUser.status === "pending" ? "amber" : selectedUser.status === "verified" ? "green" : "red"} className="mt-2" />
               </div>
               <div className="md:col-span-8 space-y-4">
@@ -539,9 +542,14 @@ export default function DaftarUserAdmin() {
                 </div>
               </div>
             </div>
+          ) : (
+            <div className="flex justify-center py-4">Memuat data...</div>
           )}
         </DialogBody>
-        <DialogFooter><Button color="black" onClick={() => handleOpen(null)}>Tutup</Button></DialogFooter>
+        
+        <DialogFooter>
+          <Button color="black" onClick={() => handleOpen(null)}>Tutup</Button>
+        </DialogFooter>
       </Dialog>
 
       <Dialog size="md" open={openPhotoPreview} handler={() => setOpenPhotoPreview(false)} className="shadow-2xl overflow-hidden rounded-xl">

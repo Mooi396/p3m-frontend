@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import SidebarAdmin from "../../admin/sidebarAdmin";
 import axios from "axios";
-import { 
-  PhotoIcon, 
+import {
   MagnifyingGlassIcon, 
   Bars3Icon, 
   XMarkIcon as XMarkOutline,
@@ -246,10 +245,10 @@ export default function DaftarBeritaAdmin() {
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">
                   <div className="flex bg-gray-100 p-1 rounded-lg">
-                    <IconButton variant={viewMode === "table" ? "white" : "text"} size="sm" onClick={() => setViewMode("table")}>
+                    <IconButton variant={viewMode === "table" ? "filled" : "text"} size="sm" onClick={() => setViewMode("table")}>
                       <ListBulletIcon className="h-4 w-4" />
                     </IconButton>
-                    <IconButton variant={viewMode === "card" ? "white" : "text"} size="sm" onClick={() => setViewMode("card")}>
+                    <IconButton variant={viewMode === "card" ? "filled" : "text"} size="sm" onClick={() => setViewMode("card")}>
                       <Squares2X2Icon className="h-4 w-4" />
                     </IconButton>
                   </div>
@@ -387,7 +386,6 @@ export default function DaftarBeritaAdmin() {
                     label="Baris"
                     value={rowsPerPage.toString()}
                     onChange={(val) => setRowsPerPage(Number(val))}
-                    size="sm"
                     containerProps={{ className: "min-w-[70px]" }}
                   >
                     <Option value="10">10</Option>

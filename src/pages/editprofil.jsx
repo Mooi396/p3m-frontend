@@ -13,27 +13,27 @@ const EditProfilUserPage = () => {
   useEffect(() => {
     dispatch(GetMe());
   }, [dispatch]);
-  
+
   useEffect(() => {
     if (!isLoading) {
       if (isError) {
         navigate('/masuk');
         return;
       }
-
       if (user && user.status !== "verified") {
         navigate("/dashboard/profil");
       }
     }
   }, [isError, user, navigate, isLoading]);
+
   if (isLoading) return <div className="h-screen flex justify-center items-center">Authenticating...</div>;
   if (!user || user.status !== "verified") {
-    return navigate("/dashboard/profil"); 
+    return null; 
   }
-  
+
   return (
     <div>
-      <Head title={"Edit Profil Admin"} />
+      <Head title={"Edit Profil"} />
       <EditProfil />
     </div>
   );

@@ -282,7 +282,6 @@ export default function DaftarTagAdmin() {
                     label="Baris"
                     value={rowsPerPage.toString()}
                     onChange={(val) => setRowsPerPage(Number(val))}
-                    size="sm"
                   >
                     <Option value="10">10</Option>
                     <Option value="15">15</Option>
