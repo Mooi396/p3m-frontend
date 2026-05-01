@@ -23,7 +23,8 @@ import {
   NewspaperIcon,
   ClipboardDocumentListIcon,
   IdentificationIcon,
-  UserGroupIcon
+  UserGroupIcon,
+  RocketLaunchIcon
 } from "@heroicons/react/24/solid";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 
@@ -131,6 +132,14 @@ export default function SidebarAdmin() {
             </List>
           </AccordionBody>
         </Accordion>
+        <Link to={'/dashboard/kustom-landing-page'}>
+          <ListItem>
+            <ListItemPrefix>
+              <RocketLaunchIcon  className="h-5 w-5" />
+            </ListItemPrefix>
+            Kustom landing Page
+          </ListItem>
+        </Link>
         <Link to={'/dashboard/profil-p3m'}>
           <ListItem>
             <ListItemPrefix>

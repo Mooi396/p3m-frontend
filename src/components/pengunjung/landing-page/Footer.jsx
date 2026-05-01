@@ -1,90 +1,78 @@
+import React, { useState, useEffect } from "react";
 import { Typography } from "@material-tailwind/react";
+import axios from "axios";
 
 export default function Footer() {
+  const [footerData, setFooterData] = useState(null);
+
+  useEffect(() => {
+    const fetchFooter = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/landing");
+        setFooterData(res.data.data.sections.footer);
+      } catch (error) {
+        console.error("Gagal load footer:", error);
+      }
+    };
+    fetchFooter();
+  }, []);
+
+  if (!footerData) return null;
+
   return (
     <footer className="bg-[#1a1a1a] text-white px-10 py-12">
       <div className="max-w-screen-xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 pb-10 border-b border-gray-700">
 
-          {/* Kolom 1 - Brand */}
+          {/* Kolom 1 - Brand (Tetap Statis / Ambil dari Profil) */}
           <div>
             <div className="flex items-center gap-3 mb-6">
-              <img
-                src="/logo.png"
-                alt="Logo P3M"
-                className="w-10 h-10 object-contain"
-              />
+              <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain" />
               <div>
-                <Typography variant="small" className="text-gray-400 text-xs">
-                  Forum Kepala P3M
-                </Typography>
-                <Typography variant="h6" className="text-white font-extrabold tracking-wide">
-                  POLITEKNIK SE-INDONESIA
-                </Typography>
+                <Typography variant="small" className="text-gray-400 text-xs">Forum Kepala P3M</Typography>
+                <Typography variant="h6" className="text-white font-extrabold">POLITEKNIK SE-INDONESIA</Typography>
               </div>
             </div>
             <Typography variant="h6" className="text-white font-bold mb-3 leading-snug">
               P3M Hadir sebagai Pusat Informasi Penelitian dan Pengabdian
             </Typography>
-            <Typography variant="small" className="text-gray-400 leading-relaxed">
-              Website ini menyediakan informasi terkini mengenai program, kegiatan, dan kontribusi P3M secara terintegrasi.
-            </Typography>
           </div>
 
-          {/* Kolom 2 - Kontak */}
+          {/* Kolom 2 - Kontak DINAMIS */}
           <div>
-            <Typography variant="h6" className="text-white font-bold mb-5">
-              Kontak
-            </Typography>
-            <div className="mb-5">
-              <Typography variant="small" className="text-gray-300">
-                <span className="font-semibold text-white">Nomor Telepon:</span> 08193871238012 (Jane Doe)
-              </Typography>
-              <Typography variant="small" className="text-gray-300">
-                <span className="font-semibold text-white">Email:</span> company@email.com
-              </Typography>
-            </div>
-            <div>
-              <Typography variant="small" className="text-gray-300">
-                <span className="font-semibold text-white">Nomor Telepon:</span> 08193871238012 (Jane Doe)
-              </Typography>
-              <Typography variant="small" className="text-gray-300">
-                <span className="font-semibold text-white">Email:</span> company@email.com
-              </Typography>
-            </div>
+            <Typography variant="h6" className="text-white font-bold mb-5">Kontak</Typography>
+            {footerData.contacts?.map((contact, idx) => (
+              <div key={idx} className="mb-5 border-l-2 border-blue-500 pl-4">
+                <Typography variant="small" className="text-gray-300">
+                  <span className="font-semibold text-white">Nomor Telepon:</span> {contact.phone} ({contact.name})
+                </Typography>
+                <Typography variant="small" className="text-gray-300">
+                  <span className="font-semibold text-white">Email:</span> {contact.email}
+                </Typography>
+              </div>
+            ))}
           </div>
 
-          {/* Kolom 3 - Alamat */}
+          {/* Kolom 3 - Alamat DINAMIS */}
           <div>
-            <Typography variant="h6" className="text-white font-bold mb-5">
-              Alamat
-            </Typography>
-            <div className="mb-5">
-              <Typography variant="small" className="text-white font-semibold mb-1">
-                Sekretariat 1:
-              </Typography>
-              <Typography variant="small" className="text-gray-400 leading-relaxed">
-                Jl. Pendidikan No. 123, Kelurahan Sukamaju, Kecamatan Kesembi, Kota Cirebon, Jawa Barat 45131
-                Gedung Rektorat Lantai 2 – Pusat Penelitian dan Pengabdian kepada Masyarakat (P3M)
-              </Typography>
-            </div>
-            <div>
-              <Typography variant="small" className="text-white font-semibold mb-1">
-                Sekretariat 2:
-              </Typography>
-              <Typography variant="small" className="text-gray-400 leading-relaxed">
-                Jl. Pendidikan No. 123, Kelurahan Sukamaju, Kecamatan Kesembi, Kota Cirebon, Jawa Barat 45131
-                Gedung Rektorat Lantai 2 – Pusat Penelitian dan Pengabdian kepada Masyarakat (P3M)
-              </Typography>
-            </div>
+            <Typography variant="h6" className="text-white font-bold mb-5">Alamat</Typography>
+            {footerData.addresses?.map((addr, idx) => (
+              <div key={idx} className="mb-5 border-l-2 border-gray-600 pl-4">
+                <Typography variant="small" className="text-white font-semibold mb-1">
+                  {addr.title}:
+                </Typography>
+                <Typography variant="small" className="text-gray-400 leading-relaxed">
+                  {addr.detail}
+                </Typography>
+              </div>
+            ))}
           </div>
 
         </div>
 
-        {/* Copyright */}
         <div className="pt-6 text-center">
           <Typography variant="small" className="text-gray-500">
-            © Copyright Forum P3M. All Rights Reserved
+            © Copyright Forum P3M {new Date().getFullYear()}. All Rights Reserved
           </Typography>
         </div>
       </div>
