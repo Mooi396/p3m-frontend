@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import SidebarAdmin from "../../admin/sidebarAdmin";
 import axios from "axios";
 import { 
@@ -47,30 +47,33 @@ export default function DaftarTagAdmin() {
   const [currentUuid, setCurrentUuid] = useState("");
   const [namaTag, setNamaTag] = useState("");
   const { user: authuser } = useSelector((state) => state.auth);
+  const API_URL = process.env.REACT_APP_API_URL;
 
   // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  useEffect(() => {
-    getTags();
-  }, []);
+  
 
   // Reset ke halaman 1 jika search atau rowsPerPage berubah
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, rowsPerPage]);
 
-  const getTags = async () => {
+  const getTags = useCallback(async () => {
     try {
-      const response = await axios.get("http://localhost:5000/tag", {
+      const response = await axios.get(`${API_URL}/tag`, {
         withCredentials: true,
       });
       setTags(response.data);
     } catch (error) {
       console.error("Gagal mengambil data tag:", error);
     }
-  };
+  }, [API_URL]);
+  
+  useEffect(() => {
+    getTags();
+  }, [getTags]);
 
   const handleOpen = () => {
     setOpen(!open);
@@ -91,12 +94,12 @@ export default function DaftarTagAdmin() {
   const handleSubmit = async () => {
     try {
       if (isEdit) {
-        await axios.patch(`http://localhost:5000/tag/${currentUuid}`, 
+        await axios.patch(`${API_URL}/tag/${currentUuid}`, 
           { nama_tag: namaTag }, 
           { withCredentials: true }
         );
       } else {
-        await axios.post("http://localhost:5000/tag", 
+        await axios.post(`${API_URL}/tag`, 
           { nama_tag: namaTag }, 
           { withCredentials: true }
         );
@@ -111,7 +114,7 @@ export default function DaftarTagAdmin() {
   const deleteTag = async (uuid) => {
     if (window.confirm("Yakin ingin menghapus tag ini?")) {
       try {
-        await axios.delete(`http://localhost:5000/tag/${uuid}`, { withCredentials: true });
+        await axios.delete(`${API_URL}/tag/${uuid}`, { withCredentials: true });
         getTags();
       } catch (error) {
         alert(error.response?.data?.msg || "Gagal menghapus");

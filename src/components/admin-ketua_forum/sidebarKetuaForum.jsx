@@ -1,53 +1,20 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { LogOut, reset } from "../../features/authSlice";
+import { Link } from "react-router-dom";
 import {
   Card,
   Typography,
   List,
   ListItem,
-  ListItemPrefix,
-  Accordion,
-  AccordionHeader,
-  AccordionBody,
+  ListItemPrefix
 } from "@material-tailwind/react";
 import {
   PresentationChartBarIcon,
   UserCircleIcon,
-  PowerIcon,
-  CalendarDaysIcon,
   DocumentTextIcon,
-  TagIcon,
-  RectangleStackIcon,
-  NewspaperIcon,
-  ClipboardDocumentListIcon,
   UserGroupIcon
 } from "@heroicons/react/24/solid";
-import { ChevronDownIcon } from "@heroicons/react/24/outline";
 
 export default function SidebarKetuaForum() {
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const [open, setOpen] = React.useState(0);
-
-  const Logout = async () => {
-    const isConfirmed = window.confirm("Anda yakin ingin keluar?");
-    if (isConfirmed) {
-      try {
-        await dispatch(LogOut()).unwrap();
-        dispatch(reset());
-        navigate("/");
-      } catch (error) {
-        console.error("Gagal logout:", error);
-      }
-    }
-  };
-
-  const handleOpen = (value) => {
-    setOpen(open === value ? 0 : value);
-  };
-
   return (
     <Card className="h-screen w-full max-w-[16rem] p-2 shadow-none flex flex-col border-r border-blue-gray-50 rounded-none shadow-none">
       <div className="mb-2 flex items-center gap-4 p-4">

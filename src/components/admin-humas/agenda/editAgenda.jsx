@@ -19,6 +19,7 @@ export default function ModalEditAgenda({ open, handler, agenda, refreshData }) 
   const [file, setFile] = useState(null);
   const [fileName, setFileName] = useState("");
   const [loading, setLoading] = useState(false);
+  const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     if (agenda) {
@@ -57,7 +58,7 @@ export default function ModalEditAgenda({ open, handler, agenda, refreshData }) 
     if (file) data.append("file", file);
 
     try {
-      await axios.patch(`http://localhost:5000/agendas/${agenda.uuid}`, data, {
+      await axios.patch(`${API_URL}/agendas/${agenda.uuid}`, data, {
         headers: { "Content-Type": "multipart/form-data" },
         withCredentials: true,
       });

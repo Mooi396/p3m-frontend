@@ -1,11 +1,11 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { GetMe } from "../features/authSlice";
-import DaftarUserAdmin from '../components/admin-ketua_forum/user/daftarUser'
-import Head from "../components/head";
+import { GetMe } from "../../features/authSlice";
+import Head from "../../components/head";
+import KustomisasiLandingComponent from "../../components/admin/landing-page/kustomisasiLandingPageComponent";
 
-const DaftarUser = () => {
+const KustomLandingPage = () => {
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -20,16 +20,16 @@ const DaftarUser = () => {
                 navigate('/masuk');
                 return;
             }
-            if(user && user.role !== 'admin' && user.role !== 'ketua_forum') {
+            if(user && user.role !== 'admin') {
                 navigate(-1)
             }
         },[isError, user, navigate]);
   return (
     <div>
-        <Head title={"Daftar User"} />
-        <DaftarUserAdmin/>
+        <Head title={"Kustomisasi Landing Page"} />
+        <KustomisasiLandingComponent/>
     </div>
   )
 }
 
-export default DaftarUser
+export default KustomLandingPage

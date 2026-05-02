@@ -1,11 +1,11 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { GetMe } from "../features/authSlice";
-import DaftarTagAdmin from "../components/admin-humas/tag-dan-kategori/daftarTag";
-import Head from "../components/head";
+import { GetMe } from "../../features/authSlice";
+import Head from "../../components/head";
+import TambahUserAdmin from "../../components/admin-ketua_forum/user/tambahUser";
 
-const DaftarTag = () => {
+const TambahUserAdminPage = () => {
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -20,16 +20,16 @@ const DaftarTag = () => {
                 navigate('/masuk');
                 return;
             }
-            if(user && user.role !== 'admin' && user.role !== 'humas') {
+            if(user && user.role !== 'admin') {
                 navigate(-1)
             }
         },[isError, user, navigate]);
   return (
     <div>
-        <Head title={"Daftar Tag"} />
-        <DaftarTagAdmin/>
+        <Head title={"Tambah User"} />
+        <TambahUserAdmin/>
     </div>
   )
 }
 
-export default DaftarTag
+export default TambahUserAdminPage

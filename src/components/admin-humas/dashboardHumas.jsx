@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { 
   Card, CardHeader, Typography, CardBody, 
@@ -71,16 +71,31 @@ const DashboardHumas = () => {
   const [agendas, setAgendas] = useState([]);
   const [openDetailAgenda, setOpenDetailAgenda] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [totals, setTotals] = useState({ agenda: 0, berita: 0 });
+  // State 'totals' dihapus karena tidak digunakan (no-unused-vars)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const API_URL = process.env.REACT_APP_API_URL;
   
   const navigate = useNavigate();
 
+  const fetchData = useCallback(async () => {
+    try {
+      const [resAgenda, resBerita] = await Promise.all([
+        axios.get(`${API_URL}/agendas`, { withCredentials: true }),
+        axios.get(`${API_URL}/beritas`, { withCredentials: true }),
+      ]);
+      setAgendas(resAgenda.data);
+      setBeritas(resBerita.data);
+      // setTotals dihapus dari sini
+    } catch (error) {
+      console.error("Gagal mengambil data:", error);
+    }
+  }, [API_URL]);
+  
   useEffect(() => {
     const getMe = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/me", {
+        const response = await axios.get(`${API_URL}/me`, {
           withCredentials: true,
         });
         setUser(response.data);
@@ -90,24 +105,7 @@ const DashboardHumas = () => {
     };
     getMe();
     fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      const [resAgenda, resBerita] = await Promise.all([
-        axios.get("http://localhost:5000/agendas", { withCredentials: true }),
-        axios.get("http://localhost:5000/beritas", { withCredentials: true }),
-      ]);
-      setAgendas(resAgenda.data);
-      setBeritas(resBerita.data);
-      setTotals({
-        agenda: resAgenda.data.length,
-        berita: resBerita.data.length,
-      });
-    } catch (error) {
-      console.error("Gagal mengambil data:", error);
-    }
-  };
+  }, [API_URL, fetchData]);
 
   // Filter data milik sendiri (Humas)
   const myAgendas = agendas.filter(a => a.user?.uuid === user?.uuid);
@@ -163,13 +161,13 @@ const DashboardHumas = () => {
             <StatCard 
               icon={<CalendarDateRangeIcon className="h-6 w-6"/>} 
               color="green" 
-              label="Total Agenda" 
+              label="Total Agenda Saya" 
               value={myAgendas.length} 
             />
             <StatCard 
               icon={<NewspaperIcon className="h-6 w-6"/>} 
               color="amber" 
-              label="Total Berita" 
+              label="Total Berita Saya" 
               value={myBeritas.length} 
             />
           </div>

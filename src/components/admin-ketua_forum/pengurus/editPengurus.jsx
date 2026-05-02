@@ -19,6 +19,7 @@ export default function EditPengurusModal({ open, handler, pengurus, refreshData
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(""); // Untuk menampilkan gambar
   const [loading, setLoading] = useState(false);
+  const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     if (pengurus) {
@@ -60,7 +61,7 @@ export default function EditPengurusModal({ open, handler, pengurus, refreshData
 
     try {
       // Sesuaikan URL endpoint (menggunakan pengurus.uuid atau pengurus.id)
-      const response = await axios.patch(`http://localhost:5000/pengurus/${pengurus.uuid}`, data, {
+      const response = await axios.patch(`${API_URL}/pengurus/${pengurus.uuid}`, data, {
         headers: { "Content-Type": "multipart/form-data" },
         withCredentials: true,
       });

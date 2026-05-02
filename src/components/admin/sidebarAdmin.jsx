@@ -1,7 +1,5 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { LogOut, reset } from "../../features/authSlice";
+import { Link } from "react-router-dom";
 import {
   Card,
   Typography,
@@ -15,7 +13,6 @@ import {
 import {
   PresentationChartBarIcon,
   UserCircleIcon,
-  PowerIcon,
   CalendarDaysIcon,
   DocumentTextIcon,
   TagIcon,
@@ -29,22 +26,7 @@ import {
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 
 export default function SidebarAdmin() {
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
   const [open, setOpen] = React.useState(0);
-
-  const Logout = async () => {
-    const isConfirmed = window.confirm("Anda yakin ingin keluar?");
-    if (isConfirmed) {
-      try {
-        await dispatch(LogOut()).unwrap();
-        dispatch(reset());
-        navigate("/");
-      } catch (error) {
-        console.error("Gagal logout:", error);
-      }
-    }
-  };
 
   const handleOpen = (value) => {
     setOpen(open === value ? 0 : value);

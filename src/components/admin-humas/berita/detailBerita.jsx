@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import axios from "axios";
 import {
@@ -30,11 +30,12 @@ export default function DetailBerita() {
   const [berita, setBerita] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     const getBeritaById = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/beritas/${uuid}`, {
+        const response = await axios.get(`${API_URL}/beritas/${uuid}`, {
           withCredentials: true,
         });
         setBerita(response.data);
@@ -45,7 +46,7 @@ export default function DetailBerita() {
       }
     };
     getBeritaById();
-  }, [uuid]);
+  }, [uuid, API_URL]);
 
   if (loading) {
     return (

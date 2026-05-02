@@ -18,6 +18,7 @@ export default function CreateAgendaModal({ open, handler, refreshData }) {
   const [jadwal, setJadwal] = useState("");
   const [file, setFile] = useState(null);
   const [fileName, setFileName] = useState("");
+  const API_URL = process.env.REACT_APP_API_URL;
 
   const resetForm = () => {
     setNamaKegiatan("");
@@ -51,7 +52,7 @@ export default function CreateAgendaModal({ open, handler, refreshData }) {
     data.append("file", file);
 
     try {
-      const response = await axios.post("http://localhost:5000/agendas", data, {
+      const response = await axios.post(`${API_URL}/agendas`, data, {
         headers: { "Content-Type": "multipart/form-data" },
         withCredentials: true,
       });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { 
   Card, CardHeader, Typography, CardBody, 
@@ -107,6 +107,7 @@ const DashboardAdmin = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [openDetailAgenda, setOpenDetailAgenda] = useState(false);
   const [openDetailLaporan, setOpenDetailLaporan] = useState(false);
+  const API_URL = process.env.REACT_APP_API_URL;
 
   const navigate = useNavigate();
 
@@ -115,17 +116,15 @@ const DashboardAdmin = () => {
     setOpen(!open);
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const [resUsers, resAgenda, resBerita, resLaporan] = await Promise.all([
-        axios.get("http://localhost:5000/users", { withCredentials: true }),
-        axios.get("http://localhost:5000/agendas", { withCredentials: true }),
-        axios.get("http://localhost:5000/beritas", { withCredentials: true }),
-        axios.get("http://localhost:5000/laporans", { withCredentials: true })
+        axios.get(`${API_URL}/users`, { withCredentials: true }),
+        axios.get(`${API_URL}/agendas`, { withCredentials: true }),
+        axios.get(`${API_URL}/beritas`, { withCredentials: true }),
+        axios.get(`${API_URL}/laporans`, { withCredentials: true })
       ]);
       setUsers(resUsers.data);
       setAgendas(resAgenda.data);
@@ -140,12 +139,16 @@ const DashboardAdmin = () => {
     } catch (error) {
       console.error("Gagal mengambil data:", error);
     }
-  };
+  }, [API_URL]);
+  
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleAction = async (type, uuid, action) => {
     if(!window.confirm(`Yakin ingin melakukan aksi ${action}?`)) return;
     try {
-      await axios.patch(`http://localhost:5000/${type}/${uuid}/${action}`, {}, { withCredentials: true });
+      await axios.patch(`${API_URL}/${type}/${uuid}/${action}`, {}, { withCredentials: true });
       fetchData();
     } catch (error) {
       alert(`Gagal melakukan aksi pada ${type}`);

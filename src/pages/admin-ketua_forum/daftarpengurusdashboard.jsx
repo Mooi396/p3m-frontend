@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { GetMe } from "../features/authSlice";
-import DaftarPengurusComponent from "../components/admin-ketua_forum/pengurus/daftarPengurus";
-import Head from "../components/head";
+import { GetMe } from "../../features/authSlice";
+import DaftarPengurusComponent from "../../components/admin-ketua_forum/pengurus/daftarPengurus";
+import Head from "../../components/head";
 
 const DaftarPengurus = () => {
   const { user } = useSelector((state) => state.auth);

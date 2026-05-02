@@ -16,7 +16,6 @@ import {
   Drawer,
 } from "@material-tailwind/react";
 import { XMarkIcon, Bars3Icon } from "@heroicons/react/24/outline";
-import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 
 // Import Komponen Navigasi
 import SidebarAdmin from "../../admin/sidebarAdmin";
@@ -39,12 +38,13 @@ export default function CreateBerita() {
   const [tags, setTags] = useState([]);
   const [selectedKategori, setSelectedKategori] = useState([]);
   const [selectedTag, setSelectedTag] = useState([]);
+  const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const resKategori = await axios.get("http://localhost:5000/kategori");
-        const resTag = await axios.get("http://localhost:5000/tag");
+        const resKategori = await axios.get(`${API_URL}/kategori`);
+        const resTag = await axios.get(`${API_URL}/tag`);
         setCategories(resKategori.data);
         setTags(resTag.data);
       } catch (error) {
@@ -52,7 +52,7 @@ export default function CreateBerita() {
       }
     };
     fetchData();
-  }, []);
+  }, [API_URL]);
 
   const handleAddKategori = (uuid) => {
     if (uuid && !selectedKategori.includes(uuid)) {
@@ -90,7 +90,7 @@ export default function CreateBerita() {
     selectedTag.forEach(id => data.append("tag_uuid", id));
 
     try {
-      const response = await axios.post("http://localhost:5000/beritas", data, {
+      const response = await axios.post(`${API_URL}/beritas`, data, {
         headers: { "Content-Type": "multipart/form-data" },
         withCredentials: true,
       });

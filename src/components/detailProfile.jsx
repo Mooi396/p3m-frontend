@@ -29,7 +29,6 @@ import SidebarKetuaForum from "./admin-ketua_forum/sidebarKetuaForum";
 
 export default function DetailProfile() {
   const [user, setUser] = useState(null);
-  const [active] = React.useState(1);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [openImage, setOpenImage] = useState(false);
 

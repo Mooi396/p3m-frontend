@@ -4,18 +4,19 @@ import axios from "axios";
 
 export default function Footer() {
   const [footerData, setFooterData] = useState(null);
+  const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     const fetchFooter = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/landing");
+        const res = await axios.get(`${API_URL}/landing`);
         setFooterData(res.data.data.sections.footer);
       } catch (error) {
         console.error("Gagal load footer:", error);
       }
     };
     fetchFooter();
-  }, []);
+  }, [API_URL]);
 
   if (!footerData) return null;
 

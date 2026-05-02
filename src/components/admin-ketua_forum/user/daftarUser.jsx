@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import SidebarAdmin from "../../admin/sidebarAdmin";
 import axios from "axios";
 import TambahUserAdmin from "./tambahUser";
@@ -90,6 +90,7 @@ export default function DaftarUserAdmin() {
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("table"); 
+  const API_URL = process.env.REACT_APP_API_URL;
   
   // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
@@ -106,29 +107,31 @@ export default function DaftarUserAdmin() {
 
   const { user: authuser } = useSelector((state) => state.auth);
 
-  useEffect(() => {
-    getUsers();
-  }, []);
+  
 
   useEffect(() => {
     setCurrentPage(1);
   }, [filter, searchTerm, rowsPerPage]);
 
-  const getUsers = async () => {
+  const getUsers = useCallback(async () => {
     try {
-      const response = await axios.get("http://localhost:5000/users", {
+      const response = await axios.get(`${API_URL}/users`, {
         withCredentials: true,
       });
       setUsers(response.data);
     } catch (error) {
       console.error("Gagal mengambil data user:", error);
     }
-  };
+  }, [API_URL]);
+  
+  useEffect(() => {
+    getUsers();
+  }, [getUsers]);
 
   const deleteUser = async (uuid) => {
     if (window.confirm("Yakin ingin menghapus user ini?")) {
       try {
-        await axios.delete(`http://localhost:5000/users/${uuid}`, { withCredentials: true });
+        await axios.delete(`${API_URL}/users/${uuid}`, { withCredentials: true });
         getUsers();
       } catch (error) { console.error("Gagal menghapus:", error); }
     }
@@ -136,14 +139,14 @@ export default function DaftarUserAdmin() {
 
   const verifyUser = async (uuid) => {
     try {
-      await axios.patch(`http://localhost:5000/users/${uuid}/verify`, {}, { withCredentials: true });
+      await axios.patch(`${API_URL}/users/${uuid}/verify`, {}, { withCredentials: true });
       getUsers();
     } catch (error) { console.error("Gagal verifikasi:", error); }
   };
 
   const rejectUser = async (uuid) => {
     try {
-      await axios.patch(`http://localhost:5000/users/${uuid}/reject`, {}, { withCredentials: true });
+      await axios.patch(`${API_URL}/users/${uuid}/reject`, {}, { withCredentials: true });
       getUsers();
     } catch (error) { console.error("Gagal menolak:", error); }
   };
@@ -151,7 +154,7 @@ export default function DaftarUserAdmin() {
   const cancelVerifyUser = async (uuid) => {
     if (window.confirm("Batalkan verifikasi?")) {
       try {
-        await axios.patch(`http://localhost:5000/users/${uuid}/cancel-verify`, {}, { withCredentials: true });
+        await axios.patch(`${API_URL}/users/${uuid}/cancel-verify`, {}, { withCredentials: true });
         getUsers();
       } catch (error) { alert("Gagal membatalkan verifikasi"); }
     }
@@ -160,7 +163,7 @@ export default function DaftarUserAdmin() {
   const cancelRejectUser = async (uuid) => {
     if (window.confirm("Batalkan penolakan?")) {
       try {
-        await axios.patch(`http://localhost:5000/users/${uuid}/cancel-reject`, {}, { withCredentials: true });
+        await axios.patch(`${API_URL}/users/${uuid}/cancel-reject`, {}, { withCredentials: true });
         getUsers();
       } catch (error) { alert("Gagal membatalkan penolakan"); }
     }

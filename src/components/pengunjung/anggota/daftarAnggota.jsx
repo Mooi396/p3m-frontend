@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import {
   Card,
@@ -16,21 +16,19 @@ export default function DaftarAnggotaP3M() {
   const [anggotas, setAnggotas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  
+  const API_URL = process.env.REACT_APP_API_URL;
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(8); 
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [currentPage, itemsPerPage]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
-      const response = await axios.get("http://localhost:5000/anggotas", { withCredentials: true });
+      const response = await axios.get(`${API_URL}/anggotas`, { withCredentials: true });
       // Filter hanya role 'anggota'
       const dataHanyaAnggota = response.data.filter(item => item.user?.role === "anggota");
       setAnggotas(dataHanyaAnggota);
@@ -39,7 +37,11 @@ export default function DaftarAnggotaP3M() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_URL]);
+  
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const filteredData = anggotas.filter((item) => {
     return (

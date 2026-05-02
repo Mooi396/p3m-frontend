@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import SidebarAdmin from "../../admin/sidebarAdmin";
 import axios from "axios";
 import { 
@@ -47,30 +47,30 @@ export default function DaftarKategoriAdmin() {
   const [currentUuid, setCurrentUuid] = useState("");
   const [namaKategori, setNamaKategori] = useState("");
   const { user: authuser } = useSelector((state) => state.auth);
+  const API_URL = process.env.REACT_APP_API_URL;
 
   // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
   useEffect(() => {
-    getKategoris();
-  }, []);
-
-  // Reset ke halaman 1 jika search atau limit berubah
-  useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, rowsPerPage]);
 
-  const getKategoris = async () => {
+  const getKategoris = useCallback(async () => {
     try {
-      const response = await axios.get("http://localhost:5000/kategori", {
+      const response = await axios.get(`${API_URL}/kategori`, {
         withCredentials: true,
       });
       setKategoris(response.data);
     } catch (error) {
       console.error("Gagal mengambil data kategori:", error);
     }
-  };
+  }, [API_URL]);
+  
+  useEffect(() => {
+    getKategoris();
+  }, [getKategoris]);
 
   const handleOpen = () => {
     setOpen(!open);
@@ -91,12 +91,12 @@ export default function DaftarKategoriAdmin() {
   const handleSubmit = async () => {
     try {
       if (isEdit) {
-        await axios.patch(`http://localhost:5000/kategori/${currentUuid}`, 
+        await axios.patch(`${API_URL}/kategori/${currentUuid}`, 
           { nama_kategori: namaKategori }, 
           { withCredentials: true }
         );
       } else {
-        await axios.post("http://localhost:5000/kategori", 
+        await axios.post(`${API_URL}/kategori`, 
           { nama_kategori: namaKategori }, 
           { withCredentials: true }
         );
@@ -111,7 +111,7 @@ export default function DaftarKategoriAdmin() {
   const deleteKategori = async (uuid) => {
     if (window.confirm("Yakin ingin menghapus kategori ini?")) {
       try {
-        await axios.delete(`http://localhost:5000/kategori/${uuid}`, { withCredentials: true });
+        await axios.delete(`${API_URL}/kategori/${uuid}`, { withCredentials: true });
         getKategoris();
       } catch (error) {
         alert(error.response?.data?.msg || "Gagal menghapus");

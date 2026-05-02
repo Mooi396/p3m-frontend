@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   Carousel,
-  IconButton,
   Spinner,
   Typography,
   Card,
@@ -89,16 +88,17 @@ export default function LandingPage() {
   const [pengurus, setPengurus] = useState([]);
   const [beritas, setBeritas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const API_URL = process.env.REACT_APP_API_URL;
   const navigate = useNavigate();
 
 useEffect(() => {
   const fetchData = async () => {
     try {
       const [resLanding, resProfil, resPengurus, resBerita] = await Promise.all([
-        axios.get("http://localhost:5000/landing"),
-        axios.get("http://localhost:5000/profil-organisasi"),
-        axios.get("http://localhost:5000/pengurus"),
-        axios.get("http://localhost:5000/beritas")
+        axios.get(`${API_URL}/landing`),
+        axios.get(`${API_URL}/profil-organisasi`),
+        axios.get(`${API_URL}/pengurus`),
+        axios.get(`${API_URL}/beritas`)
       ]);
 
       // AMBIL DATA SECTIONS
@@ -122,7 +122,7 @@ useEffect(() => {
     }
   };
   fetchData();
-}, []);
+}, [API_URL]);
 
   if (loading) {
     return (
@@ -156,7 +156,7 @@ useEffect(() => {
                 <div key={index} className="relative h-full w-full">
                   <img
                     /* Perhatikan path-nya: /storage/landing_page/home/nama_file.png */
-                    src={`http://localhost:5000/storage/${slide.image}`}
+                    src={`${API_URL}/storage/${slide.image}`}
                     alt={slide.title}
                     className="h-full w-full object-cover"
                   />

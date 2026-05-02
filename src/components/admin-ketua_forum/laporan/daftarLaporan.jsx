@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import SidebarAdmin from "../../admin/sidebarAdmin";
 import axios from "axios";
 import { 
@@ -68,6 +68,7 @@ export default function DaftarLaporanComponents() {
   const [open, setOpen] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [selectedLaporan, setSelectedLaporan] = useState(null);
+  const API_URL = process.env.REACT_APP_API_URL;
   
   const { user: authuser } = useSelector((state) => state.auth);
 
@@ -78,20 +79,22 @@ export default function DaftarLaporanComponents() {
     setOpenEdit(true);
   };
 
-  useEffect(() => {
-    getLaporans();
-  }, []);
+  
 
-  const getLaporans = async () => {
+  const getLaporans = useCallback(async () => {
     try {
-      const response = await axios.get("http://localhost:5000/laporans", {
+      const response = await axios.get(`${API_URL}/laporans`, {
         withCredentials: true,
       });
       setLaporans(response.data);
     } catch (error) {
       console.error("Gagal mengambil data laporan:", error);
     }
-  };
+  }, [API_URL]);
+  
+  useEffect(() => {
+    getLaporans();
+  }, [getLaporans]);
 
   // Logic Filter
   const filteredData = laporans.filter((item) => {
@@ -140,7 +143,7 @@ export default function DaftarLaporanComponents() {
   const deleteLaporan = async (uuid) => {
     if (window.confirm("Yakin ingin menghapus laporan ini?")) {
       try {
-        await axios.delete(`http://localhost:5000/laporans/${uuid}`, { withCredentials: true });
+        await axios.delete(`${API_URL}/laporans/${uuid}`, { withCredentials: true });
         getLaporans();
       } catch (error) { alert(error.response?.data?.msg || "Gagal menghapus"); }
     }
@@ -148,14 +151,14 @@ export default function DaftarLaporanComponents() {
 
   const verifyLaporan = async (uuid) => {
     try {
-      await axios.patch(`http://localhost:5000/laporans/${uuid}/verify`, {}, { withCredentials: true });
+      await axios.patch(`${API_URL}/laporans/${uuid}/verify`, {}, { withCredentials: true });
       getLaporans();
     } catch (error) { alert("Gagal memverifikasi laporan"); }
   };
 
   const rejectLaporan = async (uuid) => {
     try {
-      await axios.patch(`http://localhost:5000/laporans/${uuid}/reject`, {}, { withCredentials: true });
+      await axios.patch(`${API_URL}/laporans/${uuid}/reject`, {}, { withCredentials: true });
       getLaporans();
     } catch (error) { alert("Gagal menolak laporan"); }
   };
@@ -163,7 +166,7 @@ export default function DaftarLaporanComponents() {
   const cancelVerifyLaporan = async (uuid) => {
     if (window.confirm("Batalkan verifikasi?")) {
       try {
-        await axios.patch(`http://localhost:5000/laporans/${uuid}/cancel-verify`, {}, { withCredentials: true });
+        await axios.patch(`${API_URL}/laporans/${uuid}/cancel-verify`, {}, { withCredentials: true });
         getLaporans();
       } catch (error) { alert("Gagal"); }
     }
@@ -172,7 +175,7 @@ export default function DaftarLaporanComponents() {
   const cancelRejectLaporan = async (uuid) => {
     if (window.confirm("Batalkan penolakan?")) {
       try {
-        await axios.patch(`http://localhost:5000/laporans/${uuid}/cancel-reject`, {}, { withCredentials: true });
+        await axios.patch(`${API_URL}/laporans/${uuid}/cancel-reject`, {}, { withCredentials: true });
         getLaporans();
       } catch (error) { alert("Gagal"); }
     }

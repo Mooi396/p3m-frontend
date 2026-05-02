@@ -1,6 +1,5 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
 import {
   Card,
   Typography,
@@ -13,10 +12,7 @@ import {
 } from "@material-tailwind/react";
 import {
   PresentationChartBarIcon,
-  UserCircleIcon,
-  PowerIcon,
   CalendarDaysIcon,
-  DocumentTextIcon,
   TagIcon,
   RectangleStackIcon,
   NewspaperIcon,
@@ -26,7 +22,6 @@ import {
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 
 export default function SidebarHumas() {
-  const navigate = useNavigate();
   const [open, setOpen] = React.useState(0);
 
   const handleOpen = (value) => {

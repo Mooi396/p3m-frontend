@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import {
   Card,
@@ -36,11 +36,12 @@ export default function KustomisasiLandingComponent() {
   const [footerContacts, setFooterContacts] = useState([]);
   const [footerAddresses, setFooterAddresses] = useState([]);
   const [footerEmails, setFooterEmails] = useState({ marketing: "", info: "" });
+  const API_URL = process.env.REACT_APP_API_URL;
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:5000/landing", { withCredentials: true });
+      const res = await axios.get(`${API_URL}/landing`, { withCredentials: true });
       const data = res.data.data;
       
       if (!data || !data.slug) {
@@ -63,11 +64,11 @@ export default function KustomisasiLandingComponent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_URL]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const addHeroSlide = () => {
   // Validasi: Jika jumlah slide sudah 5 atau lebih, stop.
@@ -96,7 +97,7 @@ export default function KustomisasiLandingComponent() {
     formData.append("file", file);
 
     try {
-        const res = await axios.post("http://localhost:5000/landing/upload-hero", formData, {
+        const res = await axios.post(`${API_URL}/landing/upload-hero`, formData, {
         withCredentials: true,
         headers: { "Content-Type": "multipart/form-data" },
         });
@@ -132,7 +133,7 @@ export default function KustomisasiLandingComponent() {
         tempDeletedFiles: deletedImages 
       };
 
-      await axios.patch("http://localhost:5000/landing/update", payload, { withCredentials: true });
+      await axios.patch(`${API_URL}/landing/update`, payload, { withCredentials: true });
       
       // Reset antrean hapus setelah berhasil
       setDeletedImages([]);
@@ -227,7 +228,7 @@ export default function KustomisasiLandingComponent() {
                         <div key={slide.id} className="p-5 rounded-2xl border border-gray-100 bg-white">
                           <div className="aspect-video w-full rounded-xl overflow-hidden mb-4 shadow-sm border border-gray-100">
                             <img 
-                              src={slide.image ? `http://localhost:5000/storage/${slide.image}` : "https://via.placeholder.com/600x300?text=No+Image"} 
+                              src={slide.image ? `${API_URL}/storage/${slide.image}` : "https://via.placeholder.com/600x300?text=No+Image"} 
                               className="w-full h-full object-cover"
                               alt="preview"
                             />
@@ -314,7 +315,7 @@ export default function KustomisasiLandingComponent() {
                           <div className="space-y-4">
                             <div className="relative h-44 w-full bg-gray-200 rounded-lg overflow-hidden group border border-gray-300">
                               <img 
-                                src={slide.image ? `http://localhost:5000/storage/${slide.image}` : "https://via.placeholder.com/400x200?text=No+Image"} 
+                                src={slide.image ? `${API_URL}/storage/${slide.image}` : "https://via.placeholder.com/400x200?text=No+Image"} 
                                 className="w-full h-full object-cover"
                                 alt="preview"
                               />

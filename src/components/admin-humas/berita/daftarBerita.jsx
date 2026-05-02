@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import SidebarAdmin from "../../admin/sidebarAdmin";
 import axios from "axios";
 import {
@@ -48,29 +48,32 @@ export default function DaftarBeritaAdmin() {
   const [openImageModal, setOpenImageModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState({ url: "", image: "", title: "" });
   const { user: authuser } = useSelector((state) => state.auth);
+  const API_URL = process.env.REACT_APP_API_URL;
 
   // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  useEffect(() => {
-    getBeritas();
-  }, []);
+  
 
   useEffect(() => {
     setCurrentPage(1);
   }, [filter, searchTerm, rowsPerPage]);
 
-  const getBeritas = async () => {
+  const getBeritas = useCallback(async () => {
     try {
-      const response = await axios.get("http://localhost:5000/beritas", {
+      const response = await axios.get(`${API_URL}/beritas`, {
         withCredentials: true,
       });
       setBeritas(response.data);
     } catch (error) {
       console.error("Gagal mengambil data berita:", error);
     }
-  };
+  }, [API_URL]);
+  
+  useEffect(() => {
+    getBeritas();
+  }, [getBeritas]);
 
   const filteredRows = beritas.filter((item) => {
     const matchesTab = filter === "all" || item.status === filter;
@@ -117,7 +120,7 @@ export default function DaftarBeritaAdmin() {
   const deleteBerita = async (uuid) => {
     if (window.confirm("Yakin ingin menghapus berita ini?")) {
       try {
-        await axios.delete(`http://localhost:5000/beritas/${uuid}`, { withCredentials: true });
+        await axios.delete(`${API_URL}/beritas/${uuid}`, { withCredentials: true });
         getBeritas();
       } catch (error) { alert(error.response?.data?.msg || "Gagal menghapus"); }
     }
@@ -125,14 +128,14 @@ export default function DaftarBeritaAdmin() {
 
   const verifyBerita = async (uuid) => {
     try {
-      await axios.patch(`http://localhost:5000/beritas/${uuid}/verify`, {}, { withCredentials: true });
+      await axios.patch(`${API_URL}/beritas/${uuid}/verify`, {}, { withCredentials: true });
       getBeritas();
     } catch (error) { alert("Gagal memverifikasi berita"); }
   };
 
   const rejectBerita = async (uuid) => {
     try {
-      await axios.patch(`http://localhost:5000/beritas/${uuid}/reject`, {}, { withCredentials: true });
+      await axios.patch(`${API_URL}/beritas/${uuid}/reject`, {}, { withCredentials: true });
       getBeritas();
     } catch (error) { alert("Gagal menolak berita"); }
   };
@@ -140,7 +143,7 @@ export default function DaftarBeritaAdmin() {
   const cancelVerifyBerita = async (uuid) => {
     if (window.confirm("Batalkan verifikasi?")) {
       try {
-        await axios.patch(`http://localhost:5000/beritas/${uuid}/cancel-verify`, {}, { withCredentials: true });
+        await axios.patch(`${API_URL}/beritas/${uuid}/cancel-verify`, {}, { withCredentials: true });
         getBeritas();
       } catch (error) { alert("Gagal membatalkan verifikasi"); }
     }
@@ -149,7 +152,7 @@ export default function DaftarBeritaAdmin() {
   const cancelRejectBerita = async (uuid) => {
     if (window.confirm("Batalkan penolakan?")) {
       try {
-        await axios.patch(`http://localhost:5000/beritas/${uuid}/cancel-reject`, {}, { withCredentials: true });
+        await axios.patch(`${API_URL}/beritas/${uuid}/cancel-reject`, {}, { withCredentials: true });
         getBeritas();
       } catch (error) { alert("Gagal membatalkan penolakan"); }
     }

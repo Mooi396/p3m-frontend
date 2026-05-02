@@ -1,11 +1,11 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { GetMe } from "../features/authSlice";
-import DaftarKategoriAdmin from "../components/admin-humas/tag-dan-kategori/daftarKategori";
-import Head from "../components/head";
+import { GetMe } from "../../features/authSlice";
+import DaftarTagAdmin from "../../components/admin-humas/tag-dan-kategori/daftarTag";
+import Head from "../../components/head";
 
-const DaftarKategori = () => {
+const DaftarTag = () => {
   const { user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -26,10 +26,10 @@ const DaftarKategori = () => {
         },[isError, user, navigate]);
   return (
     <div>
-        <Head title={"Daftar Kategori"} />
-        <DaftarKategoriAdmin/>
+        <Head title={"Daftar Tag"} />
+        <DaftarTagAdmin/>
     </div>
   )
 }
 
-export default DaftarKategori
+export default DaftarTag

@@ -17,6 +17,7 @@ export default function CreateLaporan({ open, handler, refreshData }) {
   const [file, setFile] = useState(null);
   const [fileName, setFileName] = useState("");
   const [loading, setLoading] = useState(false);
+  const API_URL = process.env.REACT_APP_API_URL;
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -47,7 +48,7 @@ export default function CreateLaporan({ open, handler, refreshData }) {
     data.append("file", file);
 
     try {
-      const response = await axios.post("http://localhost:5000/laporans", data, {
+      const response = await axios.post(`${API_URL}/laporans`, data, {
         headers: { "Content-Type": "multipart/form-data" },
         withCredentials: true,
       });
