@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
@@ -41,11 +41,12 @@ export default function ProfilOrganisasiComponent() {
     deskripsi_organisasi: "",
     file: null,
   });
+  const API_URL = process.env.REACT_APP_API_URL;
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const resAll = await axios.get(`http://localhost:5000/profil-organisasi`, { withCredentials: true });
+      const resAll = await axios.get(`${API_URL}/profil-organisasi`, { withCredentials: true });
       if (resAll.data && resAll.data.length > 0) {
         const data = resAll.data[0];
         setProfilOrganisasi(data);
@@ -62,22 +63,22 @@ export default function ProfilOrganisasiComponent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_URL]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const verifyProfil = async (uuid) => {
     try {
-      await axios.patch(`http://localhost:5000/profil-organisasi/${uuid}/verify`, {}, { withCredentials: true });
+      await axios.patch(`${API_URL}/profil-organisasi/${uuid}/verify`, {}, { withCredentials: true });
       fetchData();
     } catch (error) { alert("Gagal memverifikasi"); }
   };
 
   const rejectProfil = async (uuid) => {
     try {
-      await axios.patch(`http://localhost:5000/profil-organisasi/${uuid}/reject`, {}, { withCredentials: true });
+      await axios.patch(`${API_URL}/profil-organisasi/${uuid}/reject`, {}, { withCredentials: true });
       fetchData();
     } catch (error) { alert("Gagal menolak"); }
   };
@@ -85,7 +86,7 @@ export default function ProfilOrganisasiComponent() {
   const cancelVerify = async (uuid) => {
     if (window.confirm("Batalkan verifikasi? Status akan kembali ke Pending.")) {
       try {
-        await axios.patch(`http://localhost:5000/profil-organisasi/${uuid}/cancel-verify`, {}, { withCredentials: true });
+        await axios.patch(`${API_URL}/profil-organisasi/${uuid}/cancel-verify`, {}, { withCredentials: true });
         fetchData();
       } catch (error) { alert("Gagal membatalkan verifikasi"); }
     }
@@ -94,7 +95,7 @@ export default function ProfilOrganisasiComponent() {
   const cancelReject = async (uuid) => {
     if (window.confirm("Batalkan penolakan? Status akan kembali ke Pending.")) {
       try {
-        await axios.patch(`http://localhost:5000/profil-organisasi/${uuid}/cancel-reject`, {}, { withCredentials: true });
+        await axios.patch(`${API_URL}/profil-organisasi/${uuid}/cancel-reject`, {}, { withCredentials: true });
         fetchData();
       } catch (error) { alert("Gagal membatalkan penolakan"); }
     }
@@ -109,12 +110,12 @@ export default function ProfilOrganisasiComponent() {
       if (formData.file) dataToSend.append("file", formData.file);
 
       if (profilOrganisasi) {
-        await axios.patch(`http://localhost:5000/profil-organisasi/${profilOrganisasi.uuid}`, dataToSend, {
+        await axios.patch(`${API_URL}/profil-organisasi/${profilOrganisasi.uuid}`, dataToSend, {
           withCredentials: true,
           headers: { "Content-Type": "multipart/form-data" }
         });
       } else {
-        await axios.post(`http://localhost:5000/profil-organisasi`, dataToSend, {
+        await axios.post(`${API_URL}/profil-organisasi`, dataToSend, {
           withCredentials: true,
           headers: { "Content-Type": "multipart/form-data" }
         });

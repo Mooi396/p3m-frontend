@@ -1,12 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import SidebarAdmin from "../../admin/sidebarAdmin";
 import axios from "axios";
 import { 
   ArrowPathIcon, 
   MagnifyingGlassIcon, 
-  Bars3Icon, 
-  XMarkIcon,
+  Bars3Icon,
   ChevronLeftIcon,
   ChevronRightIcon,
   Squares2X2Icon,
@@ -69,23 +68,26 @@ export default function DaftarAgendaAdmin() {
   const [selectedAgenda, setSelectedAgenda] = useState(null);
   const { user: authuser } = useSelector((state) => state.auth);
   const [openAdd, setOpenAdd] = useState(false);
+  const API_URL = process.env.REACT_APP_API_URL;
 
   const handleOpenAdd = () => setOpenAdd(!openAdd);
 
-  useEffect(() => {
-    getAgendas();
-  }, []);
+  
 
-  const getAgendas = async () => {
+  const getAgendas = useCallback(async () => {
     try {
-      const response = await axios.get("http://localhost:5000/agendas", {
+      const response = await axios.get(`${API_URL}/agendas`, {
         withCredentials: true,
       });
       setAgendas(response.data);
     } catch (error) {
       console.error("Gagal mengambil data agenda:", error);
     }
-  };
+  }, [API_URL]);
+  
+  useEffect(() => {
+    getAgendas();
+  }, [getAgendas]);
 
   const filteredData = agendas.filter((item) => {
     const matchesTab = filter === "all" || item.status === filter;
@@ -137,7 +139,7 @@ export default function DaftarAgendaAdmin() {
   const deleteAgenda = async (uuid) => {
     if (window.confirm("Yakin ingin menghapus agenda ini?")) {
       try {
-        await axios.delete(`http://localhost:5000/agendas/${uuid}`, { withCredentials: true });
+        await axios.delete(`${API_URL}/agendas/${uuid}`, { withCredentials: true });
         getAgendas();
       } catch (error) {
         alert(error.response?.data?.msg || "Gagal menghapus");
@@ -147,14 +149,14 @@ export default function DaftarAgendaAdmin() {
 
   const verifyAgenda = async (uuid) => {
     try {
-      await axios.patch(`http://localhost:5000/agendas/${uuid}/verify`, {}, { withCredentials: true });
+      await axios.patch(`${API_URL}/agendas/${uuid}/verify`, {}, { withCredentials: true });
       getAgendas();
     } catch (error) { alert("Gagal memverifikasi"); }
   };
 
   const rejectAgenda = async (uuid) => {
     try {
-      await axios.patch(`http://localhost:5000/agendas/${uuid}/reject`, {}, { withCredentials: true });
+      await axios.patch(`${API_URL}/agendas/${uuid}/reject`, {}, { withCredentials: true });
       getAgendas();
     } catch (error) { alert("Gagal menolak"); }
   };
@@ -162,7 +164,7 @@ export default function DaftarAgendaAdmin() {
   const cancelVerifyAgenda = async (uuid) => {
     if (window.confirm("Batalkan verifikasi?")) {
       try {
-        await axios.patch(`http://localhost:5000/agendas/${uuid}/cancel-verify`, {}, { withCredentials: true });
+        await axios.patch(`${API_URL}/agendas/${uuid}/cancel-verify`, {}, { withCredentials: true });
         getAgendas();
       } catch (error) { alert("Gagal"); }
     }
@@ -170,7 +172,7 @@ export default function DaftarAgendaAdmin() {
   const cancelRejectAgenda = async (uuid) => {
     if (window.confirm("Batalkan penolakan?")) {
       try {
-        await axios.patch(`http://localhost:5000/agendas/${uuid}/cancel-reject`, {}, { withCredentials: true });
+        await axios.patch(`${API_URL}/agendas/${uuid}/cancel-reject`, {}, { withCredentials: true });
         getAgendas();
       } catch (error) { alert("Gagal"); }
     }

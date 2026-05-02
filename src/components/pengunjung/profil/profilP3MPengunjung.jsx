@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Typography, Spinner, Avatar } from "@material-tailwind/react";
+import { Typography, Spinner } from "@material-tailwind/react";
 import { CalendarDaysIcon, UserIcon } from "@heroicons/react/24/solid";
 
 export default function ProfilP3M() {

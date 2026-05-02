@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { GetMe } from "../features/authSlice";
-import Head from "../components/head";
-import ProfilOrganisasiComponent from "../components/admin-humas/profil/profilP3M";
+import { GetMe } from "../../features/authSlice";
+import Head from "../../components/head";
+import ProfilOrganisasiComponent from "../../components/admin-humas/profil/profilP3M";
 
 const ProfilOrganisasiDashboardPage = () => {
   const { user } = useSelector((state) => state.auth);

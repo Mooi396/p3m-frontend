@@ -27,6 +27,7 @@ export default function EditUserComponent({ open, handler, user, refreshData }) 
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     if (user) {
@@ -50,7 +51,7 @@ export default function EditUserComponent({ open, handler, user, refreshData }) 
     setLoading(true);
 
     try {
-      await axios.patch(`http://localhost:5000/users/${user.uuid}`, formData, {
+      await axios.patch(`${API_URL}/users/${user.uuid}`, formData, {
         withCredentials: true,
       });
       

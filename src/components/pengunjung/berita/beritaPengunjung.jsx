@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { Input, Button, Spinner, Chip, Typography, IconButton } from "@material-tailwind/react";
 import { MagnifyingGlassIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
@@ -18,23 +18,24 @@ export default function DaftarBeritaP3M() {
   const [filterTag, setFilterTag] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 5;
+  const API_URL = process.env.REACT_APP_API_URL;
 
-  useEffect(() => {
+  const fetchData = useCallback(async () => {
+  try {
+    const response = await axios.get(`${API_URL}/beritas`, { withCredentials: true });
+    const verified = response.data.filter(b => b.status === "verified");
+    verified.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    setBeritas(verified);
+  } catch (error) {
+    console.error("Gagal ambil data:", error);
+  } finally {
+    setLoading(false);
+  }
+}, [API_URL]);
+
+useEffect(() => {
     fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      const response = await axios.get("http://localhost:5000/beritas", { withCredentials: true });
-      const verified = response.data.filter(b => b.status === "verified");
-      verified.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-      setBeritas(verified);
-    } catch (error) {
-      console.error("Gagal ambil data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [fetchData]);
 
   const filteredBerita = beritas.filter(b => {
     const matchesSearch = b.judul_berita.toLowerCase().includes(search.toLowerCase());

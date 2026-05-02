@@ -18,6 +18,7 @@ export default function CreatePengurusModal({ open, handler, refreshData }) {
   const [instansi, setInstansi] = useState("");
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState("");
+  const API_URL = process.env.REACT_APP_API_URL;
 
   const resetForm = () => {
     setNamaLengkap("");
@@ -54,7 +55,7 @@ export default function CreatePengurusModal({ open, handler, refreshData }) {
     data.append("file", file); // Pastikan key "file" sesuai dengan yang diharapkan backend
 
     try {
-      const response = await axios.post("http://localhost:5000/pengurus", data, {
+      const response = await axios.post(`${API_URL}/pengurus`, data, {
         headers: { "Content-Type": "multipart/form-data" },
         withCredentials: true,
       });

@@ -18,13 +18,14 @@ export default function DetailBeritaPengunjung() {
   const [berita, setBerita] = useState(null);
   const [allBeritas, setAllBeritas] = useState([]); 
   const [loading, setLoading] = useState(true);
+  const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [resDetail, resAll] = await Promise.all([
-          axios.get(`http://localhost:5000/beritas/${uuid}`, { withCredentials: true }),
-          axios.get(`http://localhost:5000/beritas`, { withCredentials: true })
+          axios.get(`${API_URL}/beritas/${uuid}`, { withCredentials: true }),
+          axios.get(`${API_URL}/beritas`, { withCredentials: true })
         ]);
         
         setBerita(resDetail.data);
@@ -36,7 +37,7 @@ export default function DetailBeritaPengunjung() {
       }
     };
     fetchData();
-  }, [uuid]);
+  }, [uuid, API_URL]);
 
   const kategoriCounts = allBeritas.reduce((acc, b) => {
     b.kategoris?.forEach((kat) => {

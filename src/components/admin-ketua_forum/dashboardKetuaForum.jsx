@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { 
   Card, CardHeader, Typography, CardBody, 
@@ -13,7 +13,7 @@ import {
   AcademicCapIcon, BriefcaseIcon, BuildingOfficeIcon, EyeIcon
 } from "@heroicons/react/24/outline";
 import DashboardNavbar from '../dashboardNavbar';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import DetailLaporan from './detail/detailLaporan';
 import SidebarKetuaForum from './sidebarKetuaForum';
 
@@ -102,32 +102,18 @@ const DashboardKetuaForum = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [openDetailLaporan, setOpenDetailLaporan] = useState(false);
   const [userMe, setUserMe] = useState(null);
-
-  const navigate = useNavigate();
+  const API_URL = process.env.REACT_APP_API_URL;
 
   const handleOpen = (user = null) => {
     setSelectedUser(user);
     setOpen(!open);
   };
 
-  useEffect(() => {
-    const getMe = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/me", { withCredentials: true });
-        setUserMe(response.data);
-      } catch (error) {
-        console.error("Gagal mengambil data user:", error);
-      }
-    };
-    getMe();
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const [resUsers, resLaporan] = await Promise.all([
-        axios.get("http://localhost:5000/users", { withCredentials: true }),
-        axios.get("http://localhost:5000/laporans", { withCredentials: true })
+        axios.get(`${API_URL}/users`, { withCredentials: true }),
+        axios.get(`${API_URL}/laporans`, { withCredentials: true })
       ]);
       
       // Filter: Hanya menampilkan user dengan role "anggota" untuk Ketua Forum
@@ -142,12 +128,25 @@ const DashboardKetuaForum = () => {
     } catch (error) {
       console.error("Gagal mengambil data:", error);
     }
-  };
+  }, [API_URL]);
+
+  useEffect(() => {
+    const getMe = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/me`, { withCredentials: true });
+        setUserMe(response.data);
+      } catch (error) {
+        console.error("Gagal mengambil data user:", error);
+      }
+    };
+    getMe();
+    fetchData();
+  }, [API_URL, fetchData]);
 
   const handleAction = async (type, uuid, action) => {
     if(!window.confirm(`Yakin ingin melakukan verifikasi?`)) return;
     try {
-      await axios.patch(`http://localhost:5000/${type}/${uuid}/${action}`, {}, { withCredentials: true });
+      await axios.patch(`${API_URL}/${type}/${uuid}/${action}`, {}, { withCredentials: true });
       fetchData();
     } catch (error) {
       alert(`Gagal melakukan aksi pada ${type}`);
@@ -256,7 +255,7 @@ const DashboardKetuaForum = () => {
           </IconButton>
         </DialogHeader>
         <DialogBody className="p-4 lg:p-6">
-          {selectedUser && (
+          {selectedUser ? (
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
               <div className="md:col-span-4 flex flex-col items-center border-b md:border-b-0 md:border-r border-gray-100 pb-6 md:pb-0 md:pr-4">
                 {selectedUser.anggotas?.[0]?.url ? (
@@ -281,6 +280,10 @@ const DashboardKetuaForum = () => {
                   <SocialLink label="Sinta ID" value={selectedUser.anggotas?.[0]?.sinta} />
                 </div>
               </div>
+            </div>
+          ) : (
+            <div className="flex justify-center items-center py-10">
+              <Typography color="gray" className="italic">Memuat data...</Typography>
             </div>
           )}
         </DialogBody>

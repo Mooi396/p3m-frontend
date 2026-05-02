@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import {
   Listbox,
@@ -29,15 +29,14 @@ export default function HalamanAgenda() {
   const [agendas, setAgendas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterYear, setFilterYear] = useState(ALL_YEARS);
-  const [viewMode, setViewMode] = useState("grid"); // State baru: 'grid' atau 'table'
+  const [viewMode, setViewMode] = useState("grid");
+  const API_URL = process.env.REACT_APP_API_URL;
 
-  useEffect(() => {
-    fetchAgenda();
-  }, []);
+  
 
-  const fetchAgenda = async () => {
+  const fetchAgenda = useCallback(async () => {
     try {
-      const response = await axios.get("http://localhost:5000/agendas", {
+      const response = await axios.get(`${API_URL}/agendas`, {
         withCredentials: true,
       });
       const verified = response.data
@@ -49,7 +48,11 @@ export default function HalamanAgenda() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_URL]);
+  
+  useEffect(() => {
+    fetchAgenda();
+  }, [fetchAgenda]);
 
   const yearOptions = [
     ALL_YEARS,

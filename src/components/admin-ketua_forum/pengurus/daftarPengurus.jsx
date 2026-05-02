@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import SidebarAdmin from "../../admin/sidebarAdmin";
 import axios from "axios";
 import {
@@ -43,6 +43,7 @@ export default function DaftarPengurusComponent() {
   const [openAdd, setOpenAdd] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [selectedPengurus, setSelectedPengurus] = useState(null);
+  const API_URL = process.env.REACT_APP_API_URL;
   
   const handleOpenAdd = () => setOpenAdd(!openAdd);
 
@@ -51,25 +52,27 @@ export default function DaftarPengurusComponent() {
     setOpenImageModal(true);
   };
 
-  useEffect(() => {
-    getPengurus();
-  }, []);
+  
 
-  const getPengurus = async () => {
+  const getPengurus = useCallback(async () => {
     try {
-      const response = await axios.get("http://localhost:5000/pengurus", {
+      const response = await axios.get(`${API_URL}/pengurus`, {
         withCredentials: true,
       });
       setPengurus(response.data);
     } catch (error) {
       console.error("Gagal mengambil data pengurus:", error);
     }
-  };
-
+  }, [API_URL]);
+  
+  useEffect(() => {
+    getPengurus();
+  }, [getPengurus]);
+  
   const deletePengurus = async (uuid) => {
     if (window.confirm("Yakin ingin menghapus pengurus ini?")) {
       try {
-        await axios.delete(`http://localhost:5000/pengurus/${uuid}`, { withCredentials: true });
+        await axios.delete(`${API_URL}/pengurus/${uuid}`, { withCredentials: true });
         getPengurus();
       } catch (error) {
         alert(error.response?.data?.msg || "Gagal menghapus");

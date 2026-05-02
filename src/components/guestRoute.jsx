@@ -1,7 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { Alert } from "@material-tailwind/react";
 
 const GuestRoute = ({ children }) => {
   const { user, isError, message } = useSelector((state) => state.auth);

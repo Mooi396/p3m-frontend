@@ -26,6 +26,7 @@ export default function TambahUserAdmin({ open, handler, refreshData }) {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const API_URL = process.env.REACT_APP_API_URL;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -37,7 +38,7 @@ export default function TambahUserAdmin({ open, handler, refreshData }) {
     setLoading(true);
 
     try {
-      await axios.post("http://localhost:5000/register", formData, {
+      await axios.post(`${API_URL}/register`, formData, {
         withCredentials: true,
       });
       setFormData({ username: "", email: "", password: "", confPassword: "", role: "" });

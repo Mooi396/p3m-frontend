@@ -16,7 +16,6 @@ import {
   Drawer,
 } from "@material-tailwind/react";
 import { XMarkIcon, Bars3Icon } from "@heroicons/react/24/outline";
-import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 
 // Import Komponen Navigasi
 import SidebarAdmin from "../../admin/sidebarAdmin";
@@ -27,6 +26,7 @@ export default function EditBerita() {
   const { uuid } = useParams();
   const navigate = useNavigate();
   const { user: authuser } = useSelector((state) => state.auth);
+  const API_URL = process.env.REACT_APP_API_URL;
   
   // State UI
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -47,14 +47,14 @@ export default function EditBerita() {
       try {
         // Ambil data pendukung (kategori & tag)
         const [resKat, resTag] = await Promise.all([
-          axios.get("http://localhost:5000/kategori"),
-          axios.get("http://localhost:5000/tag")
+          axios.get(`${API_URL}/kategori`),
+          axios.get(`${API_URL}/tag`)
         ]);
         setCategories(resKat.data);
         setTags(resTag.data);
 
         // Ambil detail berita yang akan diedit
-        const resBerita = await axios.get(`http://localhost:5000/beritas/${uuid}`, {
+        const resBerita = await axios.get(`${API_URL}/beritas/${uuid}`, {
           withCredentials: true,
         });
         
@@ -82,7 +82,7 @@ export default function EditBerita() {
       }
     };
     fetchData();
-  }, [uuid, navigate, authuser]);
+  }, [uuid, navigate, authuser, API_URL]);
 
   const handleAddKategori = (val) => {
     if (val && !selectedKategori.includes(val)) setSelectedKategori([...selectedKategori, val]);
@@ -114,7 +114,7 @@ export default function EditBerita() {
     selectedTag.forEach(id => data.append("tag_uuid", id));
 
     try {
-      const response = await axios.patch(`http://localhost:5000/beritas/${uuid}`, data, {
+      const response = await axios.patch(`${API_URL}/beritas/${uuid}`, data, {
         headers: { "Content-Type": "multipart/form-data" },
         withCredentials: true,
       });

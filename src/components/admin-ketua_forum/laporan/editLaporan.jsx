@@ -18,6 +18,7 @@ export default function EditLaporan({ open, handler, laporan, refreshData }) {
   const [file, setFile] = useState(null);
   const [fileName, setFileName] = useState("");
   const [loading, setLoading] = useState(false);
+  const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     if (laporan) {
@@ -47,7 +48,7 @@ export default function EditLaporan({ open, handler, laporan, refreshData }) {
     if (file) data.append("file", file);
 
     try {
-      const response = await axios.patch(`http://localhost:5000/laporans/${laporan.uuid}`, data, {
+      await axios.patch(`${API_URL}/laporans/${laporan.uuid}`, data, {
         headers: { "Content-Type": "multipart/form-data" },
         withCredentials: true,
       });

@@ -1,11 +1,11 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { GetMe } from "../features/authSlice";
-import Head from "../components/head";
-import CreateAgenda from "../components/admin-humas/agenda/buatAgenda";
+import { GetMe } from "../../features/authSlice";
+import Head from "../../components/head";
+import CreateLaporan from "../components/admin-humas/laporan/buatLaporan";
 
-const TambahAgendaPage = () => {
+const TambahLaporanPage = () => {
     const { user } = useSelector((state) => state.auth);
       const dispatch = useDispatch();
       const navigate = useNavigate();
@@ -20,15 +20,15 @@ const TambahAgendaPage = () => {
                     navigate('/masuk');
                     return;
                 }
-                if(user && user.role !== 'admin' && user.role !== 'humas') {
+                if(user && user.role !== 'admin') {
                     navigate(-1)
                 }
             },[isError, user, navigate]);
   return (
     <div>
-        <Head title="Tambah Agenda" />
-        <CreateAgenda /></div>
+        <Head title="Tambah Laporan" />
+        <CreateLaporan /></div>
   )
 }
 
-export default TambahAgendaPage
+export default TambahLaporanPage

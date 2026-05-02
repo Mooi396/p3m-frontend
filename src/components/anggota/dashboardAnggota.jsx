@@ -23,11 +23,12 @@ import DashboardNavbar from "../dashboardNavbar";
 export default function DashboardAnggota() {
   const [user, setUser] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     const getMe = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/me", {
+        const response = await axios.get(`${API_URL}/me`, {
           withCredentials: true,
         });
         setUser(response.data);
@@ -36,7 +37,7 @@ export default function DashboardAnggota() {
       }
     };
     getMe();
-  }, []);
+  }, [API_URL]);
 
   if (!user) return (
     <div className="flex h-screen w-full items-center justify-center bg-gray-50">

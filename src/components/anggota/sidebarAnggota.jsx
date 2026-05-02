@@ -1,7 +1,5 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { LogOut, reset } from "../../features/authSlice";
+import { Link } from "react-router-dom"
 import {
   Card,
   Typography,
@@ -10,28 +8,10 @@ import {
   ListItemPrefix,
 } from "@material-tailwind/react";
 import {
-  UserCircleIcon,
-  PowerIcon,
   PresentationChartBarIcon,
 } from "@heroicons/react/24/solid";
 
 export default function SidebarAnggota() {
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const [open, setOpen] = React.useState(0);
-
-  const Logout = async () => {
-    const isConfirmed = window.confirm("Anda yakin ingin keluar?");
-    if (isConfirmed) {
-      try {
-        await dispatch(LogOut()).unwrap();
-        dispatch(reset());
-        navigate("/");
-      } catch (error) {
-        console.error("Gagal logout:", error);
-      }
-    }
-  };
 
   return (
     <Card className="h-screen w-full max-w-[16rem] p-2 shadow-none flex flex-col border-r border-blue-gray-50 rounded-none shadow-none">

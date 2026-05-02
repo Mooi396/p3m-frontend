@@ -1,36 +1,36 @@
 import {BrowserRouter, Routes, Route} from "react-router-dom"
-import Home from "./pages/home";
+import Home from "./pages/pengunjung/home";
 import Register from "./pages/register"
 import Dashboard from "./pages/dashboard";
-import DaftarUser from "./pages/daftaruser";
+import DaftarUser from "./pages/admin-ketua_forum/daftaruser";
 import Login from "./pages/login";
-import DaftarAgenda from "./pages/daftaragenda";
-import Daftarberita from "./pages/daftarberita";
-import Daftarlaporan from "./pages/daftarlaporan";
-import DaftarTag from "./pages/daftartag";
-import DaftarKategori from "./pages/daftarkategori";
-import TambahUserAdminPage from "./pages/tambahuseradmin";
+import DaftarAgenda from "./pages/admin-humas/daftaragenda";
+import Daftarberita from "./pages/admin-humas/daftarberita";
+import Daftarlaporan from "./pages/admin-ketua_forum/daftarlaporan";
+import DaftarTag from "./pages/admin-humas/daftartag";
+import DaftarKategori from "./pages/admin-humas/daftarkategori";
+import TambahUserAdminPage from "./pages/admin-ketua_forum/tambahuseradmin";
 import GuestRoute from "./components/guestRoute";
 import { useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { GetMe } from "./features/authSlice.js";
 import ScrollToTop from "./components/scrollToTop.jsx";
 import DetailProfilUserPage from "./pages/detailprofiladmin.jsx";
-import TambahBeritaPage from "./pages/tambahberita.jsx";
-import DetailBeritaDashboardPage from "./pages/detailberitadashboard.jsx";
-import EditberitaPage from "./pages/editberita.jsx";
-import TambahAgendaPage from "./pages/tambahagenda.jsx";
+import TambahBeritaPage from "./pages/admin-humas/tambahberita.jsx";
+import DetailBeritaDashboardPage from "./pages/admin-humas/detailberitadashboard.jsx";
+import EditberitaPage from "./pages/admin-humas/editberita.jsx";
+import TambahAgendaPage from "./pages/admin-humas/tambahagenda.jsx";
 import EditProfilUserPage from "./pages/editprofil.jsx";
-import BeritaPengunjungPage from "./pages/beritapengunjung.jsx";
-import DetailBeritaPengunjungPage from "./pages/detailberitapengunjung.jsx";
-import DaftarPengurus from "./pages/daftarpengurusdashboard.jsx";
-import ProfilOrganisasiDashboardPage from "./pages/profilorganisasidashboard.jsx";
-import DaftarAnggotaPengunjungPage from "./pages/daftaranggotapengunjung.jsx";
-import DaftarPengurusPengunjungPage from "./pages/daftarpenguruspengunjung.jsx";
-import ProfilP3MPengunjungPage from "./pages/profilP3MPengunjung.jsx";
-import DaftarAgendaPengunjungPage from "./pages/daftaragendapengunjung.jsx";
+import BeritaPengunjungPage from "./pages/pengunjung/beritapengunjung.jsx";
+import DetailBeritaPengunjungPage from "./pages/pengunjung/detailberitapengunjung.jsx";
+import DaftarPengurus from "./pages/admin-ketua_forum/daftarpengurusdashboard.jsx";
+import ProfilOrganisasiDashboardPage from "./pages/admin-humas/profilorganisasidashboard.jsx";
+import DaftarAnggotaPengunjungPage from "./pages/pengunjung/daftaranggotapengunjung.jsx";
+import DaftarPengurusPengunjungPage from "./pages/pengunjung/daftarpenguruspengunjung.jsx";
+import ProfilP3MPengunjungPage from "./pages/pengunjung/profilP3MPengunjung.jsx";
+import DaftarAgendaPengunjungPage from "./pages/pengunjung/daftaragendapengunjung.jsx";
 import NotFoundPage from "./pages/notfound.jsx";
-import KustomLandingPage from "./pages/kustomlandingpage.jsx";
+import KustomLandingPage from "./pages/admin/kustomlandingpage.jsx";
 
 function App() {
   const dispatch = useDispatch();

@@ -1,9 +1,8 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { GetMe } from "../features/authSlice";
-import Head from "../components/head";
-import DetailBerita from '../components/admin-humas/berita/detailBerita'
+import { GetMe } from "../../features/authSlice";
+import DetailBerita from '../../components/admin-humas/berita/detailBerita'
 
 const DetailBeritaDashboardPage = () => {
   const { user } = useSelector((state) => state.auth);
