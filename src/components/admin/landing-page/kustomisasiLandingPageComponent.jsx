@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+// Import instance api yang sudah memiliki interceptor JWT
+import api from "../../../utils/api"; 
 import {
   Card,
   Typography,
@@ -23,12 +24,14 @@ import {
 import Head from "../../head";
 import SidebarAdmin from "../../admin/sidebarAdmin";
 import DashboardNavbar from "../../dashboardNavbar";
+import { useNavigate } from "react-router-dom";
 
 export default function KustomisasiLandingComponent() {
   const [loading, setLoading] = useState(true);
   const [isEdit, setIsEdit] = useState(false);
   const [landingData, setLandingData] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const navigate = useNavigate();
 
   // State untuk Form Data
   const [heroSlides, setHeroSlides] = useState([]);
@@ -36,12 +39,15 @@ export default function KustomisasiLandingComponent() {
   const [footerContacts, setFooterContacts] = useState([]);
   const [footerAddresses, setFooterAddresses] = useState([]);
   const [footerEmails, setFooterEmails] = useState({ marketing: "", info: "" });
+  
+  // API_URL tetap dibutuhkan untuk prefix src gambar
   const API_URL = process.env.REACT_APP_API_URL;
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/landing`, { withCredentials: true });
+      // Menggunakan api instance
+      const res = await api.get(`/landing`);
       const data = res.data.data;
       
       if (!data || !data.slug) {
@@ -60,29 +66,30 @@ export default function KustomisasiLandingComponent() {
       }
     } catch (error) {
       console.error("Gagal mengambil data landing:", error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/masuk");
+      }
       setIsEdit(true);
     } finally {
       setLoading(false);
     }
-  }, [API_URL]);
+  }, [navigate]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
   const addHeroSlide = () => {
-  // Validasi: Jika jumlah slide sudah 5 atau lebih, stop.
-  if (heroSlides.length >= 5) {
-    alert("Batas maksimal adalah 5 slide.");
-    return;
-  }
-  
-  setHeroSlides([...heroSlides, { id: Date.now(), image: "", title: "", description: "" }]);
-};
+    if (heroSlides.length >= 5) {
+      alert("Batas maksimal adalah 5 slide.");
+      return;
+    }
+    setHeroSlides([...heroSlides, { id: Date.now(), image: "", title: "", description: "" }]);
+  };
 
   const removeHeroSlide = (id) => {
     const slideToRemove = heroSlides.find((s) => s.id === id);
-    // Jika slide yang dihapus punya image, masukkan ke daftar hapus
     if (slideToRemove && slideToRemove.image) {
       setDeletedImages((prev) => [...prev, slideToRemove.image]);
     }
@@ -97,24 +104,24 @@ export default function KustomisasiLandingComponent() {
     formData.append("file", file);
 
     try {
-        const res = await axios.post(`${API_URL}/landing/upload-hero`, formData, {
-        withCredentials: true,
-        headers: { "Content-Type": "multipart/form-data" },
+        // Post menggunakan api instance dengan header multipart
+        const res = await api.post(`/landing/upload-hero`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
         });
 
-      // Jika slide ini sebelumnya sudah ada gambarnya, masukkan gambar lama ke daftar antrean hapus
       if (oldSlide && oldSlide.image) {
         setDeletedImages((prev) => [...prev, oldSlide.image]);
       }
 
       const newSlides = heroSlides.map((s) => 
         s.id === id ? { ...s, image: res.data.imagePath } : s
-        );
-        setHeroSlides(newSlides);
+      );
+      setHeroSlides(newSlides);
     } catch (err) {
+        if (err.response?.status === 401) navigate("/masuk");
         alert("Gagal upload gambar");
     }
-    };
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -129,23 +136,26 @@ export default function KustomisasiLandingComponent() {
           socials: landingData?.footer?.socials || []
         },
         tradition: landingData?.tradition || { items: [] },
-        // Kirim daftar file yang perlu dibersihkan (Opsional, tapi membantu logika backend)
         tempDeletedFiles: deletedImages 
       };
 
-      await axios.patch(`${API_URL}/landing/update`, payload, { withCredentials: true });
+      await api.patch(`/landing/update`, payload);
       
-      // Reset antrean hapus setelah berhasil
       setDeletedImages([]);
       setIsEdit(false);
       fetchData();
       alert("Perubahan berhasil disimpan!");
     } catch (err) {
+      if (err.response?.status === 401) navigate("/masuk");
       alert("Gagal menyimpan perubahan");
     }
   };
 
-  if (loading) return <div className="flex h-screen w-full items-center justify-center"><Spinner className="h-12 w-12" color="blue" /></div>;
+  if (loading) return (
+    <div className="flex h-screen w-full items-center justify-center">
+      <Spinner className="h-12 w-12" color="blue" />
+    </div>
+  );
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
@@ -178,7 +188,6 @@ export default function KustomisasiLandingComponent() {
           
           <Card className="w-full shadow-sm border border-gray-100 rounded-2xl overflow-hidden bg-white">
             <CardBody className="p-6 lg:p-10">
-              {/* HEADER SECTION */}
               <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-10">
                 <div>
                   <Typography variant="h4" className="font-bold text-gray-800">
@@ -194,11 +203,10 @@ export default function KustomisasiLandingComponent() {
                     className={`flex items-center gap-2 normal-case rounded-lg shadow-none hover:shadow-none ${isEdit ? "bg-red-500" : "bg-black"}`}
                     onClick={() => {
                         if (isEdit) {
-                        fetchData();
-                        setIsEdit(false);
+                          fetchData();
+                          setIsEdit(false);
                         } else {
-                        // Jika ingin mulai edit
-                        setIsEdit(true);
+                          setIsEdit(true);
                         }
                     }}
                     >
@@ -217,7 +225,6 @@ export default function KustomisasiLandingComponent() {
 
               {!isEdit && landingData ? (
                 <div className="space-y-12">
-                  {/* VIEW MODE: HERO SLIDES */}
                   <section>
                     <Typography className="flex items-center gap-2 font-bold text-gray-800 mb-6 uppercase tracking-wider text-sm">
                       <PhotoIcon className="h-5 w-5" /> Hero Slides
@@ -246,9 +253,7 @@ export default function KustomisasiLandingComponent() {
                     </div>
                   </section>
 
-                  {/* VIEW MODE: CONTACTS & ADDRESSES */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                    {/* Contacts View */}
                     <div>
                       <Typography className="font-bold text-gray-800 mb-6 uppercase tracking-wider text-sm">Kontak Person</Typography>
                       <div className="space-y-4">
@@ -264,7 +269,6 @@ export default function KustomisasiLandingComponent() {
                       </div>
                     </div>
 
-                    {/* Addresses View */}
                     <div>
                       <Typography className="font-bold text-gray-800 mb-6 uppercase tracking-wider text-sm">Alamat Sekretariat</Typography>
                       <div className="space-y-4">
@@ -280,18 +284,17 @@ export default function KustomisasiLandingComponent() {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-12">
-                  {/* EDIT MODE: HERO SLIDER */}
                   <section>
                     <div className="flex justify-between items-center mb-6">
-                      <Typography as="div" className="flex items-center gap-2 font-bold text-gray-800 mb-6 uppercase tracking-wider text-sm">
-                      <PhotoIcon className="h-5 w-5" /> 
-                      <div className="flex flex-col">
-                        <Typography variant="h6">Hero Slides</Typography>
-                        <Typography className="text-xs text-gray-500 mt-1">
-                            * Maksimal 5 slide
-                        </Typography>
+                      <div className="flex items-center gap-2 font-bold text-gray-800 mb-6 uppercase tracking-wider text-sm">
+                        <PhotoIcon className="h-5 w-5" /> 
+                        <div className="flex flex-col">
+                          <Typography variant="h6">Hero Slides</Typography>
+                          <Typography className="text-xs text-gray-500 mt-1">
+                              * Maksimal 5 slide
+                          </Typography>
+                        </div>
                       </div>
-                    </Typography>
                       <Button size="sm" variant="outlined" className="flex items-center gap-2 rounded-lg" onClick={addHeroSlide} disabled={heroSlides.length >= 5}>
                         <PlusIcon className="h-4 w-4" /> Tambah Slide
                       </Button>
@@ -347,9 +350,7 @@ export default function KustomisasiLandingComponent() {
                     </div>
                   </section>
 
-                  {/* EDIT MODE: FOOTER CONTENT */}
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
-                    {/* Contacts Form */}
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
                         <Typography className="font-bold text-gray-800 uppercase tracking-wider text-sm">Kontak Person</Typography>
@@ -379,7 +380,6 @@ export default function KustomisasiLandingComponent() {
                       </div>
                     </div>
 
-                    {/* Addresses Form */}
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
                         <Typography className="font-bold text-gray-800 uppercase tracking-wider text-sm">Alamat Sekretariat</Typography>

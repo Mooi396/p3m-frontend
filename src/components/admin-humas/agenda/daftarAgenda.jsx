@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import SidebarAdmin from "../../admin/sidebarAdmin";
-import axios from "axios";
+// Menggunakan instance api yang sudah dikonfigurasi dengan JWT
+import api from "../../../utils/api"; 
 import { 
   ArrowPathIcon, 
   MagnifyingGlassIcon, 
@@ -44,6 +45,7 @@ import ModalEditAgenda from "./editAgenda";
 import DashboardNavbar from "../../dashboardNavbar";
 import SidebarHumas from "../sidebarHumas";
 import CreateAgendaModal from "./buatAgenda";
+import { useNavigate } from "react-router-dom";
 
 const TABS = [
   { label: "Semua", value: "all" },
@@ -68,22 +70,22 @@ export default function DaftarAgendaAdmin() {
   const [selectedAgenda, setSelectedAgenda] = useState(null);
   const { user: authuser } = useSelector((state) => state.auth);
   const [openAdd, setOpenAdd] = useState(false);
-  const API_URL = process.env.REACT_APP_API_URL;
+  const navigate = useNavigate();
 
   const handleOpenAdd = () => setOpenAdd(!openAdd);
 
-  
-
   const getAgendas = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_URL}/agendas`, {
-        withCredentials: true,
-      });
+      const response = await api.get("/agendas");
       setAgendas(response.data);
     } catch (error) {
       console.error("Gagal mengambil data agenda:", error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/masuk");
+      }
     }
-  }, [API_URL]);
+  }, [navigate]);
   
   useEffect(() => {
     getAgendas();
@@ -135,11 +137,11 @@ export default function DaftarAgendaAdmin() {
     return pages;
   };
 
-  // API Actions
+  // API Actions menggunakan instance api
   const deleteAgenda = async (uuid) => {
     if (window.confirm("Yakin ingin menghapus agenda ini?")) {
       try {
-        await axios.delete(`${API_URL}/agendas/${uuid}`, { withCredentials: true });
+        await api.delete(`/agendas/${uuid}`);
         getAgendas();
       } catch (error) {
         alert(error.response?.data?.msg || "Gagal menghapus");
@@ -149,14 +151,14 @@ export default function DaftarAgendaAdmin() {
 
   const verifyAgenda = async (uuid) => {
     try {
-      await axios.patch(`${API_URL}/agendas/${uuid}/verify`, {}, { withCredentials: true });
+      await api.patch(`/agendas/${uuid}/verify`);
       getAgendas();
     } catch (error) { alert("Gagal memverifikasi"); }
   };
 
   const rejectAgenda = async (uuid) => {
     try {
-      await axios.patch(`${API_URL}/agendas/${uuid}/reject`, {}, { withCredentials: true });
+      await api.patch(`/agendas/${uuid}/reject`);
       getAgendas();
     } catch (error) { alert("Gagal menolak"); }
   };
@@ -164,15 +166,16 @@ export default function DaftarAgendaAdmin() {
   const cancelVerifyAgenda = async (uuid) => {
     if (window.confirm("Batalkan verifikasi?")) {
       try {
-        await axios.patch(`${API_URL}/agendas/${uuid}/cancel-verify`, {}, { withCredentials: true });
+        await api.patch(`/agendas/${uuid}/cancel-verify`);
         getAgendas();
       } catch (error) { alert("Gagal"); }
     }
   };
+
   const cancelRejectAgenda = async (uuid) => {
     if (window.confirm("Batalkan penolakan?")) {
       try {
-        await axios.patch(`${API_URL}/agendas/${uuid}/cancel-reject`, {}, { withCredentials: true });
+        await api.patch(`/agendas/${uuid}/cancel-reject`);
         getAgendas();
       } catch (error) { alert("Gagal"); }
     }
@@ -343,7 +346,6 @@ export default function DaftarAgendaAdmin() {
             </CardBody>
 
             <CardFooter className="flex flex-wrap items-center justify-between border-t border-blue-gray-50 p-4 gap-4">
-              {/* Bagian Kiri: Info Halaman & Rows per Page */}
               <div className="flex items-center flex-wrap gap-4">
                 <Typography variant="small" color="blue-gray" className="font-normal whitespace-nowrap">
                   Halaman <b>{currentPage}</b> dari <b>{totalPages || 1}</b>
@@ -362,7 +364,6 @@ export default function DaftarAgendaAdmin() {
                 </div>
               </div>
               
-              {/* Bagian Kanan: Kontrol Navigasi */}
               <div className="flex items-center gap-1 sm:gap-2">
                 <Button
                   variant="outlined"

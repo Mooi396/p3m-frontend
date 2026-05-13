@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import SidebarAdmin from "../../admin/sidebarAdmin";
-import axios from "axios";
+// Import instance api yang sudah dikonfigurasi dengan JWT Interceptor
+import api from "../../../utils/api"; 
 import {
   MagnifyingGlassIcon, 
   Bars3Icon, 
@@ -48,13 +49,10 @@ export default function DaftarBeritaAdmin() {
   const [openImageModal, setOpenImageModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState({ url: "", image: "", title: "" });
   const { user: authuser } = useSelector((state) => state.auth);
-  const API_URL = process.env.REACT_APP_API_URL;
 
   // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-
-  
 
   useEffect(() => {
     setCurrentPage(1);
@@ -62,14 +60,17 @@ export default function DaftarBeritaAdmin() {
 
   const getBeritas = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_URL}/beritas`, {
-        withCredentials: true,
-      });
+      // Menggunakan api instance
+      const response = await api.get("/beritas");
       setBeritas(response.data);
     } catch (error) {
       console.error("Gagal mengambil data berita:", error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/masuk");
+      }
     }
-  }, [API_URL]);
+  }, [navigate]);
   
   useEffect(() => {
     getBeritas();
@@ -95,7 +96,6 @@ export default function DaftarBeritaAdmin() {
     }
   };
 
-  // --- LOGIKA ELLIPSIS PAGINATION ---
   const getPageNumbers = () => {
     const pages = [];
     if (totalPages <= 5) {
@@ -120,22 +120,24 @@ export default function DaftarBeritaAdmin() {
   const deleteBerita = async (uuid) => {
     if (window.confirm("Yakin ingin menghapus berita ini?")) {
       try {
-        await axios.delete(`${API_URL}/beritas/${uuid}`, { withCredentials: true });
+        await api.delete(`/beritas/${uuid}`);
         getBeritas();
-      } catch (error) { alert(error.response?.data?.msg || "Gagal menghapus"); }
+      } catch (error) { 
+        alert(error.response?.data?.msg || "Gagal menghapus"); 
+      }
     }
   };
 
   const verifyBerita = async (uuid) => {
     try {
-      await axios.patch(`${API_URL}/beritas/${uuid}/verify`, {}, { withCredentials: true });
+      await api.patch(`/beritas/${uuid}/verify`);
       getBeritas();
     } catch (error) { alert("Gagal memverifikasi berita"); }
   };
 
   const rejectBerita = async (uuid) => {
     try {
-      await axios.patch(`${API_URL}/beritas/${uuid}/reject`, {}, { withCredentials: true });
+      await api.patch(`/beritas/${uuid}/reject`);
       getBeritas();
     } catch (error) { alert("Gagal menolak berita"); }
   };
@@ -143,7 +145,7 @@ export default function DaftarBeritaAdmin() {
   const cancelVerifyBerita = async (uuid) => {
     if (window.confirm("Batalkan verifikasi?")) {
       try {
-        await axios.patch(`${API_URL}/beritas/${uuid}/cancel-verify`, {}, { withCredentials: true });
+        await api.patch(`/beritas/${uuid}/cancel-verify`);
         getBeritas();
       } catch (error) { alert("Gagal membatalkan verifikasi"); }
     }
@@ -152,7 +154,7 @@ export default function DaftarBeritaAdmin() {
   const cancelRejectBerita = async (uuid) => {
     if (window.confirm("Batalkan penolakan?")) {
       try {
-        await axios.patch(`${API_URL}/beritas/${uuid}/cancel-reject`, {}, { withCredentials: true });
+        await api.patch(`/beritas/${uuid}/cancel-reject`);
         getBeritas();
       } catch (error) { alert("Gagal membatalkan penolakan"); }
     }
@@ -445,6 +447,7 @@ export default function DaftarBeritaAdmin() {
         </div>
       </div>
 
+      {/* MODAL PREVIEW GAMBAR */}
       <Dialog size="md" open={openImageModal} handler={() => setOpenImageModal(false)} className="shadow-2xl overflow-hidden flex flex-col max-h-[95vh] w-[95vw] md:w-full">
         <DialogHeader className="flex shrink-0 justify-between items-center border-b border-gray-100 bg-gray-50 py-3 px-5">
           <div className="flex flex-col min-w-0">

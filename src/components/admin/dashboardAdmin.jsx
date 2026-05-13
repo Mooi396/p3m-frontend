@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import api from "../../utils/api"; 
 import { 
   Card, CardHeader, Typography, CardBody, 
   IconButton, Avatar, Chip, Button, Dialog,
@@ -107,7 +107,6 @@ const DashboardAdmin = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [openDetailAgenda, setOpenDetailAgenda] = useState(false);
   const [openDetailLaporan, setOpenDetailLaporan] = useState(false);
-  const API_URL = process.env.REACT_APP_API_URL;
 
   const navigate = useNavigate();
 
@@ -116,16 +115,16 @@ const DashboardAdmin = () => {
     setOpen(!open);
   };
 
-  
-
   const fetchData = useCallback(async () => {
     try {
+      // Menggunakan instance api. Path sudah otomatis relatif terhadap baseURL
       const [resUsers, resAgenda, resBerita, resLaporan] = await Promise.all([
-        axios.get(`${API_URL}/users`, { withCredentials: true }),
-        axios.get(`${API_URL}/agendas`, { withCredentials: true }),
-        axios.get(`${API_URL}/beritas`, { withCredentials: true }),
-        axios.get(`${API_URL}/laporans`, { withCredentials: true })
+        api.get(`/users`),
+        api.get(`/agendas`),
+        api.get(`/beritas`),
+        api.get(`/laporans`)
       ]);
+
       setUsers(resUsers.data);
       setAgendas(resAgenda.data);
       setBeritas(resBerita.data);
@@ -138,8 +137,13 @@ const DashboardAdmin = () => {
       });
     } catch (error) {
       console.error("Gagal mengambil data:", error);
+      // Jika error 401 (Unauthorized), arahkan ke login
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/masuk");
+      }
     }
-  }, [API_URL]);
+  }, [navigate]);
   
   useEffect(() => {
     fetchData();
@@ -148,7 +152,8 @@ const DashboardAdmin = () => {
   const handleAction = async (type, uuid, action) => {
     if(!window.confirm(`Yakin ingin melakukan aksi ${action}?`)) return;
     try {
-      await axios.patch(`${API_URL}/${type}/${uuid}/${action}`, {}, { withCredentials: true });
+      // Menggunakan api instance untuk patch request
+      await api.patch(`/${type}/${uuid}/${action}`);
       fetchData();
     } catch (error) {
       alert(`Gagal melakukan aksi pada ${type}`);
@@ -195,7 +200,6 @@ const DashboardAdmin = () => {
             <Typography color="gray" className="font-normal text-sm lg:text-base">Ringkasan data organisasi hari ini.</Typography>
           </div>
 
-          {/* Stats Cards - Responsive Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <StatCard icon={<UserGroupIcon className="h-6 w-6"/>} color="blue" label="Total Pengguna" value={totals.user} />
             <StatCard icon={<CalendarDateRangeIcon className="h-6 w-6"/>} color="green" label="Total Agenda" value={totals.agenda} />
@@ -203,9 +207,7 @@ const DashboardAdmin = () => {
             <StatCard icon={<DocumentTextIcon className="h-6 w-6"/>} color="red" label="Total Laporan" value={totals.laporan} />
           </div>
 
-          {/* Verification Tables - Responsive Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
-            
             <VerificationTable 
               title="Persetujuan Pengguna" 
               data={users.filter(u => u.status === "pending")}
@@ -334,7 +336,7 @@ const DashboardAdmin = () => {
               </div>
             </div>
           ) : (
-            <div className="flex justify-center p-10"><Spinner /></div> // Fallback agar tidak null
+            <div className="flex justify-center p-10"><Spinner /></div>
           )}
         </DialogBody>
         <DialogFooter className="p-4 border-t">
