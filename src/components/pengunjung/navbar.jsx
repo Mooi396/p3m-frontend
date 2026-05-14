@@ -1,10 +1,10 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
+// Menggunakan instance api dari folder utils
+import api from "../../utils/api";
 import {
   Navbar,
-  // Ganti MobileNav dengan Collapse
-  Collapse, 
+  Collapse,
   Typography,
   Button,
   Menu,
@@ -25,7 +25,7 @@ import {
 
 // --- SUB-COMPONENT: NavMenu ---
 export function NavMenu({ label, icon: Icon, items }) {
-  const [openMenu, setOpenMenu] = React.useState(false);
+  const [openMenu, setOpenMenu] = useState(false);
 
   return (
     <Menu open={openMenu} handler={setOpenMenu} allowHover>
@@ -127,18 +127,23 @@ function NavList({ laporanData }) {
 
 // --- MAIN COMPONENT: ComplexNavbar ---
 export function ComplexNavbar() {
-  const [isNavOpen, setIsNavOpen] = React.useState(false);
-  const [laporanData, setLaporanData] = React.useState([]);
+  const [isNavOpen, setIsNavOpen] = useState(false);
+  const [laporanData, setLaporanData] = useState([]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchLaporan = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/laporans", { withCredentials: true });
-        const formattedData = response.data.map(item => ({
-          label: item.keterangan,
-          url: item.url
-        }));
-        setLaporanData(formattedData);
+        // Menggunakan instance api (tanpa URL lengkap)
+        const response = await api.get("/laporans");
+        
+        // Memastikan data diproses jika response sukses
+        if (response.data && Array.isArray(response.data)) {
+          const formattedData = response.data.map(item => ({
+            label: item.keterangan,
+            url: item.url
+          }));
+          setLaporanData(formattedData);
+        }
       } catch (error) {
         console.error("Gagal memuat laporan:", error);
       }
@@ -155,18 +160,21 @@ export function ComplexNavbar() {
     <Navbar className="max-w-full py-2 px-4 lg:px-6 shadow-none border-b border-gray-100 rounded-none sticky top-0 z-[999] bg-white/90 backdrop-blur-md">
       <div className="container mx-auto flex items-center justify-between text-blue-gray-900">
         
+        {/* LOGO & TITLE */}
         <Link to="/" className="flex items-center gap-2 md:gap-3">
           <img src="/logo.png" alt="logo" className="w-10 h-10 md:w-14 md:h-14 object-contain" />
           <div className="text-black font-bold leading-tight">
             <div className="text-[11px] sm:text-sm md:text-base uppercase tracking-tight">Forum Kepala P3M</div>
-            <div className="text-[8px] sm:text-[10px] md:text-[11px] text-gray-600 tracking-wider">POLITEKNIK SE-INDONESIA</div>
+            <div className="text-[8px] sm:text-[10px] md:text-[11px] text-gray-600 tracking-wider font-medium">POLITEKNIK SE-INDONESIA</div>
           </div>
         </Link>
         
+        {/* DESKTOP NAVIGATION */}
         <div className="hidden lg:block">
           <NavList laporanData={laporanData} />
         </div>
 
+        {/* RIGHT ACTION BUTTONS */}
         <div className="flex items-center gap-2">
           <div className="hidden lg:block">
             <Link to="/daftar">
@@ -191,9 +199,9 @@ export function ComplexNavbar() {
         </div>
       </div>
 
-      {/* PERBAIKAN: Menggunakan Collapse menggantikan MobileNav */}
+      {/* MOBILE NAVIGATION COLLAPSE */}
       <Collapse open={isNavOpen}>
-        <div className="py-4 border-t border-gray-50 mt-2">
+        <div className="py-4 border-t border-gray-50 mt-2 container mx-auto">
           <NavList laporanData={laporanData} />
         </div>
       </Collapse>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import SidebarAdmin from "../../admin/sidebarAdmin";
-import axios from "axios";
+// Import instance api yang sudah dikonfigurasi dengan JWT Interceptor
+import api from "../../../utils/api"; 
 import {
   MagnifyingGlassIcon, 
   Bars3Icon, 
@@ -48,13 +49,13 @@ export default function DaftarBeritaAdmin() {
   const [openImageModal, setOpenImageModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState({ url: "", image: "", title: "" });
   const { user: authuser } = useSelector((state) => state.auth);
-  const API_URL = process.env.REACT_APP_API_URL;
+
+  // Ambil token untuk disisipkan ke tag <img>
+  const token = localStorage.getItem("token");
 
   // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-
-  
 
   useEffect(() => {
     setCurrentPage(1);
@@ -62,14 +63,17 @@ export default function DaftarBeritaAdmin() {
 
   const getBeritas = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_URL}/beritas`, {
-        withCredentials: true,
-      });
+      // Menggunakan api instance
+      const response = await api.get("/beritas");
       setBeritas(response.data);
     } catch (error) {
       console.error("Gagal mengambil data berita:", error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/masuk");
+      }
     }
-  }, [API_URL]);
+  }, [navigate]);
   
   useEffect(() => {
     getBeritas();
@@ -95,7 +99,6 @@ export default function DaftarBeritaAdmin() {
     }
   };
 
-  // --- LOGIKA ELLIPSIS PAGINATION ---
   const getPageNumbers = () => {
     const pages = [];
     if (totalPages <= 5) {
@@ -120,22 +123,24 @@ export default function DaftarBeritaAdmin() {
   const deleteBerita = async (uuid) => {
     if (window.confirm("Yakin ingin menghapus berita ini?")) {
       try {
-        await axios.delete(`${API_URL}/beritas/${uuid}`, { withCredentials: true });
+        await api.delete(`/beritas/${uuid}`);
         getBeritas();
-      } catch (error) { alert(error.response?.data?.msg || "Gagal menghapus"); }
+      } catch (error) { 
+        alert(error.response?.data?.msg || "Gagal menghapus"); 
+      }
     }
   };
 
   const verifyBerita = async (uuid) => {
     try {
-      await axios.patch(`${API_URL}/beritas/${uuid}/verify`, {}, { withCredentials: true });
+      await api.patch(`/beritas/${uuid}/verify`);
       getBeritas();
     } catch (error) { alert("Gagal memverifikasi berita"); }
   };
 
   const rejectBerita = async (uuid) => {
     try {
-      await axios.patch(`${API_URL}/beritas/${uuid}/reject`, {}, { withCredentials: true });
+      await api.patch(`/beritas/${uuid}/reject`);
       getBeritas();
     } catch (error) { alert("Gagal menolak berita"); }
   };
@@ -143,7 +148,7 @@ export default function DaftarBeritaAdmin() {
   const cancelVerifyBerita = async (uuid) => {
     if (window.confirm("Batalkan verifikasi?")) {
       try {
-        await axios.patch(`${API_URL}/beritas/${uuid}/cancel-verify`, {}, { withCredentials: true });
+        await api.patch(`/beritas/${uuid}/cancel-verify`);
         getBeritas();
       } catch (error) { alert("Gagal membatalkan verifikasi"); }
     }
@@ -152,7 +157,7 @@ export default function DaftarBeritaAdmin() {
   const cancelRejectBerita = async (uuid) => {
     if (window.confirm("Batalkan penolakan?")) {
       try {
-        await axios.patch(`${API_URL}/beritas/${uuid}/cancel-reject`, {}, { withCredentials: true });
+        await api.patch(`/beritas/${uuid}/cancel-reject`);
         getBeritas();
       } catch (error) { alert("Gagal membatalkan penolakan"); }
     }
@@ -212,6 +217,41 @@ export default function DaftarBeritaAdmin() {
     </div>
   );
 
+  const SecureImage = ({ src, alt, className, onClick }) => {
+  const [imageBlob, setImageBlob] = useState(null);
+
+  useEffect(() => {
+    const fetchImage = async () => {
+      try {
+        // Mengambil image sebagai blob lewat axios instance (yang sudah punya interceptor token)
+        const response = await api.get(src, { responseType: 'blob' });
+        const url = URL.createObjectURL(response.data);
+        setImageBlob(url);
+      } catch (error) {
+        console.error("Gagal memuat gambar secara aman", error);
+        setImageBlob("https://via.placeholder.com/150"); // fallback
+      }
+    };
+
+    if (src) fetchImage();
+    
+    // Cleanup URL saat komponen unmount
+    return () => {
+      if (imageBlob) URL.revokeObjectURL(imageBlob);
+    };
+  }, [src]);
+
+  return (
+    <img 
+      src={imageBlob || ""} 
+      alt={alt} 
+      className={className} 
+      onClick={onClick}
+      onError={(e) => { e.target.src = "https://via.placeholder.com/150" }}
+    />
+  );
+};
+
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
       <div className="hidden lg:block">
@@ -256,7 +296,7 @@ export default function DaftarBeritaAdmin() {
                     </IconButton>
                   </div>
                   <Link to="/dashboard/berita/tambah" className="flex-1 sm:flex-none">
-                    <Button className="flex items-center gap-3 w-full justify-center" size="sm">
+                    <Button className="flex items-center gap-3" size="sm">
                       <PlusIcon className="h-4 w-4" /> Tambah Berita
                     </Button>
                   </Link>
@@ -304,8 +344,13 @@ export default function DaftarBeritaAdmin() {
                         <tr key={berita.uuid} className="hover:bg-gray-50 transition-colors">
                           <td className={classes}>
                             <div className="flex items-center gap-3">
+                              {/* Menambahkan Token di Image URL */}
                               <div className="relative h-10 w-10 cursor-pointer overflow-hidden rounded-lg shadow-sm" onClick={() => handleOpenImage(berita.url, berita.image, berita.judul_berita)}>
-                                <img src={berita.url} alt="" className="h-full w-full object-cover" onError={(e) => { e.target.src = "https://via.placeholder.com/150" }} />
+                                <SecureImage 
+                                  src={berita.url} 
+                                  alt={berita.judul_berita} 
+                                  className="h-full w-full object-cover" 
+                                />
                               </div>
                               <div className="flex flex-col max-w-[200px]">
                                 <Typography variant="small" className="font-bold truncate">{berita.judul_berita}</Typography>
@@ -341,8 +386,13 @@ export default function DaftarBeritaAdmin() {
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 p-4">
                   {currentItems.map((berita) => (
                     <Card key={berita.uuid} className="border border-gray-200 shadow-sm rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                      {/* Menambahkan Token di Image URL */}
                       <div className="relative h-40 group cursor-pointer" onClick={() => handleOpenImage(berita.url, berita.image, berita.judul_berita)}>
-                        <img src={berita.url} className="w-full h-full object-cover" alt="" onError={(e) => e.target.src = "https://via.placeholder.com/400x200"} />
+                        <SecureImage 
+                          src={berita.url} 
+                          className="w-full h-full object-cover" 
+                          alt={berita.judul_berita} 
+                        />
                         <div className="absolute top-2 right-2">
                           <Chip size="sm" value={berita.status} color={berita.status === "verified" ? "green" : berita.status === "pending" ? "amber" : "red"} />
                         </div>
@@ -445,6 +495,7 @@ export default function DaftarBeritaAdmin() {
         </div>
       </div>
 
+      {/* MODAL PREVIEW GAMBAR */}
       <Dialog size="md" open={openImageModal} handler={() => setOpenImageModal(false)} className="shadow-2xl overflow-hidden flex flex-col max-h-[95vh] w-[95vw] md:w-full">
         <DialogHeader className="flex shrink-0 justify-between items-center border-b border-gray-100 bg-gray-50 py-3 px-5">
           <div className="flex flex-col min-w-0">
@@ -457,7 +508,12 @@ export default function DaftarBeritaAdmin() {
         </DialogHeader>
         <DialogBody className="p-0 bg-gray-100 overflow-y-auto flex-1">
           <div className="flex items-center justify-center p-4">
-            <img alt={selectedImage.title} className="max-h-[60vh] w-full h-auto rounded-lg shadow-lg object-contain bg-white" src={selectedImage.url} />
+             {/* Menambahkan Token di Image URL */}
+            <SecureImage 
+              src={selectedImage.url} 
+              alt={selectedImage.title} 
+              className="max-h-[60vh] w-full h-auto rounded-lg shadow-lg object-contain bg-white" 
+            />
           </div>
         </DialogBody>
       </Dialog>

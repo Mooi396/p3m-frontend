@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import axios from "axios";
+// Import instance api yang sudah memiliki interceptor JWT
+import api from "../../../utils/api"; 
 import {
   Button,
   Dialog,
@@ -11,6 +12,7 @@ import {
   IconButton,
 } from "@material-tailwind/react";
 import { DocumentIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import { useNavigate } from "react-router-dom";
 
 export default function CreateAgendaModal({ open, handler, refreshData }) {
   const [namaKegiatan, setNamaKegiatan] = useState("");
@@ -18,7 +20,7 @@ export default function CreateAgendaModal({ open, handler, refreshData }) {
   const [jadwal, setJadwal] = useState("");
   const [file, setFile] = useState(null);
   const [fileName, setFileName] = useState("");
-  const API_URL = process.env.REACT_APP_API_URL;
+  const navigate = useNavigate();
 
   const resetForm = () => {
     setNamaKegiatan("");
@@ -52,15 +54,20 @@ export default function CreateAgendaModal({ open, handler, refreshData }) {
     data.append("file", file);
 
     try {
-      const response = await axios.post(`${API_URL}/agendas`, data, {
+      // Menggunakan api instance. Header multipart/form-data tetap diperlukan untuk upload file.
+      const response = await api.post(`/agendas`, data, {
         headers: { "Content-Type": "multipart/form-data" },
-        withCredentials: true,
       });
+      
       alert(response.data.msg);
       resetForm();
       refreshData(); // Memanggil fungsi fetch data di parent
       handler(); // Menutup modal
     } catch (error) {
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/masuk");
+      }
       alert(error.response?.data?.msg || "Terjadi kesalahan saat menyimpan agenda");
     }
   };

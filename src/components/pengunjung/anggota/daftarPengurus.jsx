@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+// Menggunakan instance api dari folder utils
+import api from "../../../utils/api"; 
 import {
   Card,
   CardBody,
@@ -16,31 +17,31 @@ export default function DaftarPengurusP3M() {
   const [pengurus, setPengurus] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const API_URL = process.env.REACT_APP_API_URL;
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(8);
 
-  
-
+  // Auto scroll ke atas saat ganti halaman atau limit data
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [currentPage, itemsPerPage]);
 
   const fetchData = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_URL}/pengurus`, { withCredentials: true });
+      // Menggunakan utilitas api untuk memanggil endpoint /pengurus
+      const response = await api.get("/pengurus");
       setPengurus(response.data);
     } catch (error) {
       console.error("Gagal mengambil data pengurus:", error);
     } finally {
       setLoading(false);
     }
-  }, [API_URL]);
+  }, []);
 
-useEffect(() => {
+  useEffect(() => {
     fetchData();
   }, [fetchData]);
 
+  // Logika Pencarian
   const filteredData = pengurus.filter((item) => {
     return (
       item.nama_lengkap?.toLowerCase().includes(search.toLowerCase()) ||
@@ -49,6 +50,7 @@ useEffect(() => {
     );
   });
 
+  // Logika Paginasi
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredData.slice(indexOfFirstItem, indexOfLastItem);

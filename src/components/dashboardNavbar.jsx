@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+// Import instance api agar token terkirim otomatis di header
+import api from "../utils/api"; 
 import { Link, useNavigate } from "react-router-dom";
 import { LogOut, reset } from "../features/authSlice";
 import {
@@ -42,43 +43,53 @@ function ProfileMenu() {
   useEffect(() => {
     const getMe = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/me", {
-          withCredentials: true,
-        });
+        // Menggunakan api instance untuk fetch data profile
+        const response = await api.get("/me");
         setUser(response.data);
       } catch (error) {
         console.error("Gagal mengambil data user:", error);
+        // Jika token tidak valid saat fetch profile, paksa logout di client
+        if (error.response?.status === 401) {
+          localStorage.removeItem("token");
+          navigate("/masuk");
+        }
       }
     };
     getMe();
-  }, []);
+  }, [navigate]);
+
   const info = user?.anggotas && user.anggotas.length > 0 ? user.anggotas[0] : {};
   const isNotVerified = user?.status !== "verified";
 
   const closeMenu = () => setIsMenuOpen(false);
 
   const handleMenuClick = (path, label) => {
-  if (label === "Edit Profile" && (user?.status === "pending" || user?.status === "rejected")) {
-    return; 
-  }
-  
-  closeMenu();
-  if (path) navigate(path);
-};
+    if (label === "Edit Profile" && (user?.status === "pending" || user?.status === "rejected")) {
+      return; 
+    }
+    
+    closeMenu();
+    if (path) navigate(path);
+  };
 
-  if (!user) return <div className="h-8 w-8 animate-pulse rounded-full bg-gray-200" />;
   const Logout = async () => {
     const isConfirmed = window.confirm("Anda yakin ingin keluar?");
     if (isConfirmed) {
       try {
+        // Jalankan LogOut dari authSlice yang sudah kita sesuaikan (menghapus token & session)
         await dispatch(LogOut()).unwrap();
         dispatch(reset());
-        navigate("/");
+        navigate("/masuk");
       } catch (error) {
         console.error("Gagal logout:", error);
+        // Fallback jika API logout gagal, tetap bersihkan client
+        localStorage.removeItem("token");
+        navigate("/masuk");
       }
     }
   };
+
+  if (!user) return <div className="h-8 w-8 animate-pulse rounded-full bg-gray-200" />;
 
   return (
     <Menu open={isMenuOpen} handler={setIsMenuOpen} placement="bottom-end">
@@ -119,7 +130,7 @@ function ProfileMenu() {
               disabled={isDisabled}
               onClick={() => handleMenuClick(path, label)}
               className={`flex items-center gap-2 rounded ${
-                isDisabled ? "opacity-50 cursor-not-allowed pointer-events-none" : ""
+                isDisabled ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >
               {React.createElement(icon, {
@@ -131,29 +142,29 @@ function ProfileMenu() {
                 className="font-normal"
                 color={isDisabled ? "gray" : "inherit"}
               >
-                {label} {isDisabled && "(Tidak memiliki akses)"}
+                {label} {isDisabled && "(Dibatasi)"}
               </Typography>
             </MenuItem>
           );
         })}
-        <MenuItem onClick={Logout} className=" flex items-center gap-2 hover:bg-red-50">
+        <hr className="my-1 border-blue-gray-50" />
+        <MenuItem onClick={Logout} className="flex items-center gap-2 hover:bg-red-50 group">
           <PowerIcon className="h-4 w-4 text-red-500" />
           <Typography 
             variant="small" 
-            className="font-normal text-red-500 hover:text-red-700 "
+            className="font-normal text-red-500 group-hover:text-red-700"
           >
             Log Out
           </Typography>
-          </MenuItem>
+        </MenuItem>
       </MenuList>
-      
     </Menu>
   );
 }
 
 export default function DashboardNavbar() {
   return (
-    <Navbar fullWidth className="p-2 lg:pl-6 rounded-none shadow-none border border-blue-gray-50">
+    <Navbar fullWidth className="p-2 lg:pl-6 rounded-none shadow-none border border-blue-gray-50 sticky top-0 z-50 bg-white">
       <div className="relative mx-auto flex items-center justify-between text-blue-gray-900">
         <Typography
           as={Link}

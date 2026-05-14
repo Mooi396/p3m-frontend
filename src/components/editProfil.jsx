@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
-import axios from "axios";
+// Menggunakan instance api dari utils
+import api from "../utils/api";
 import { useNavigate } from "react-router-dom";
 import {
   Card,
@@ -38,7 +39,7 @@ export default function EditProfil() {
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState("");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [openPreview, setOpenPreview] = useState(false); // State untuk modal preview besar
+  const [openPreview, setOpenPreview] = useState(false);
 
   const [formData, setFormData] = useState({
     username: "",
@@ -60,9 +61,8 @@ export default function EditProfil() {
 
   const getUserData = useCallback(async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/users/${user.uuid}`, {
-        withCredentials: true,
-      });
+      // Menggunakan api.get
+      const response = await api.get(`/users/${user.uuid}`);
       const data = response.data;
       const detail = data.anggotas?.[0] || {};
       
@@ -110,23 +110,22 @@ export default function EditProfil() {
 
     const data = new FormData();
     Object.keys(formData).forEach((key) => {
+      // Hanya kirim field yang memiliki nilai, kecuali password (biarkan backend yang handle jika kosong)
       if (formData[key] !== null && formData[key] !== undefined) {
         data.append(key, formData[key]);
       }
     });
+    
     if (file) {
       data.append("file", file);
     }
 
     try {
-      const response = await axios.patch(
-        `http://localhost:5000/users/${user.uuid}`,
-        data,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-          withCredentials: true,
-        }
-      );
+      // Menggunakan api.patch
+      const response = await api.patch(`/users/${user.uuid}`, data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      
       alert(response.data.msg);
       navigate("/dashboard/profil");
     } catch (error) {
@@ -164,7 +163,7 @@ export default function EditProfil() {
           <IconButton
             variant="text"
             color="blue-gray"
-            className="lg:hidden mr-2"
+            className="lg:hidden ml-4"
             onClick={() => setIsDrawerOpen(true)}
           >
             <Bars3Icon className="h-6 w-6" />
@@ -175,7 +174,7 @@ export default function EditProfil() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 md:p-8">
-          <Card className="w-full mx-auto p-4 md:p-8 shadow-md border border-gray-200 bg-white rounded-xl mb-10">
+          <Card className="w-full max-w-5xl mx-auto p-4 md:p-8 shadow-sm border border-gray-200 bg-white rounded-xl mb-10">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
               <div>
                 <Typography variant="h4" color="blue-gray" className="mb-1 text-2xl font-bold">
@@ -205,7 +204,7 @@ export default function EditProfil() {
                       alt="avatar" 
                       size="xxl" 
                       className="border-4 border-white shadow-xl p-0.5 object-cover h-32 w-32 cursor-pointer hover:opacity-90 transition-opacity" 
-                      onClick={handleOpenPreview} // Klik untuk preview besar
+                      onClick={handleOpenPreview}
                     />
                   ) : (
                     <div className="h-32 w-32 rounded-full bg-gray-200 flex items-center justify-center border-4 border-white shadow-lg">
@@ -240,7 +239,7 @@ export default function EditProfil() {
               </div>
 
               {/* Account Section */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-black">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-5">
                   <Typography variant="h6" color="blue-gray" className="flex items-center gap-2">
                     <div className="h-2 w-2 bg-black rounded-full"></div>
@@ -256,7 +255,7 @@ export default function EditProfil() {
                     <div className="h-2 w-2 bg-black rounded-full"></div>
                     Detail Profesional
                   </Typography>
-                  <Input label="Nama Lengkap & Gelar" name="nama_lengkap" color="black" value={formData.nama_lengkap} onChange={handleChange} icon={<UserCircleIcon/>} />
+                  <Input label="Nama Lengkap" name="nama_lengkap" color="black" value={formData.nama_lengkap} onChange={handleChange} icon={<UserCircleIcon/>} />
                   <Input label="Gelar Singkat (Mis: S.Kom, M.T.)" name="gelar" color="black" value={formData.gelar} onChange={handleChange} />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Input label="Jabatan" name="jabatan" color="black" value={formData.jabatan} onChange={handleChange} icon={<BriefcaseIcon/>} />
@@ -267,7 +266,7 @@ export default function EditProfil() {
               </div>
 
               {/* Social/Links Section */}
-              <div className="space-y-5 border-t border-gray-100 pt-8 text-black">
+              <div className="space-y-5 border-t border-gray-100 pt-8">
                 <Typography variant="h6" color="blue-gray" className="flex items-center gap-2">
                   <div className="h-2 w-2 bg-black rounded-full"></div>
                   Tautan Akademik & Media Sosial
@@ -285,7 +284,7 @@ export default function EditProfil() {
                 <Button 
                   variant="text" 
                   color="red" 
-                  onClick={() => navigate(0)} 
+                  onClick={() => getUserData()} 
                   className="order-2 sm:order-1 normal-case"
                 >
                   Reset Form

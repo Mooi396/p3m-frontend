@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+// Import instance api yang sudah memiliki interceptor JWT
+import api from "../../../utils/api"; 
 import {
   Button,
   Dialog,
@@ -11,6 +12,7 @@ import {
   IconButton,
 } from "@material-tailwind/react";
 import { XMarkIcon, DocumentIcon } from "@heroicons/react/24/solid";
+import { useNavigate } from "react-router-dom";
 
 export default function ModalEditAgenda({ open, handler, agenda, refreshData }) {
   const [namaKegiatan, setNamaKegiatan] = useState("");
@@ -19,7 +21,7 @@ export default function ModalEditAgenda({ open, handler, agenda, refreshData }) 
   const [file, setFile] = useState(null);
   const [fileName, setFileName] = useState("");
   const [loading, setLoading] = useState(false);
-  const API_URL = process.env.REACT_APP_API_URL;
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (agenda) {
@@ -58,13 +60,20 @@ export default function ModalEditAgenda({ open, handler, agenda, refreshData }) 
     if (file) data.append("file", file);
 
     try {
-      await axios.patch(`${API_URL}/agendas/${agenda.uuid}`, data, {
+      // Menggunakan api instance untuk request PATCH
+      await api.patch(`/agendas/${agenda.uuid}`, data, {
         headers: { "Content-Type": "multipart/form-data" },
-        withCredentials: true,
       });
+      
+      alert("Agenda berhasil diperbarui");
       refreshData();
       handler();
     } catch (error) {
+      // Penanganan jika token expired (401)
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/masuk");
+      }
       alert(error.response?.data?.msg || "Gagal memperbarui agenda");
     } finally {
       setLoading(false);

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import axios from "axios";
+// Import instance api yang sudah memiliki interceptor JWT
+import api from "../../../utils/api"; 
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import {
@@ -38,21 +39,25 @@ export default function CreateBerita() {
   const [tags, setTags] = useState([]);
   const [selectedKategori, setSelectedKategori] = useState([]);
   const [selectedTag, setSelectedTag] = useState([]);
-  const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const resKategori = await axios.get(`${API_URL}/kategori`);
-        const resTag = await axios.get(`${API_URL}/tag`);
+        // Menggunakan api instance untuk mengambil data pendukung
+        const resKategori = await api.get("/kategori");
+        const resTag = await api.get("/tag");
         setCategories(resKategori.data);
         setTags(resTag.data);
       } catch (error) {
         console.error("Gagal mengambil data pendukung:", error);
+        if (error.response?.status === 401) {
+          localStorage.removeItem("token");
+          navigate("/masuk");
+        }
       }
     };
     fetchData();
-  }, [API_URL]);
+  }, [navigate]);
 
   const handleAddKategori = (uuid) => {
     if (uuid && !selectedKategori.includes(uuid)) {
@@ -90,13 +95,17 @@ export default function CreateBerita() {
     selectedTag.forEach(id => data.append("tag_uuid", id));
 
     try {
-      const response = await axios.post(`${API_URL}/beritas`, data, {
+      // Menggunakan api instance untuk mengirim berita
+      const response = await api.post("/beritas", data, {
         headers: { "Content-Type": "multipart/form-data" },
-        withCredentials: true,
       });
       alert(response.data.msg);
       navigate("/dashboard/berita");
     } catch (error) {
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/masuk");
+      }
       alert(error.response?.data?.msg || "Terjadi kesalahan");
     }
   };

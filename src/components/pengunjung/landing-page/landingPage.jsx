@@ -9,7 +9,8 @@ import {
   Button
 } from "@material-tailwind/react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+// Menggunakan instance api dari folder utils
+import api from "../../../utils/api";
 
 // --- INTERNAL SUB-COMPONENTS ---
 const ArrowRightIcon = () => (
@@ -88,46 +89,50 @@ export default function LandingPage() {
   const [pengurus, setPengurus] = useState([]);
   const [beritas, setBeritas] = useState([]);
   const [loading, setLoading] = useState(true);
-  const API_URL = process.env.REACT_APP_API_URL;
   const navigate = useNavigate();
 
-useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const [resLanding, resProfil, resPengurus, resBerita] = await Promise.all([
-        axios.get(`${API_URL}/landing`),
-        axios.get(`${API_URL}/profil-organisasi`),
-        axios.get(`${API_URL}/pengurus`),
-        axios.get(`${API_URL}/beritas`)
-      ]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Menggunakan api instance untuk mengambil semua data sekaligus
+        const [resLanding, resProfil, resPengurus, resBerita] = await Promise.all([
+          api.get("/landing"),
+          api.get("/profil-organisasi"),
+          api.get("/pengurus"),
+          api.get("/beritas")
+        ]);
 
-      // AMBIL DATA SECTIONS
-      const rawSections = resLanding.data.data.sections;
+        const rawSections = resLanding.data.data.sections;
 
-      // PARSE JIKA DATA BERUPA STRING
-      const parsedSections = {
-        ...rawSections,
-        hero: typeof rawSections.hero === "string" ? JSON.parse(rawSections.hero) : rawSections.hero,
-        tradition: typeof rawSections.tradition === "string" ? JSON.parse(rawSections.tradition) : rawSections.tradition,
-      };
+        // Parsing data hero dan tradition jika masih dalam bentuk string JSON
+        const parsedSections = {
+          ...rawSections,
+          hero: typeof rawSections.hero === "string" ? JSON.parse(rawSections.hero) : rawSections.hero,
+          tradition: typeof rawSections.tradition === "string" ? JSON.parse(rawSections.tradition) : rawSections.tradition,
+        };
 
-      setLandingData(parsedSections);
-      setProfil(resProfil.data.find(b => b.status === "verified") || resProfil.data[0]);
-      setPengurus(resPengurus.data);
-      setBeritas(resBerita.data.filter(b => b.status === "verified"));
-    } catch (error) {
-      console.error("Gagal memuat data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  fetchData();
-}, [API_URL]);
+        setLandingData(parsedSections);
+        setProfil(resProfil.data.find(b => b.status === "verified") || resProfil.data[0]);
+        setPengurus(resPengurus.data);
+        setBeritas(resBerita.data.filter(b => b.status === "verified"));
+      } catch (error) {
+        console.error("Gagal memuat data landing page:", error);
+      } finally {
+        // Mematikan loading screen setelah semua promise selesai
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
+  // --- FULL PAGE LOADING SCREEN ---
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-white">
-        <Spinner className="h-12 w-12 text-blue-500" />
+      <div className="fixed inset-0 z-[9999] flex flex-col justify-center items-center bg-white">
+        <Spinner className="h-14 w-14 text-blue-500" />
+        <Typography className="mt-4 font-medium text-gray-600 animate-pulse">
+          Memuat Data...
+        </Typography>
       </div>
     );
   }
@@ -136,6 +141,7 @@ useEffect(() => {
 
   return (
     <div className="bg-[#FCFCFC] min-h-screen font-sans">
+      {/* Hero Section */}
       <div className="container mx-auto px-6 lg:px-10 py-10 lg:py-16 flex flex-col lg:flex-row items-center gap-10">
         <div className="w-full lg:w-1/2 text-center lg:text-left">
           <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold text-gray-900 leading-[1.1]">
@@ -155,18 +161,18 @@ useEffect(() => {
               {hero.slides.map((slide, index) => (
                 <div key={index} className="relative h-full w-full">
                   <img
-                    /* Perhatikan path-nya: /storage/landing_page/home/nama_file.png */
-                    src={`${API_URL}/storage/${slide.image}`}
+                    // Mengambil base URL dari instance API jika diperlukan, atau langsung via endpoint storage
+                    src={`${process.env.REACT_APP_API_URL}/storage/${slide.image}`}
                     alt={slide.title}
                     className="h-full w-full object-cover"
                   />
                   {(slide.title || slide.description) && (
-                    <div className="absolute inset-0 grid h-full w-full place-items-center bg-black/30">
+                    <div className="absolute inset-0 grid h-full w-full place-items-center bg-black/40">
                        <div className="w-3/4 text-center md:w-2/4">
                         <Typography variant="h3" color="white" className="mb-4 text-xl md:text-2xl lg:text-3xl font-bold">
                           {slide.title}
                         </Typography>
-                        <Typography variant="lead" color="white" className="mb-12 opacity-80 text-sm md:text-base">
+                        <Typography variant="lead" color="white" className="mb-12 opacity-90 text-sm md:text-base">
                           {slide.description}
                         </Typography>
                       </div>
@@ -177,16 +183,17 @@ useEffect(() => {
             </Carousel>
           ) : (
              <div className="h-[250px] md:h-[400px] bg-gray-200 rounded-[30px] flex items-center justify-center italic text-gray-400">
-                Belum ada slide hero
+               Belum ada slide hero aktif
              </div>
           )}
         </div>
       </div>
+
       {/* Profil Section */}
       {profil && (
         <section className="container mx-auto px-6 lg:px-10 py-16 lg:py-24">
           <div className=" pt-10 flex items-center gap-10 mb-12 lg:mb-18">
-            <div className="w-1/2">
+            <div className="w-full md:w-1/2">
                 <h1 className="text-4xl font-bold text-gray-900 leading-tight">
                   Mendorong Penelitian dan Pengabdian
                 </h1>
@@ -214,22 +221,22 @@ useEffect(() => {
       )}
 
       {/* Pengurus Section */}
-      <section className="py-20">
+      <section className="py-20 bg-gray-50/50">
         <div className="container mx-auto px-6 lg:px-10">
           <div className="mb-16 flex flex-col items-center text-center">
-            <h1 className="text-4xl font-bold leading-tight">Struktur Pengurus</h1>
-            <div className="w-24 h-1.5 bg-gray-900 rounded-full mt-4"></div>
+            <h1 className="text-4xl font-bold leading-tight text-gray-900">Struktur Pengurus</h1>
+            <div className="w-24 h-1.5 bg-blue-600 rounded-full mt-4"></div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
             {pengurus.map((item) => (
-              <Card key={item.uuid} className="bg-white border border-gray-100 shadow-sm hover:shadow-md overflow-hidden rounded-2xl group">
+              <Card key={item.uuid} className="bg-white border border-gray-100 shadow-sm hover:shadow-lg transition-shadow overflow-hidden rounded-2xl group">
                 <div className="relative h-72 w-full overflow-hidden">
-                  <img src={item.url} alt={item.nama_lengkap} className="h-full w-full object-cover transition-transform group-hover:scale-110" />
+                  <img src={item.url} alt={item.nama_lengkap} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
                 </div>
                 <CardBody className="p-5 text-center flex flex-col items-center gap-2">
-                  <Typography variant="h6" className="font-bold text-base">{item.nama_lengkap}</Typography>
-                  <Typography className="text-blue-700 text-[10px] font-black uppercase">{item.jabatan}</Typography>
-                  <Typography className="text-base">{item.instansi}</Typography>
+                  <Typography variant="h6" className="font-bold text-base text-gray-900">{item.nama_lengkap}</Typography>
+                  <Typography className="text-blue-700 text-[10px] font-black uppercase tracking-wider">{item.jabatan}</Typography>
+                  <Typography className="text-sm text-gray-600 font-medium">{item.instansi}</Typography>
                 </CardBody>
               </Card>
             ))}
@@ -244,13 +251,17 @@ useEffect(() => {
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">Berita & Pembaruan</h1>
             <div className="h-1.5 w-32 bg-gray-900 mt-4 rounded-full mx-auto md:mx-0"></div>
           </div>
-          <Button variant="outlined" onClick={() => navigate("/berita")} className="border-gray-900 text-gray-900 rounded-full px-8 normal-case flex items-center gap-2">
+          <Button variant="outlined" onClick={() => navigate("/berita")} className="border-gray-900 text-gray-900 rounded-full px-8 normal-case flex items-center gap-2 hover:bg-gray-900 hover:text-white transition-all">
             Semua Berita <ArrowRightIcon />
           </Button>
         </div>
+        
         {beritas.length > 0 ? (
           <div className="space-y-10">
+            {/* Berita Utama */}
             <InternalFeaturedCard article={beritas[0]} />
+            
+            {/* Berita Lainnya */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {beritas.slice(1, 4).map((article) => (
                 <InternalArticleCard key={article.uuid} article={article} />
@@ -259,7 +270,7 @@ useEffect(() => {
           </div>
         ) : (
           <div className="text-center py-20 bg-white rounded-[30px] border border-dashed border-gray-300">
-            <p className="text-gray-500 italic">Belum ada berita tersedia.</p>
+            <p className="text-gray-500 italic">Belum ada berita yang diterbitkan.</p>
           </div>
         )}
       </section>

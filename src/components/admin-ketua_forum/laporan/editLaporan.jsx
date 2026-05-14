@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import {
   Button,
   Dialog,
@@ -12,48 +11,61 @@ import {
   Alert,
 } from "@material-tailwind/react";
 import { XMarkIcon, DocumentCheckIcon, InformationCircleIcon } from "@heroicons/react/24/solid";
+// Import instance API utilitas
+import api from "../../../utils/api";
 
 export default function EditLaporan({ open, handler, laporan, refreshData }) {
   const [keterangan, setKeterangan] = useState("");
   const [file, setFile] = useState(null);
   const [fileName, setFileName] = useState("");
   const [loading, setLoading] = useState(false);
-  const API_URL = process.env.REACT_APP_API_URL;
 
+  // Sinkronisasi data saat modal dibuka atau laporan berubah
   useEffect(() => {
     if (laporan) {
       setKeterangan(laporan.keterangan || "");
       setFileName(laporan.file_laporan || "");
-      setFile(null);
+      setFile(null); // Reset file input setiap kali modal dibuka
     }
   }, [laporan, open]);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
-    if (selectedFile && selectedFile.type === "application/pdf") {
-      setFile(selectedFile);
-      setFileName(selectedFile.name);
-    } else {
-      alert("Hanya file PDF yang diperbolehkan!");
+    if (selectedFile) {
+      if (selectedFile.type === "application/pdf") {
+        setFile(selectedFile);
+        setFileName(selectedFile.name);
+      } else {
+        alert("Hanya file PDF yang diperbolehkan!");
+        e.target.value = null; // Reset input file
+      }
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (laporan?.status === "verified") return;
+    
+    // Guard clause jika laporan sudah diverifikasi (double safety)
+    if (laporan?.status === "verified" || laporan?.status === "rejected") {
+      alert("Laporan yang sudah diproses tidak dapat diubah.");
+      return;
+    }
 
     setLoading(true);
     const data = new FormData();
     data.append("keterangan", keterangan);
-    if (file) data.append("file", file);
+    if (file) {
+      data.append("file", file);
+    }
 
     try {
-      await axios.patch(`${API_URL}/laporans/${laporan.uuid}`, data, {
+      // Menggunakan instance api (tanpa API_URL manual & withCredentials)
+      await api.patch(`/laporans/${laporan.uuid}`, data, {
         headers: { "Content-Type": "multipart/form-data" },
-        withCredentials: true,
       });
+      
       refreshData();
-      handler();
+      handler(); // Tutup modal setelah sukses
     } catch (error) {
       alert(error.response?.data?.msg || "Gagal memperbarui laporan");
     } finally {
@@ -61,11 +73,11 @@ export default function EditLaporan({ open, handler, laporan, refreshData }) {
     }
   };
 
-  // Cek apakah laporan sudah diverifikasi
-  const isVerified = laporan?.status === "verified";
+  // Cek status laporan untuk proteksi UI
+  const isLocked = laporan?.status === "verified" || laporan?.status === "rejected";
 
   return (
-    <Dialog open={open} handler={handler} size="sm">
+    <Dialog open={open} handler={handler} size="sm" className="outline-none">
       <form onSubmit={handleSubmit}>
         <DialogHeader className="flex items-center justify-between border-b border-gray-100 py-4 px-6">
           <Typography variant="h5" color="blue-gray">
@@ -77,13 +89,13 @@ export default function EditLaporan({ open, handler, laporan, refreshData }) {
         </DialogHeader>
 
         <DialogBody className="py-6 px-6 flex flex-col gap-4">
-          {isVerified && (
+          {isLocked && (
             <Alert
-              color="amber"
+              color={laporan?.status === "verified" ? "amber" : "red"}
               icon={<InformationCircleIcon className="h-5 w-5" />}
               className="mb-2"
             >
-              Laporan ini sudah diverifikasi dan tidak dapat diubah lagi.
+              Laporan ini sudah {laporan?.status === "verified" ? "diverifikasi" : "ditolak"} dan tidak dapat diubah lagi.
             </Alert>
           )}
 
@@ -94,7 +106,8 @@ export default function EditLaporan({ open, handler, laporan, refreshData }) {
             <Textarea
               value={keterangan}
               onChange={(e) => setKeterangan(e.target.value)}
-              disabled={isVerified}
+              disabled={isLocked || loading}
+              placeholder="Masukkan deskripsi laporan..."
               required
             />
           </div>
@@ -103,35 +116,54 @@ export default function EditLaporan({ open, handler, laporan, refreshData }) {
             <Typography variant="small" color="blue-gray" className="mb-2 font-bold">
               File Laporan (PDF)
             </Typography>
-            <label className={`flex items-center gap-3 p-3 border border-dashed rounded-lg ${isVerified ? 'bg-gray-100 cursor-not-allowed border-gray-200' : 'cursor-pointer border-gray-300 hover:bg-gray-50'}`}>
-              <DocumentCheckIcon className={`h-6 w-6 ${isVerified ? 'text-gray-400' : 'text-blue-500'}`} />
+            <label 
+              className={`flex items-center gap-3 p-3 border border-dashed rounded-lg transition-colors ${
+                isLocked || loading 
+                  ? 'bg-gray-100 cursor-not-allowed border-gray-200' 
+                  : 'cursor-pointer border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <DocumentCheckIcon className={`h-6 w-6 ${isLocked ? 'text-gray-400' : 'text-blue-500'}`} />
               <div className="flex flex-col overflow-hidden">
                 <Typography className="text-xs font-medium text-gray-700 truncate max-w-[250px]">
                   {fileName || "Pilih file PDF baru"}
                 </Typography>
-                {!isVerified && (
+                {!isLocked && (
                   <Typography className="text-[10px] text-gray-500 italic uppercase">
-                    *Kosongkan jika tidak ganti file
+                    *Kosongkan jika tidak ingin mengganti file
                   </Typography>
                 )}
               </div>
-              {!isVerified && (
-                <input type="file" className="hidden" accept=".pdf" onChange={handleFileChange} />
+              {!isLocked && !loading && (
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept=".pdf" 
+                  onChange={handleFileChange} 
+                />
               )}
             </label>
           </div>
         </DialogBody>
 
         <DialogFooter className="gap-2 border-t border-gray-100 py-3 px-6">
-          <Button variant="text" color="red" onClick={handler} disabled={loading}>
-            Tutup
+          <Button 
+            variant="text" 
+            color="red" 
+            onClick={handler} 
+            disabled={loading}
+            className="capitalize"
+          >
+            Batal
           </Button>
-          {!isVerified && (
+          {!isLocked && (
             <Button
               type="submit" 
               loading={loading}
+              color="blue"
+              className="capitalize"
             >
-              Update Laporan
+              Simpan Perubahan
             </Button>
           )}
         </DialogFooter>

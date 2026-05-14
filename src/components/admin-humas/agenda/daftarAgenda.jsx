@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import SidebarAdmin from "../../admin/sidebarAdmin";
-import axios from "axios";
+// Menggunakan instance api yang sudah dikonfigurasi dengan JWT
+import api from "../../../utils/api"; 
 import { 
   ArrowPathIcon, 
   MagnifyingGlassIcon, 
@@ -44,6 +45,7 @@ import ModalEditAgenda from "./editAgenda";
 import DashboardNavbar from "../../dashboardNavbar";
 import SidebarHumas from "../sidebarHumas";
 import CreateAgendaModal from "./buatAgenda";
+import { useNavigate } from "react-router-dom";
 
 const TABS = [
   { label: "Semua", value: "all" },
@@ -59,7 +61,6 @@ export default function DaftarAgendaAdmin() {
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("table"); 
-  
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -68,22 +69,22 @@ export default function DaftarAgendaAdmin() {
   const [selectedAgenda, setSelectedAgenda] = useState(null);
   const { user: authuser } = useSelector((state) => state.auth);
   const [openAdd, setOpenAdd] = useState(false);
-  const API_URL = process.env.REACT_APP_API_URL;
+  const navigate = useNavigate();
 
   const handleOpenAdd = () => setOpenAdd(!openAdd);
 
-  
-
   const getAgendas = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_URL}/agendas`, {
-        withCredentials: true,
-      });
+      const response = await api.get("/agendas");
       setAgendas(response.data);
     } catch (error) {
       console.error("Gagal mengambil data agenda:", error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/masuk");
+      }
     }
-  }, [API_URL]);
+  }, [navigate]);
   
   useEffect(() => {
     getAgendas();
@@ -135,11 +136,11 @@ export default function DaftarAgendaAdmin() {
     return pages;
   };
 
-  // API Actions
+  // API Actions menggunakan instance api
   const deleteAgenda = async (uuid) => {
     if (window.confirm("Yakin ingin menghapus agenda ini?")) {
       try {
-        await axios.delete(`${API_URL}/agendas/${uuid}`, { withCredentials: true });
+        await api.delete(`/agendas/${uuid}`);
         getAgendas();
       } catch (error) {
         alert(error.response?.data?.msg || "Gagal menghapus");
@@ -149,14 +150,14 @@ export default function DaftarAgendaAdmin() {
 
   const verifyAgenda = async (uuid) => {
     try {
-      await axios.patch(`${API_URL}/agendas/${uuid}/verify`, {}, { withCredentials: true });
+      await api.patch(`/agendas/${uuid}/verify`);
       getAgendas();
     } catch (error) { alert("Gagal memverifikasi"); }
   };
 
   const rejectAgenda = async (uuid) => {
     try {
-      await axios.patch(`${API_URL}/agendas/${uuid}/reject`, {}, { withCredentials: true });
+      await api.patch(`/agendas/${uuid}/reject`);
       getAgendas();
     } catch (error) { alert("Gagal menolak"); }
   };
@@ -164,15 +165,16 @@ export default function DaftarAgendaAdmin() {
   const cancelVerifyAgenda = async (uuid) => {
     if (window.confirm("Batalkan verifikasi?")) {
       try {
-        await axios.patch(`${API_URL}/agendas/${uuid}/cancel-verify`, {}, { withCredentials: true });
+        await api.patch(`/agendas/${uuid}/cancel-verify`);
         getAgendas();
       } catch (error) { alert("Gagal"); }
     }
   };
+
   const cancelRejectAgenda = async (uuid) => {
     if (window.confirm("Batalkan penolakan?")) {
       try {
-        await axios.patch(`${API_URL}/agendas/${uuid}/cancel-reject`, {}, { withCredentials: true });
+        await api.patch(`/agendas/${uuid}/cancel-reject`);
         getAgendas();
       } catch (error) { alert("Gagal"); }
     }
@@ -186,6 +188,8 @@ export default function DaftarAgendaAdmin() {
   const formatTgl = (tgl) => new Date(tgl).toLocaleDateString("id-ID", {
     day: "2-digit", month: "long", year: "numeric"
   });
+
+
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
@@ -343,7 +347,6 @@ export default function DaftarAgendaAdmin() {
             </CardBody>
 
             <CardFooter className="flex flex-wrap items-center justify-between border-t border-blue-gray-50 p-4 gap-4">
-              {/* Bagian Kiri: Info Halaman & Rows per Page */}
               <div className="flex items-center flex-wrap gap-4">
                 <Typography variant="small" color="blue-gray" className="font-normal whitespace-nowrap">
                   Halaman <b>{currentPage}</b> dari <b>{totalPages || 1}</b>
@@ -362,7 +365,6 @@ export default function DaftarAgendaAdmin() {
                 </div>
               </div>
               
-              {/* Bagian Kanan: Kontrol Navigasi */}
               <div className="flex items-center gap-1 sm:gap-2">
                 <Button
                   variant="outlined"
@@ -417,10 +419,42 @@ export default function DaftarAgendaAdmin() {
 }
 
 function ActionButtons({ agenda, authuser, handleEdit, deleteAgenda, verifyAgenda, rejectAgenda, cancelVerify, cancelReject }) {
+  // Pindahkan pemanggilan token ke dalam komponen ini
+  const token = localStorage.getItem("token");
+  const [loadingFile, setLoadingFile] = useState(false);
+
+
+    const handleViewPdf = async (fileUrl) => {
+    try {
+      setLoadingFile(true);
+      
+      // Mengambil file PDF sebagai blob lewat axios instance
+      // Header Authorization otomatis terpasang oleh interceptor di api.js
+      const response = await api.get(fileUrl, {
+        responseType: "blob",
+      });
+
+      // Membuat URL blob dari data yang diterima
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+
+      // Membuka tab baru dengan URL blob tersebut
+      window.open(url, "_blank");
+
+      // Optional: Revoke URL setelah beberapa saat untuk bersihkan memori
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      console.error("Gagal membuka file:", error);
+      alert("Gagal memuat file PDF. Pastikan Anda memiliki akses.");
+    } finally {
+      setLoadingFile(false);
+    }
+  };
+
   return (
     <div className="flex gap-1">
       <Tooltip content="Lihat Dokumen">
-        <IconButton variant="text" size="sm" onClick={() => window.open(agenda.url, "_blank")}>
+        <IconButton variant="text" size="sm" onClick={() => handleViewPdf(agenda.url)}>
           <DocumentIcon className="h-4 w-4 text-gray-800" />
         </IconButton>
       </Tooltip>
