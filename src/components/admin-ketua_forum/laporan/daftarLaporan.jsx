@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import SidebarAdmin from "../../admin/sidebarAdmin";
-import axios from "axios";
+import { useSelector } from "react-redux";
 import { 
   ArrowPathIcon, 
   MagnifyingGlassIcon, 
@@ -39,11 +38,14 @@ import {
   XMarkIcon, 
   DocumentIcon 
 } from "@heroicons/react/24/solid";
+
+// Import API utilitas dan komponen lokal
+import api from "../../../utils/api"; 
+import SidebarAdmin from "../../admin/sidebarAdmin";
 import CreateLaporan from "./buatLaporan";
 import EditLaporan from "./editLaporan";
 import DashboardNavbar from "../../dashboardNavbar";
 import SidebarKetuaForum from "../sidebarKetuaForum";
-import { useSelector } from "react-redux";
 
 const TABS = [
   { label: "Semua", value: "all" },
@@ -59,6 +61,8 @@ export default function DaftarLaporanComponents() {
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("table"); 
+  const [loadingFile, setLoadingFile] = useState(false);
+
   
   // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
@@ -68,7 +72,6 @@ export default function DaftarLaporanComponents() {
   const [open, setOpen] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [selectedLaporan, setSelectedLaporan] = useState(null);
-  const API_URL = process.env.REACT_APP_API_URL;
   
   const { user: authuser } = useSelector((state) => state.auth);
 
@@ -79,18 +82,15 @@ export default function DaftarLaporanComponents() {
     setOpenEdit(true);
   };
 
-  
-
+  // Fetch Data menggunakan instance API utilitas
   const getLaporans = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_URL}/laporans`, {
-        withCredentials: true,
-      });
+      const response = await api.get("/laporans");
       setLaporans(response.data);
     } catch (error) {
       console.error("Gagal mengambil data laporan:", error);
     }
-  }, [API_URL]);
+  }, []);
   
   useEffect(() => {
     getLaporans();
@@ -122,7 +122,6 @@ export default function DaftarLaporanComponents() {
     setCurrentPage(1);
   }, [filter, searchTerm, rowsPerPage]);
 
-  // LOGIKA ELLIPSIS PAGINATION
   const getPageNumbers = () => {
     const pages = [];
     if (totalPages <= 5) {
@@ -139,48 +138,59 @@ export default function DaftarLaporanComponents() {
     return pages;
   };
 
-  // Handler Actions
+  // Handler Actions menggunakan instance API utilitas
   const deleteLaporan = async (uuid) => {
     if (window.confirm("Yakin ingin menghapus laporan ini?")) {
       try {
-        await axios.delete(`${API_URL}/laporans/${uuid}`, { withCredentials: true });
+        await api.delete(`/laporans/${uuid}`);
         getLaporans();
-      } catch (error) { alert(error.response?.data?.msg || "Gagal menghapus"); }
+      } catch (error) { 
+        alert(error.response?.data?.msg || "Gagal menghapus"); 
+      }
     }
   };
 
   const verifyLaporan = async (uuid) => {
     try {
-      await axios.patch(`${API_URL}/laporans/${uuid}/verify`, {}, { withCredentials: true });
+      await api.patch(`/laporans/${uuid}/verify`);
       getLaporans();
-    } catch (error) { alert("Gagal memverifikasi laporan"); }
+    } catch (error) { 
+      alert("Gagal memverifikasi laporan"); 
+    }
   };
 
   const rejectLaporan = async (uuid) => {
     try {
-      await axios.patch(`${API_URL}/laporans/${uuid}/reject`, {}, { withCredentials: true });
+      await api.patch(`/laporans/${uuid}/reject`);
       getLaporans();
-    } catch (error) { alert("Gagal menolak laporan"); }
+    } catch (error) { 
+      alert("Gagal menolak laporan"); 
+    }
   };
 
   const cancelVerifyLaporan = async (uuid) => {
     if (window.confirm("Batalkan verifikasi?")) {
       try {
-        await axios.patch(`${API_URL}/laporans/${uuid}/cancel-verify`, {}, { withCredentials: true });
+        await api.patch(`/laporans/${uuid}/cancel-verify`);
         getLaporans();
-      } catch (error) { alert("Gagal"); }
+      } catch (error) { 
+        alert("Gagal membatalkan verifikasi"); 
+      }
     }
   };
 
   const cancelRejectLaporan = async (uuid) => {
     if (window.confirm("Batalkan penolakan?")) {
       try {
-        await axios.patch(`${API_URL}/laporans/${uuid}/cancel-reject`, {}, { withCredentials: true });
+        await api.patch(`/laporans/${uuid}/cancel-reject`);
         getLaporans();
-      } catch (error) { alert("Gagal"); }
+      } catch (error) { 
+        alert("Gagal membatalkan penolakan"); 
+      }
     }
   };
 
+  // Komponen Tombol Aksi
   const ActionButtons = ({ laporan }) => (
     <div className="flex gap-1">
       {authuser?.role === "admin" && (
@@ -216,7 +226,7 @@ export default function DaftarLaporanComponents() {
         </>
       )}
       <Tooltip content="Buka Dokumen">
-        <IconButton variant="text" size="sm" onClick={() => window.open(laporan.url, "_blank")}>
+        <IconButton variant="text" size="sm" onClick={() => handleViewPdf(laporan.url)}>
           <DocumentIcon className="h-4 w-4 text-gray-800" />
         </IconButton>
       </Tooltip>
@@ -238,6 +248,33 @@ export default function DaftarLaporanComponents() {
       )}
     </div>
   );
+
+    const handleViewPdf = async (fileUrl) => {
+    try {
+      setLoadingFile(true);
+      
+      // Mengambil file PDF sebagai blob lewat axios instance
+      // Header Authorization otomatis terpasang oleh interceptor di api.js
+      const response = await api.get(fileUrl, {
+        responseType: "blob",
+      });
+
+      // Membuat URL blob dari data yang diterima
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+
+      // Membuka tab baru dengan URL blob tersebut
+      window.open(url, "_blank");
+
+      // Optional: Revoke URL setelah beberapa saat untuk bersihkan memori
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      console.error("Gagal membuka file:", error);
+      alert("Gagal memuat file PDF. Pastikan Anda memiliki akses.");
+    } finally {
+      setLoadingFile(false);
+    }
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
@@ -283,7 +320,7 @@ export default function DaftarLaporanComponents() {
                     </IconButton>
                   </div>
                   <Button className="flex items-center gap-3 flex-1 sm:flex-none justify-center" size="sm" onClick={handleOpen}>
-                    <PlusIcon strokeWidth={2} className="h-4 w-4" /> Tambah
+                    <PlusIcon strokeWidth={2} className="h-4 w-4" /> Tambah Laporan
                   </Button>
                 </div>
               </div>
@@ -329,7 +366,7 @@ export default function DaftarLaporanComponents() {
                         <tr key={laporan.uuid} className="hover:bg-blue-gray-50/50 transition-colors">
                           <td className={classes}>
                             <div className="flex items-center gap-3">
-                              <DocumentIcon className="h-5 w-5 text-blue-500 hidden sm:block" />
+                              <DocumentIcon className="h-5 w-5 text-gray-500 hidden sm:block" />
                               <div className="max-w-[250px]">
                                 <Typography variant="small" className="font-bold text-xs lg:text-sm truncate">
                                   {laporan.keterangan}
@@ -362,7 +399,7 @@ export default function DaftarLaporanComponents() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 p-4">
                   {currentItems.map((laporan) => (
-                    <Card key={laporan.uuid} className="border border-gray-200 shadow-sm rounded-xl hover:border-blue-300 transition-all">
+                    <Card key={laporan.uuid} className="border border-gray-200 shadow-sm rounded-xl hover:border-gray-300 transition-all">
                       <CardBody className="p-4">
                         <div className="flex justify-between items-start mb-3">
                           <Chip size="sm" variant="ghost" value={laporan.status} color={laporan.status === "verified" ? "green" : laporan.status === "pending" ? "amber" : "red"} />

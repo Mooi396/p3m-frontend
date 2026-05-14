@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import { 
   Card, CardHeader, Typography, CardBody, 
   IconButton, Avatar, Chip, Button, Dialog,
-  DialogHeader, DialogBody, DialogFooter, Drawer
+  DialogHeader, DialogBody, DialogFooter, Drawer, Spinner
 } from "@material-tailwind/react";
 import { 
   UserGroupIcon, CheckIcon, XMarkIcon, UserCircleIcon,
@@ -18,6 +18,63 @@ import DetailLaporan from './detail/detailLaporan';
 import SidebarKetuaForum from './sidebarKetuaForum';
 
 // --- Sub-Components ---
+
+/**
+ * Komponen SecureAvatar untuk menangani pengambilan gambar via API 
+ * agar tidak mengekspos token di URL dan menghindari error void element.
+ */
+const SecureAvatar = ({ src, alt, size, variant, fallback, className }) => {
+  const [imgSrc, setImgSrc] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchImage = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get(src, { responseType: 'blob' });
+        if (isMounted) {
+          const url = URL.createObjectURL(response.data);
+          setImgSrc(url);
+        }
+      } catch (error) {
+        if (isMounted) setImgSrc(null);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    if (src) {
+      fetchImage();
+    } else {
+      setLoading(false);
+    }
+
+    return () => {
+      isMounted = false;
+      if (imgSrc) URL.revokeObjectURL(imgSrc);
+    };
+  }, [src]);
+
+  if (loading || !imgSrc) {
+    return (
+      <div className={`${className} flex items-center justify-center bg-gray-100 rounded-full overflow-hidden`}>
+        {fallback}
+      </div>
+    );
+  }
+
+  return (
+    <Avatar 
+      src={imgSrc} 
+      alt={alt} 
+      size={size} 
+      variant={variant} 
+      className={className} 
+    />
+  );
+};
+
 const InfoItem = ({ icon, label, value }) => (
   <div className="flex items-start gap-3">
     <div className="mt-1 p-1 bg-gray-200 rounded text-black">{icon}</div>
@@ -102,7 +159,6 @@ const DashboardKetuaForum = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [openDetailLaporan, setOpenDetailLaporan] = useState(false);
   const [userMe, setUserMe] = useState(null);
-  const API_URL = process.env.REACT_APP_API_URL;
 
   const handleOpen = (user = null) => {
     setSelectedUser(user);
@@ -112,11 +168,10 @@ const DashboardKetuaForum = () => {
   const fetchData = useCallback(async () => {
     try {
       const [resUsers, resLaporan] = await Promise.all([
-        axios.get(`${API_URL}/users`, { withCredentials: true }),
-        axios.get(`${API_URL}/laporans`, { withCredentials: true })
+        api.get('/users'),
+        api.get('/laporans')
       ]);
       
-      // Filter: Hanya menampilkan user dengan role "anggota" untuk Ketua Forum
       const anggotaOnly = resUsers.data.filter(u => u.role === "anggota");
       
       setUsers(anggotaOnly);
@@ -128,12 +183,12 @@ const DashboardKetuaForum = () => {
     } catch (error) {
       console.error("Gagal mengambil data:", error);
     }
-  }, [API_URL]);
+  }, []);
 
   useEffect(() => {
     const getMe = async () => {
       try {
-        const response = await axios.get(`${API_URL}/me`, { withCredentials: true });
+        const response = await api.get('/me');
         setUserMe(response.data);
       } catch (error) {
         console.error("Gagal mengambil data user:", error);
@@ -141,12 +196,12 @@ const DashboardKetuaForum = () => {
     };
     getMe();
     fetchData();
-  }, [API_URL, fetchData]);
+  }, [fetchData]);
 
   const handleAction = async (type, uuid, action) => {
     if(!window.confirm(`Yakin ingin melakukan verifikasi?`)) return;
     try {
-      await axios.patch(`${API_URL}/${type}/${uuid}/${action}`, {}, { withCredentials: true });
+      await api.patch(`/${type}/${uuid}/${action}`);
       fetchData();
     } catch (error) {
       alert(`Gagal melakukan aksi pada ${type}`);
@@ -155,12 +210,10 @@ const DashboardKetuaForum = () => {
 
   return (
     <div className='flex h-screen w-full bg-gray-50 overflow-hidden'>
-      {/* SIDEBAR DESKTOP */}
       <div className="hidden lg:block">
         <SidebarKetuaForum />
       </div>
 
-      {/* SIDEBAR MOBILE (DRAWER) */}
       <Drawer open={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} className="p-0">
         <div className="flex items-center justify-between p-4 border-b">
           <Typography variant="h5" color="blue-gray">Ketua Forum</Typography>
@@ -172,12 +225,11 @@ const DashboardKetuaForum = () => {
       </Drawer>
 
       <div className='flex-1 flex flex-col min-w-0 h-full overflow-hidden'>
-        {/* NAVBAR */}
-        <div className="flex items-center bg-white lg:bg-transparent">
+        <div className="flex items-center bg-white lg:bg-transparent shadow-sm lg:shadow-none">
           <IconButton 
             variant="text" 
             color="blue-gray" 
-            className="lg:hidden" 
+            className="lg:hidden ml-2" 
             onClick={() => setIsDrawerOpen(true)}
           >
             <Bars3Icon className="h-6 w-6" />
@@ -187,20 +239,21 @@ const DashboardKetuaForum = () => {
           </div>
         </div>
 
-        {/* CONTENT */}
         <div className="flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="mb-6">
-            <Typography variant="h4" color="blue-gray" className="text-2xl">Selamat datang, {userMe?.username}</Typography>
-            <Typography color="gray" className="font-normal text-sm">Panel manajemen forum hari ini.</Typography>
+            <Typography variant="h4" color="blue-gray" className="text-2xl capitalize">
+              Selamat datang, {userMe?.username}
+            </Typography>
+            <Typography color="gray" className="font-normal text-sm">
+              Panel manajemen forum hari ini.
+            </Typography>
           </div>
 
-          {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
             <StatCard icon={<UserGroupIcon className="h-6 w-6"/>} color="blue" label="Total Anggota" value={totals.user} />
             <StatCard icon={<DocumentTextIcon className="h-6 w-6"/>} color="red" label="Total Laporan" value={totals.laporan} />
           </div>
 
-          {/* Tables */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
             <VerificationTable 
               title="Persetujuan Anggota Forum" 
@@ -210,11 +263,19 @@ const DashboardKetuaForum = () => {
                 <tr key={user.uuid}>
                   <td className={classes}>
                     <div className="flex items-center gap-2">
-                      <Avatar src={user.anggotas?.[0]?.url} size="xs" variant="circular" fallback={<UserCircleIcon className="h-4 w-4 text-gray-300"/>}/>
+                      <SecureAvatar 
+                        src={user.anggotas?.[0]?.url} 
+                        size="xs" 
+                        variant="circular" 
+                        className="h-8 w-8"
+                        fallback={<UserCircleIcon className="h-6 w-6 text-gray-300"/>}
+                      />
                       <Typography variant="small" className="font-bold text-xs truncate w-24">{user.username}</Typography>
                     </div>
                   </td>
-                  <td className={classes}><Chip size="sm" variant="ghost" value="pending" color="amber" className="text-[10px]"/></td>
+                  <td className={classes}>
+                    <Chip size="sm" variant="ghost" value="pending" color="amber" className="text-[10px]"/>
+                  </td>
                   <td className={classes}>
                     <div className="flex gap-0">
                       <IconButton variant="text" size="sm" onClick={() => handleOpen(user)}><EyeIcon className="h-4 w-4"/></IconButton>
@@ -235,7 +296,9 @@ const DashboardKetuaForum = () => {
                   <td className={classes}>
                     <Typography variant="small" className="font-bold truncate w-32 sm:w-48 text-xs">{laporan.keterangan}</Typography>
                   </td>
-                  <td className={classes}><Chip size="sm" variant="ghost" value="pending" color="amber" className="text-[10px]"/></td>
+                  <td className={classes}>
+                    <Chip size="sm" variant="ghost" value="pending" color="amber" className="text-[10px]"/>
+                  </td>
                   <td className={classes}>
                     <IconButton variant="text" size="sm" onClick={() => { setSelectedItem(laporan); setOpenDetailLaporan(true); }}><EyeIcon className="h-4 w-4"/></IconButton>
                   </td>
@@ -246,11 +309,10 @@ const DashboardKetuaForum = () => {
         </div>
       </div>
 
-      {/* MODAL DETAIL USER */}
-      <Dialog open={open} handler={() => handleOpen(null)} size="md" className="max-h-[90vh] overflow-y-auto">
+      <Dialog open={open} handler={() => handleOpen(null)} size="md" className="max-h-[90vh] overflow-y-auto rounded-xl">
         <DialogHeader className="flex justify-between items-center border-b p-4">
-          <Typography variant="h5">Detail Profil Anggota</Typography>
-          <IconButton size="sm" variant="text" onClick={() => handleOpen(null)}>
+          <Typography variant="h5" color="blue-gray">Detail Profil Anggota</Typography>
+          <IconButton size="sm" variant="text" color="blue-gray" onClick={() => handleOpen(null)}>
             <XMarkIcon className="h-5 w-5" />
           </IconButton>
         </DialogHeader>
@@ -258,13 +320,14 @@ const DashboardKetuaForum = () => {
           {selectedUser ? (
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
               <div className="md:col-span-4 flex flex-col items-center border-b md:border-b-0 md:border-r border-gray-100 pb-6 md:pb-0 md:pr-4">
-                {selectedUser.anggotas?.[0]?.url ? (
-                  <Avatar src={selectedUser.anggotas[0].url} size="xxl" className="mb-4 shadow-xl border-2 border-black p-1" />
-                ) : (
-                  <UserCircleIcon className="h-24 w-24 text-gray-300 mb-4" />
-                )}
-                <Typography variant="h6" className="text-center">{selectedUser.anggotas?.[0]?.nama_lengkap || selectedUser.username}</Typography>
-                <Typography variant="small" color="gray" className="italic mb-2">{selectedUser.anggotas?.[0]?.gelar || "-"}</Typography>
+                <SecureAvatar 
+                  src={selectedUser.anggotas?.[0]?.url} 
+                  size="xxl" 
+                  className="mb-4 shadow-xl border-2 border-black p-1 h-32 w-32" 
+                  fallback={<UserCircleIcon className="h-24 w-24 text-gray-300" />}
+                />
+                <Typography variant="h6" className="text-center text-blue-gray-900">{selectedUser.anggotas?.[0]?.nama_lengkap || selectedUser.username}</Typography>
+                <Typography variant="small" color="gray" className="italic mb-2 text-center">{selectedUser.anggotas?.[0]?.gelar || "-"}</Typography>
                 <Chip variant="ghost" size="sm" value={selectedUser.status} color={selectedUser.status === "verified" ? "green" : "amber"} />
               </div>
               <div className="md:col-span-8 space-y-4">
@@ -274,7 +337,7 @@ const DashboardKetuaForum = () => {
                   <InfoItem icon={<AcademicCapIcon className="h-4 w-4" />} label="Email" value={selectedUser.email} />
                 </div>
                 <hr className="my-2" />
-                <Typography variant="small" color="blue-gray" className="font-bold uppercase text-[10px]">Publikasi & Sosial</Typography>
+                <Typography variant="small" color="blue-gray" className="font-bold uppercase text-[10px] tracking-wider text-gray-500">Publikasi & Sosial</Typography>
                 <div className="grid grid-cols-2 gap-2">
                   <SocialLink label="LinkedIn" value={selectedUser.anggotas?.[0]?.linkedin} />
                   <SocialLink label="Sinta ID" value={selectedUser.anggotas?.[0]?.sinta} />
@@ -283,12 +346,12 @@ const DashboardKetuaForum = () => {
             </div>
           ) : (
             <div className="flex justify-center items-center py-10">
-              <Typography color="gray" className="italic">Memuat data...</Typography>
+              <Spinner className="h-8 w-8" />
             </div>
           )}
         </DialogBody>
-        <DialogFooter className="p-4 border-t">
-          <Button variant="gradient" onClick={() => handleOpen(null)}>Tutup</Button>
+        <DialogFooter className="p-4 border-t gap-2">
+          <Button variant="gradient" color="blue-gray" onClick={() => handleOpen(null)} className="capitalize">Tutup</Button>
         </DialogFooter>
       </Dialog>
 

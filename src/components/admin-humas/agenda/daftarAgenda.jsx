@@ -61,7 +61,6 @@ export default function DaftarAgendaAdmin() {
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("table"); 
-  
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -189,6 +188,8 @@ export default function DaftarAgendaAdmin() {
   const formatTgl = (tgl) => new Date(tgl).toLocaleDateString("id-ID", {
     day: "2-digit", month: "long", year: "numeric"
   });
+
+
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
@@ -418,10 +419,42 @@ export default function DaftarAgendaAdmin() {
 }
 
 function ActionButtons({ agenda, authuser, handleEdit, deleteAgenda, verifyAgenda, rejectAgenda, cancelVerify, cancelReject }) {
+  // Pindahkan pemanggilan token ke dalam komponen ini
+  const token = localStorage.getItem("token");
+  const [loadingFile, setLoadingFile] = useState(false);
+
+
+    const handleViewPdf = async (fileUrl) => {
+    try {
+      setLoadingFile(true);
+      
+      // Mengambil file PDF sebagai blob lewat axios instance
+      // Header Authorization otomatis terpasang oleh interceptor di api.js
+      const response = await api.get(fileUrl, {
+        responseType: "blob",
+      });
+
+      // Membuat URL blob dari data yang diterima
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+
+      // Membuka tab baru dengan URL blob tersebut
+      window.open(url, "_blank");
+
+      // Optional: Revoke URL setelah beberapa saat untuk bersihkan memori
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      console.error("Gagal membuka file:", error);
+      alert("Gagal memuat file PDF. Pastikan Anda memiliki akses.");
+    } finally {
+      setLoadingFile(false);
+    }
+  };
+
   return (
     <div className="flex gap-1">
       <Tooltip content="Lihat Dokumen">
-        <IconButton variant="text" size="sm" onClick={() => window.open(agenda.url, "_blank")}>
+        <IconButton variant="text" size="sm" onClick={() => handleViewPdf(agenda.url)}>
           <DocumentIcon className="h-4 w-4 text-gray-800" />
         </IconButton>
       </Tooltip>

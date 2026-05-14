@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+// Menggunakan instance api dari folder utils
+import api from "../../../utils/api";
 import { Input, Button, Spinner, Chip, Typography, IconButton } from "@material-tailwind/react";
 import { MagnifyingGlassIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
@@ -18,25 +19,30 @@ export default function DaftarBeritaP3M() {
   const [filterTag, setFilterTag] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 5;
-  const API_URL = process.env.REACT_APP_API_URL;
 
   const fetchData = useCallback(async () => {
-  try {
-    const response = await axios.get(`${API_URL}/beritas`, { withCredentials: true });
-    const verified = response.data.filter(b => b.status === "verified");
-    verified.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-    setBeritas(verified);
-  } catch (error) {
-    console.error("Gagal ambil data:", error);
-  } finally {
-    setLoading(false);
-  }
-}, [API_URL]);
+    try {
+      // Menggunakan utilitas api untuk mengambil data berita
+      const response = await api.get("/beritas");
+      
+      // Filter hanya berita yang sudah diverifikasi
+      const verified = response.data.filter(b => b.status === "verified");
+      
+      // Urutkan berdasarkan tanggal terbaru
+      verified.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+      setBeritas(verified);
+    } catch (error) {
+      console.error("Gagal ambil data berita:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-useEffect(() => {
+  useEffect(() => {
     fetchData();
   }, [fetchData]);
 
+  // Logika Filter
   const filteredBerita = beritas.filter(b => {
     const matchesSearch = b.judul_berita.toLowerCase().includes(search.toLowerCase());
     const matchesKategori = filterKategori ? b.kategoris?.some(k => k.uuid === filterKategori) : true;
@@ -44,10 +50,12 @@ useEffect(() => {
     return matchesSearch && matchesKategori && matchesTag;
   });
 
+  // Logika Paginasi Dasar
   const indexOfLastPost = currentPage * postsPerPage;
   const indexOfFirstPost = indexOfLastPost - postsPerPage;
   const currentPosts = filteredBerita.slice(indexOfFirstPost, indexOfLastPost);
 
+  // Berita Utama (Hanya muncul di hal 1 jika tidak ada filter aktif)
   const featured = currentPage === 1 && !search && !filterKategori && !filterTag ? currentPosts[0] : null;
   const listBerita = featured ? currentPosts.slice(1) : currentPosts;
   const totalPages = Math.ceil(filteredBerita.length / postsPerPage);
@@ -57,7 +65,7 @@ useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // --- LOGIKA ELLIPSIS PAGINATION ---
+  // Logika Ellipsis Pagination
   const getPageNumbers = () => {
     const pages = [];
     if (totalPages <= 5) {
@@ -74,6 +82,7 @@ useEffect(() => {
     return pages;
   };
 
+  // Menghitung jumlah berita per kategori untuk Sidebar
   const kategoriCounts = beritas.reduce((acc, berita) => {
     berita.kategoris?.forEach((kat) => {
       if (!acc[kat.uuid]) acc[kat.uuid] = { nama: kat.nama_kategori, count: 0, uuid: kat.uuid };
@@ -83,6 +92,8 @@ useEffect(() => {
   }, {});
 
   const masterKategoris = Object.values(kategoriCounts);
+  
+  // Mengambil unique tags dari data berita
   const masterTags = Array.from(
     new Set(beritas.flatMap((b) => b.tags?.map((t) => JSON.stringify(t)) || []))
   ).map((t) => JSON.parse(t));
@@ -90,7 +101,11 @@ useEffect(() => {
   const formatDate = (dateString) => {
     if (!dateString) return "Sedang memuat...";
     const date = new Date(dateString);
-    return isNaN(date.getTime()) ? "Tanggal tidak valid" : date.toLocaleDateString("id-ID");
+    return isNaN(date.getTime()) ? "Tanggal tidak valid" : date.toLocaleDateString("id-ID", {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
   };
 
   if (loading) return <div className="h-screen flex justify-center items-center"><Spinner className="h-12 w-12" /></div>;
@@ -223,7 +238,7 @@ useEffect(() => {
             <Typography className="text-center py-20 text-gray-500">Tidak ada berita yang sesuai pencarian.</Typography>
           )}
 
-          {/* --- PAGINATION SECTION --- */}
+          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex flex-wrap justify-center items-center mt-16 gap-2 sm:gap-4">
               <Button
@@ -246,7 +261,7 @@ useEffect(() => {
                       key={page}
                       size="sm"
                       variant={currentPage === page ? "filled" : "text"}
-                      color={currentPage === page ? null : "blue-gray"}
+                      color={currentPage === page ? "blue" : "blue-gray"}
                       onClick={() => paginate(page)}
                       className="rounded-full h-8 w-8 sm:h-10 sm:w-10"
                     >
@@ -272,6 +287,7 @@ useEffect(() => {
 
         {/* Sidebar */}
         <div className="w-full lg:w-80 flex flex-col gap-8">
+          {/* Kategori Sidebar */}
           <div className="bg-gray-50 p-6 rounded-[20px] border border-gray-100">
             <h4 className="font-bold mb-4 text-gray-900">Semua Kategori</h4>
             <div className="flex flex-col gap-3">
@@ -288,6 +304,7 @@ useEffect(() => {
             </div>
           </div>
 
+          {/* Berita Terbaru Sidebar */}
           <div className="bg-gray-50 p-6 rounded-[20px] border border-gray-100">
             <h4 className="font-bold mb-4 text-gray-900">Berita Terbaru</h4>
             <div className="flex flex-col gap-5">
@@ -305,6 +322,7 @@ useEffect(() => {
             </div>
           </div>
 
+          {/* Tags Sidebar */}
           <div className="bg-gray-50 p-6 rounded-[20px] border border-gray-100">
             <h4 className="font-bold mb-4 text-gray-900">Semua Tag</h4>
             <div className="flex flex-wrap gap-2">

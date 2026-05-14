@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+// Menggunakan instance api dari utils
+import api from "../../../utils/api";
 import {
   Card,
   CardBody,
@@ -16,11 +17,8 @@ export default function DaftarAnggotaP3M() {
   const [anggotas, setAnggotas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const API_URL = process.env.REACT_APP_API_URL;
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(8); 
-
-  
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -28,8 +26,10 @@ export default function DaftarAnggotaP3M() {
 
   const fetchData = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_URL}/anggotas`, { withCredentials: true });
-      // Filter hanya role 'anggota'
+      // Memanggil endpoint /anggotas menggunakan utilitas api
+      const response = await api.get("/anggotas");
+      
+      // Filter hanya user dengan role 'anggota'
       const dataHanyaAnggota = response.data.filter(item => item.user?.role === "anggota");
       setAnggotas(dataHanyaAnggota);
     } catch (error) {
@@ -37,7 +37,7 @@ export default function DaftarAnggotaP3M() {
     } finally {
       setLoading(false);
     }
-  }, [API_URL]);
+  }, []);
   
   useEffect(() => {
     fetchData();
@@ -74,7 +74,7 @@ export default function DaftarAnggotaP3M() {
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 overflow-x-hidden">
       <div className="max-w-7xl mx-auto">
         
-        {/* HEADER & CONTROLS - Fix Overflow Layout */}
+        {/* HEADER & CONTROLS */}
         <div className="mb-10 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
           <div className="max-w-xl">
             <Typography variant="h3" color="blue-gray" className="font-bold">
@@ -114,7 +114,7 @@ export default function DaftarAnggotaP3M() {
           </div>
         </div>
 
-        {/* GRID KARTU - Sesuai Request */}
+        {/* GRID KARTU */}
         {currentItems.length > 0 ? (
           <div className="flex flex-wrap justify-center gap-8">
             {currentItems.map((item) => (
@@ -159,7 +159,7 @@ export default function DaftarAnggotaP3M() {
                     </Typography>
                   </div>
 
-                  {/* Research Links - Perbaikan link eksternal */}
+                  {/* Research Links */}
                   <div className="flex justify-center gap-2 mt-2 pt-3 border-t border-gray-50">
                     {item.sinta && (
                       <a 
@@ -202,7 +202,7 @@ export default function DaftarAnggotaP3M() {
           </div>
         )}
 
-        {/* PAGINATION - Fix Alignment */}
+        {/* PAGINATION */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center mt-16 gap-2">
             <IconButton

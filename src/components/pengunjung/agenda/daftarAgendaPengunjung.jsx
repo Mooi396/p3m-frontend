@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+// Menggunakan instance api dari utils
+import api from "../../../utils/api"; 
 import {
   Listbox,
   ListboxButton,
@@ -19,8 +20,8 @@ import {
   CalendarDaysIcon,
   MapPinIcon,
   ArrowDownTrayIcon,
-  Squares2X2Icon, // Icon untuk Grid
-  ListBulletIcon, // Icon untuk Tabel
+  Squares2X2Icon,
+  ListBulletIcon,
 } from "@heroicons/react/24/outline";
 
 const ALL_YEARS = { id: "all", label: "Semua Tahun" };
@@ -30,25 +31,23 @@ export default function HalamanAgenda() {
   const [loading, setLoading] = useState(true);
   const [filterYear, setFilterYear] = useState(ALL_YEARS);
   const [viewMode, setViewMode] = useState("grid");
-  const API_URL = process.env.REACT_APP_API_URL;
-
-  
 
   const fetchAgenda = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_URL}/agendas`, {
-        withCredentials: true,
-      });
+      // Memanggil endpoint /agendas menggunakan utilitas api
+      const response = await api.get("/agendas");
+      
       const verified = response.data
         .filter((a) => a.status === "verified")
         .sort((a, b) => new Date(b.jadwal) - new Date(a.jadwal));
+      
       setAgendas(verified);
     } catch (error) {
       console.error("Gagal memuat agenda:", error);
     } finally {
       setLoading(false);
     }
-  }, [API_URL]);
+  }, []);
   
   useEffect(() => {
     fetchAgenda();
@@ -109,7 +108,7 @@ export default function HalamanAgenda() {
               className={viewMode === "grid" ? "shadow-sm" : ""}
               onClick={() => setViewMode("grid")}
             >
-              <Squares2X2Icon className={viewMode === "grid" ? "h-5 w-5 text-white" : "h-5 w-5 text-gray-400"} />
+              <Squares2X2Icon className={`h-5 w-5 ${viewMode === "grid" ? "text-blue-900" : "text-gray-400"}`} />
             </IconButton>
             <IconButton
               variant={viewMode === "table" ? "white" : "text"}
@@ -117,7 +116,7 @@ export default function HalamanAgenda() {
               className={viewMode === "table" ? "shadow-sm" : ""}
               onClick={() => setViewMode("table")}
             >
-              <ListBulletIcon className={viewMode === "table" ? "h-5 w-5 text-white" : "h-5 w-5 text-gray-400"} />
+              <ListBulletIcon className={`h-5 w-5 ${viewMode === "table" ? "text-blue-900" : "text-gray-400"}`} />
             </IconButton>
           </div>
 
@@ -149,6 +148,7 @@ export default function HalamanAgenda() {
           </div>
         </div>
       </div>
+
       {filteredAgendas.length > 0 ? (
         viewMode === "grid" ? (
           /* Tampilan Grid */

@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react"; // Tambahkan useCallback
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import axios from "axios";
+// Import instance api yang sudah dikonfigurasi dengan JWT Interceptor
+import api from "../../../utils/api"; 
 import {
   Card,
   Typography,
@@ -30,23 +31,65 @@ export default function DetailBerita() {
   const [berita, setBerita] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const API_URL = process.env.REACT_APP_API_URL;
+  const token = localStorage.getItem("token");
+
+  // Menggunakan useCallback untuk fetching data (mengikuti pola referensi)
+  const getBeritaById = useCallback(async () => {
+    try {
+      setLoading(true);
+      // Menggunakan api instance (base URL sudah ada di konfigurasi api)
+      const response = await api.get(`/beritas/${uuid}`);
+      setBerita(response.data);
+    } catch (error) {
+      console.error("Gagal mengambil detail berita:", error);
+      // Proteksi jika token kadaluarsa atau tidak valid
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/masuk");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [uuid, navigate]);
 
   useEffect(() => {
-    const getBeritaById = async () => {
+    getBeritaById();
+  }, [getBeritaById]);
+
+  const SecureImage = ({ src, alt, className, onClick }) => {
+  const [imageBlob, setImageBlob] = useState(null);
+
+  useEffect(() => {
+    const fetchImage = async () => {
       try {
-        const response = await axios.get(`${API_URL}/beritas/${uuid}`, {
-          withCredentials: true,
-        });
-        setBerita(response.data);
+        // Mengambil image sebagai blob lewat axios instance (yang sudah punya interceptor token)
+        const response = await api.get(src, { responseType: 'blob' });
+        const url = URL.createObjectURL(response.data);
+        setImageBlob(url);
       } catch (error) {
-        console.error("Gagal mengambil detail berita:", error);
-      } finally {
-        setLoading(false);
+        console.error("Gagal memuat gambar secara aman", error);
+        setImageBlob("https://via.placeholder.com/150"); // fallback
       }
     };
-    getBeritaById();
-  }, [uuid, API_URL]);
+
+    if (src) fetchImage();
+    
+    // Cleanup URL saat komponen unmount
+    return () => {
+      if (imageBlob) URL.revokeObjectURL(imageBlob);
+    };
+  }, [src]);
+
+  return (
+    <img 
+      src={imageBlob || ""} 
+      alt={alt} 
+      className={className} 
+      onClick={onClick}
+      onError={(e) => { e.target.src = "https://via.placeholder.com/150" }}
+    />
+  );
+};
 
   if (loading) {
     return (
@@ -152,14 +195,13 @@ export default function DetailBerita() {
                 </div>
               </div>
 
-              {/* Gambar Utama: DIPAKSA LANDSCAPE */}
+              {/* Gambar Utama */}
               <div className="mb-10 w-full aspect-video md:aspect-[21/9] overflow-hidden rounded-xl shadow-inner bg-gray-100">
                 {berita.url ? (
-                  <img 
+                  <SecureImage 
                     src={berita.url} 
                     alt={berita.judul_berita} 
-                    className="w-full h-full object-cover" 
-                    onError={(e) => { e.target.src = "https://via.placeholder.com/1200x600?text=Gambar+Tidak+Tersedia"; }}
+                    className="max-h-[60vh] w-full h-auto rounded-lg shadow-lg object-contain bg-white" 
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-400 italic">
@@ -168,7 +210,7 @@ export default function DetailBerita() {
                 )}
               </div>
 
-              {/* Isi Berita: ANTI-MELUAP */}
+              {/* Isi Berita */}
               <div className="rich-text-container w-full min-w-0 overflow-hidden">
                 {berita.isi_berita ? (
                   <div 
@@ -199,7 +241,6 @@ export default function DetailBerita() {
       </div>
 
       <style>{`
-        /* Mengamankan elemen di dalam konten rich text agar tidak meluap */
         .rich-text-content {
           font-size: 1.125rem;
           line-height: 1.8;
@@ -231,7 +272,7 @@ export default function DetailBerita() {
         .rich-text-content table {
           display: block;
           width: 100%;
-          overflow-x: auto; /* Jika ada tabel, dia bisa di scroll horizontal di dalam artikel */
+          overflow-x: auto;
           border-collapse: collapse;
           margin: 1.5rem 0;
         }

@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import axios from "axios";
+// Import instance api yang sudah dikonfigurasi dengan JWT Interceptor
+import api from "../../../utils/api"; 
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import {
@@ -26,7 +27,6 @@ export default function EditBerita() {
   const { uuid } = useParams();
   const navigate = useNavigate();
   const { user: authuser } = useSelector((state) => state.auth);
-  const API_URL = process.env.REACT_APP_API_URL;
   
   // State UI
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -42,63 +42,85 @@ export default function EditBerita() {
   const [selectedKategori, setSelectedKategori] = useState([]);
   const [selectedTag, setSelectedTag] = useState([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Ambil data pendukung (kategori & tag)
-        const [resKat, resTag] = await Promise.all([
-          axios.get(`${API_URL}/kategori`),
-          axios.get(`${API_URL}/tag`)
-        ]);
-        setCategories(resKat.data);
-        setTags(resTag.data);
+  // Fetch Data menggunakan api instance
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      // Ambil data pendukung (kategori & tag) dan detail berita secara paralel
+      const [resKat, resTag, resBerita] = await Promise.all([
+        api.get("/kategori"),
+        api.get("/tag"),
+        api.get(`/beritas/${uuid}`)
+      ]);
 
-        // Ambil detail berita yang akan diedit
-        const resBerita = await axios.get(`${API_URL}/beritas/${uuid}`, {
-          withCredentials: true,
-        });
-        
-        const data = resBerita.data;
+      setCategories(resKat.data);
+      setTags(resTag.data);
 
-        // Validasi: Berita verified tidak boleh diedit
-        if (data.status === "verified" && authuser?.role !== "admin") {
-          alert("Berita yang sudah diverifikasi tidak dapat diedit kembali.");
-          navigate("/dashboard/berita");
-          return;
-        }
+      const data = resBerita.data;
 
-        setJudul(data.judul_berita);
-        setIsi(data.isi_berita);
-        setPreview(data.url); 
-        setSelectedKategori(data.kategoris.map(k => k.uuid));
-        setSelectedTag(data.tags.map(t => t.uuid));
-        
-      } catch (error) {
-        console.error("Gagal memuat data:", error);
+      // Validasi: Berita verified tidak boleh diedit oleh Humas (Hanya Admin)
+      if (data.status === "verified" && authuser?.role !== "admin") {
+        alert("Berita yang sudah diverifikasi tidak dapat diedit kembali.");
+        navigate("/dashboard/berita");
+        return;
+      }
+
+      setJudul(data.judul_berita);
+      setIsi(data.isi_berita);
+
+      // Tambahkan Token ke URL agar preview gambar bisa diakses jika belum terverifikasi
+      const token = localStorage.getItem("token");
+      setPreview(`${data.url}?token=${token}`); 
+      
+      // Ambil UUID saja untuk state lokal
+      setSelectedKategori(data.kategoris.map(k => k.uuid));
+      setSelectedTag(data.tags.map(t => t.uuid));
+      
+    } catch (error) {
+      console.error("Gagal memuat data:", error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/masuk");
+      } else {
         alert("Berita tidak ditemukan atau Anda tidak memiliki akses.");
         navigate("/dashboard/berita");
-      } finally {
-        setLoading(false);
       }
-    };
+    } finally {
+      setLoading(false);
+    }
+  }, [uuid, navigate, authuser]);
+
+  useEffect(() => {
     fetchData();
-  }, [uuid, navigate, authuser, API_URL]);
+  }, [fetchData]);
 
+  // Handler untuk Kategori
   const handleAddKategori = (val) => {
-    if (val && !selectedKategori.includes(val)) setSelectedKategori([...selectedKategori, val]);
+    if (val && !selectedKategori.includes(val)) {
+      setSelectedKategori([...selectedKategori, val]);
+    }
   };
 
+  const removeKategori = (id) => {
+    setSelectedKategori(selectedKategori.filter(item => item !== id));
+  };
+
+  // Handler untuk Tag
   const handleAddTag = (val) => {
-    if (val && !selectedTag.includes(val)) setSelectedTag([...selectedTag, val]);
+    if (val && !selectedTag.includes(val)) {
+      setSelectedTag([...selectedTag, val]);
+    }
   };
 
-  const removeKategori = (id) => setSelectedKategori(selectedKategori.filter(item => item !== id));
-  const removeTag = (id) => setSelectedTag(selectedTag.filter(item => item !== id));
+  const removeTag = (id) => {
+    setSelectedTag(selectedTag.filter(item => item !== id));
+  };
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
       setFile(selectedFile);
+      // Untuk file dari PC lokal, tidak perlu ditambahkan token
       setPreview(URL.createObjectURL(selectedFile));
     }
   };
@@ -110,18 +132,24 @@ export default function EditBerita() {
     data.append("isi_berita", isi);
     if (file) data.append("file", file);
     
+    // Kirim UUID kategori dan tag
     selectedKategori.forEach(id => data.append("kategori_uuid", id));
     selectedTag.forEach(id => data.append("tag_uuid", id));
 
     try {
-      const response = await axios.patch(`${API_URL}/beritas/${uuid}`, data, {
+      const response = await api.patch(`/beritas/${uuid}`, data, {
         headers: { "Content-Type": "multipart/form-data" },
-        withCredentials: true,
       });
-      alert(response.data.msg);
+      alert(response.data.msg || "Berita berhasil diperbarui");
       navigate("/dashboard/berita");
     } catch (error) {
-      alert(error.response?.data?.msg || "Gagal memperbarui berita");
+      console.error("Update error:", error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/masuk");
+      } else {
+        alert(error.response?.data?.msg || "Gagal memperbarui berita");
+      }
     }
   };
 
@@ -130,6 +158,7 @@ export default function EditBerita() {
       [{ header: [1, 2, 3, false] }],
       ["bold", "italic", "underline", "strike", "blockquote"],
       [{ list: "ordered" }, { list: "bullet" }],
+      ["link", "image"],
       ["clean"],
     ],
   };
@@ -148,7 +177,7 @@ export default function EditBerita() {
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
       {/* SIDEBAR DESKTOP */}
-      <div className="hidden lg:block">
+      <div className="hidden lg:block shrink-0">
         {authuser?.role === "admin" ? <SidebarAdmin /> : <SidebarHumas />}
       </div>
 
@@ -169,7 +198,7 @@ export default function EditBerita() {
           <IconButton
             variant="text"
             color="blue-gray"
-            className="lg:hidden mr-2"
+            className="lg:hidden mx-2"
             onClick={() => setIsDrawerOpen(true)}
           >
             <Bars3Icon className="h-6 w-6" />
@@ -197,6 +226,7 @@ export default function EditBerita() {
                 <Typography variant="h6" color="blue-gray" className="mb-2">Judul Berita</Typography>
                 <Input 
                   size="lg" 
+                  placeholder="Masukkan judul berita..."
                   value={judul} 
                   onChange={(e) => setJudul(e.target.value)} 
                   required 
@@ -207,7 +237,7 @@ export default function EditBerita() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <Typography variant="h6" color="blue-gray" className="mb-2">Kategori</Typography>
-                  <Select label="Tambah Kategori" onChange={(val) => handleAddKategori(val)}>
+                  <Select label="Pilih Kategori" onChange={(val) => handleAddKategori(val)}>
                     {categories.map((cat) => (
                       <Option key={cat.uuid} value={cat.uuid}>{cat.nama_kategori}</Option>
                     ))}
@@ -218,7 +248,7 @@ export default function EditBerita() {
                       return (
                         <Chip 
                           key={id} 
-                          value={cat?.nama_kategori} 
+                          value={cat?.nama_kategori || "Loading..."} 
                           variant="ghost" 
                           color="blue" 
                           size="sm" 
@@ -231,7 +261,7 @@ export default function EditBerita() {
 
                 <div>
                   <Typography variant="h6" color="blue-gray" className="mb-2">Tag</Typography>
-                  <Select label="Tambah Tag" onChange={(val) => handleAddTag(val)}>
+                  <Select label="Pilih Tag" onChange={(val) => handleAddTag(val)}>
                     {tags.map((t) => (
                       <Option key={t.uuid} value={t.uuid}>{t.nama_tag}</Option>
                     ))}
@@ -242,7 +272,7 @@ export default function EditBerita() {
                       return (
                         <Chip 
                           key={id} 
-                          value={tag?.nama_tag} 
+                          value={tag?.nama_tag || "Loading..."} 
                           variant="ghost" 
                           color="teal" 
                           size="sm" 
@@ -255,7 +285,7 @@ export default function EditBerita() {
               </div>
 
               {/* Upload Gambar */}
-              <div className="border-2 border-dashed border-gray-200 p-4 rounded-xl">
+              <div className="border-2 border-dashed border-gray-200 p-4 rounded-xl bg-gray-50/50">
                 <Typography variant="h6" color="blue-gray" className="mb-2">Gambar Utama Berita</Typography>
                 <input 
                   type="file" 
@@ -267,8 +297,11 @@ export default function EditBerita() {
                   *Biarkan kosong jika tidak ingin mengganti gambar yang sudah ada.
                 </Typography>
                 {preview && (
-                  <div className="mt-4 relative group">
+                  <div className="mt-4 relative group w-full max-w-lg mx-auto">
                     <img src={preview} alt="Preview" className="w-full h-64 object-cover rounded-lg border shadow-sm" />
+                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                       <Typography color="white" className="font-bold">Preview Gambar Baru/Aktif</Typography>
+                    </div>
                   </div>
                 )}
               </div>
@@ -276,19 +309,19 @@ export default function EditBerita() {
               {/* React Quill */}
               <div className="mb-14">
                 <Typography variant="h6" color="blue-gray" className="mb-2">Isi Konten Berita</Typography>
-                <div className="bg-white border rounded-lg">
+                <div className="bg-white border rounded-lg overflow-hidden">
                   <ReactQuill 
                     theme="snow" 
                     value={isi} 
                     onChange={setIsi} 
                     modules={modules}
-                    className="h-72 mb-12" 
+                    className="h-80 mb-12" 
                   />
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 mt-6">
+              <div className="flex flex-col sm:flex-row gap-4 mt-10">
                 <Button 
                   variant="outlined" 
                   color="red" 
@@ -300,10 +333,11 @@ export default function EditBerita() {
                 </Button>
                 <Button 
                   type="submit" 
+                  color="blue"
                   fullWidth 
                   className="order-1 sm:order-2"
                 >
-                  Update Perubahan
+                  Simpan Perubahan
                 </Button>
               </div>
             </form>

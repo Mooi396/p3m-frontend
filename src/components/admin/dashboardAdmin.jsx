@@ -110,6 +110,9 @@ const DashboardAdmin = () => {
 
   const navigate = useNavigate();
 
+  // Ambil token untuk disisipkan ke gambar profile user yang pending
+  const token = localStorage.getItem("token");
+
   const handleOpen = (user = null) => {
     setSelectedUser(user);
     setOpen(!open);
@@ -159,6 +162,56 @@ const DashboardAdmin = () => {
       alert(`Gagal melakukan aksi pada ${type}`);
     }
   };
+
+ const SecureAvatar = ({ src, alt, size, variant, fallback, className }) => {
+  const [imgSrc, setImgSrc] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchImage = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get(src, { responseType: 'blob' });
+        if (isMounted) {
+          const url = URL.createObjectURL(response.data);
+          setImgSrc(url);
+        }
+      } catch (error) {
+        if (isMounted) setImgSrc(null);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    if (src) {
+      fetchImage();
+    } else {
+      setLoading(false);
+    }
+
+    return () => {
+      isMounted = false;
+      if (imgSrc) URL.revokeObjectURL(imgSrc);
+    };
+  }, [src]);
+
+  // Jika masih loading atau gambar gagal dimuat (imgSrc null), tampilkan fallback
+  if (loading || !imgSrc) {
+    return <div className={className}>{fallback}</div>;
+  }
+
+  // Jika gambar berhasil didapat, render Avatar tanpa children
+  return (
+    <Avatar 
+      src={imgSrc} 
+      alt={alt} 
+      size={size} 
+      variant={variant} 
+      className={className} 
+    />
+  );
+};
 
   return (
     <div className='flex h-screen w-full bg-gray-50 overflow-hidden'>
@@ -216,7 +269,12 @@ const DashboardAdmin = () => {
                 <tr key={user.uuid}>
                   <td className={classes}>
                     <div className="flex items-center gap-2">
-                      <Avatar src={user.anggotas?.[0]?.url} size="xs" variant="circular" fallback={<UserCircleIcon className="h-4 w-4 text-gray-300"/>}/>
+                    <SecureAvatar 
+                      src={user.anggotas?.[0]?.url} 
+                      size="xs" 
+                      variant="circular" 
+                      fallback={<UserCircleIcon className="h-4 w-4 text-gray-300"/>}
+                    />
                       <Typography variant="small" className="font-bold text-xs truncate w-24 sm:w-auto">{user.username}</Typography>
                     </div>
                   </td>
@@ -311,7 +369,12 @@ const DashboardAdmin = () => {
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
               <div className="md:col-span-4 flex flex-col items-center border-b md:border-b-0 md:border-r border-gray-100 pb-6 md:pb-0 md:pr-4">
                 {selectedUser.anggotas?.[0]?.url ? (
-                  <Avatar src={selectedUser.anggotas[0].url} size="xxl" className="mb-4 shadow-xl border-2 border-black p-1" />
+                  <SecureAvatar 
+                    src={selectedUser.anggotas?.[0]?.url} 
+                    size="xxl" 
+                    className="mb-4 shadow-xl border-2 border-black p-1 flex items-center justify-center" 
+                    fallback={<UserCircleIcon className="h-24 w-24 text-gray-300" />}
+                  />
                 ) : (
                   <UserCircleIcon className="h-24 w-24 text-gray-300 mb-4" />
                 )}
@@ -340,7 +403,7 @@ const DashboardAdmin = () => {
           )}
         </DialogBody>
         <DialogFooter className="p-4 border-t">
-          <Button variant="gradient" onClick={() => handleOpen(null)}>Tutup</Button>
+          <Button onClick={() => handleOpen(null)}>Tutup</Button>
         </DialogFooter>
       </Dialog>
 

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import axios from "axios";
+// Menggunakan instance api dari utils
+import api from "../../../utils/api";
 import {
   Button,
   Dialog,
@@ -23,10 +24,10 @@ export default function TambahUserAdmin({ open, handler, refreshData }) {
     confPassword: "",
     role: "anggota",
   });
+  
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
-  const API_URL = process.env.REACT_APP_API_URL;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -35,27 +36,44 @@ export default function TambahUserAdmin({ open, handler, refreshData }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg("");
+
+    // Validasi sederhana sebelum kirim ke API
+    if (formData.password !== formData.confPassword) {
+      return setErrorMsg("Password dan Konfirmasi Password tidak cocok!");
+    }
+
     setLoading(true);
 
     try {
-      await axios.post(`${API_URL}/register`, formData, {
-        withCredentials: true,
+      // Mengirim data menggunakan api.post ke endpoint /register
+      // Base URL dan withCredentials sudah otomatis ditangani oleh instance api
+      await api.post("/register", formData);
+      
+      // Reset form setelah berhasil
+      setFormData({ 
+        username: "", 
+        email: "", 
+        password: "", 
+        confPassword: "", 
+        role: "anggota" 
       });
-      setFormData({ username: "", email: "", password: "", confPassword: "", role: "" });
-      refreshData();
-      handler();
+      
+      refreshData(); // Memperbarui daftar user di halaman utama
+      handler();     // Menutup dialog
     } catch (error) {
-      setErrorMsg(error.response?.data?.msg || "Terjadi kesalahan");
+      setErrorMsg(error.response?.data?.msg || "Terjadi kesalahan saat menyimpan user");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Dialog open={open} handler={handler} size="sm" className="p-2">
+    <Dialog open={open} handler={handler} size="sm" className="rounded-xl">
       <form onSubmit={handleSubmit}>
         <DialogHeader className="flex flex-col items-start gap-1">
-          <Typography variant="h5" color="blue-gray">Tambah User Baru</Typography>
+          <Typography variant="h5" color="blue-gray">
+            Tambah User Baru
+          </Typography>
           <Typography className="font-normal text-sm text-gray-600">
             Kredensial ini akan digunakan user untuk masuk ke sistem.
           </Typography>
@@ -68,53 +86,85 @@ export default function TambahUserAdmin({ open, handler, refreshData }) {
             </Alert>
           )}
 
-          <Input label="Username" name="username" value={formData.username} onChange={handleChange} required />
-          <Input label="Email" type="email" name="email" value={formData.email} onChange={handleChange} required />
-          
-          <Select 
-            label="Role Pengguna" 
-            value={formData.role} 
-            onChange={(val) => setFormData({ ...formData, role: val })}
-          >
-            <Option value="admin">Administrator</Option>
-            <Option value="ketua_forum">Ketua Forum</Option>
-            <Option value="humas">Humas</Option>
-          </Select>
-
-          <div className="relative">
+          <div className="flex flex-col gap-4">
             <Input 
-              label="Password" 
-              name="password"
-              type={showPassword ? "text" : "password"} 
-              value={formData.password} 
+              label="Username" 
+              name="username" 
+              value={formData.username} 
               onChange={handleChange} 
               required 
             />
-            <IconButton 
-              variant="text" 
-              size="sm" 
-              className="!absolute right-1 top-1 rounded" 
-              onClick={() => setShowPassword(!showPassword)}
+            
+            <Input 
+              label="Email" 
+              type="email" 
+              name="email" 
+              value={formData.email} 
+              onChange={handleChange} 
+              required 
+            />
+            
+            <Select 
+              label="Role Pengguna" 
+              value={formData.role} 
+              onChange={(val) => setFormData({ ...formData, role: val })}
             >
-              {showPassword ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
-            </IconButton>
-          </div>
+              <Option value="admin">Administrator</Option>
+              <Option value="ketua_forum">Ketua Forum</Option>
+              <Option value="humas">Humas</Option>
+              <Option value="anggota">Anggota</Option>
+            </Select>
 
-          <Input 
-            label="Konfirmasi Password" 
-            name="confPassword"
-            type={showPassword ? "text" : "password"} 
-            value={formData.confPassword} 
-            onChange={handleChange} 
-            required 
-          />
+            <div className="relative">
+              <Input 
+                label="Password" 
+                name="password"
+                type={showPassword ? "text" : "password"} 
+                value={formData.password} 
+                onChange={handleChange} 
+                required 
+              />
+              <IconButton 
+                variant="text" 
+                size="sm" 
+                className="!absolute right-1 top-1 rounded" 
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? (
+                  <EyeSlashIcon className="h-4 w-4 text-gray-500" />
+                ) : (
+                  <EyeIcon className="h-4 w-4 text-gray-500" />
+                )}
+              </IconButton>
+            </div>
+
+            <Input 
+              label="Konfirmasi Password" 
+              name="confPassword"
+              type={showPassword ? "text" : "password"} 
+              value={formData.confPassword} 
+              onChange={handleChange} 
+              required 
+            />
+          </div>
         </DialogBody>
 
         <DialogFooter className="gap-2">
-          <Button variant="text" color="red" onClick={handler} disabled={loading}>
+          <Button 
+            variant="text" 
+            color="red" 
+            onClick={handler} 
+            disabled={loading}
+            className="capitalize"
+          >
             Batal
           </Button>
-          <Button type="submit" loading={loading}>
+          <Button 
+            type="submit" 
+            color="black" 
+            loading={loading}
+            className="capitalize shadow-none hover:shadow-md"
+          >
             Simpan User
           </Button>
         </DialogFooter>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import axios from "axios";
+// Menggunakan instance api dari folder utils
+import api from "../../../utils/api";
 import {
   Card,
   Typography,
@@ -18,27 +19,29 @@ export default function DetailBeritaPengunjung() {
   const [berita, setBerita] = useState(null);
   const [allBeritas, setAllBeritas] = useState([]); 
   const [loading, setLoading] = useState(true);
-  const API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Menggunakan utilitas api untuk pemanggilan paralel
         const [resDetail, resAll] = await Promise.all([
-          axios.get(`${API_URL}/beritas/${uuid}`, { withCredentials: true }),
-          axios.get(`${API_URL}/beritas`, { withCredentials: true })
+          api.get(`/beritas/${uuid}`),
+          api.get("/beritas")
         ]);
         
         setBerita(resDetail.data);
+        // Filter berita yang terverifikasi untuk sidebar
         setAllBeritas(resAll.data.filter(b => b.status === "verified"));
       } catch (error) {
-        console.error("Gagal mengambil data:", error);
+        console.error("Gagal mengambil data berita:", error);
       } finally {
         setLoading(false);
       }
     };
     fetchData();
-  }, [uuid, API_URL]);
+  }, [uuid]);
 
+  // Logika Sidebar: Menghitung kategori
   const kategoriCounts = allBeritas.reduce((acc, b) => {
     b.kategoris?.forEach((kat) => {
       if (!acc[kat.uuid]) acc[kat.uuid] = { nama: kat.nama_kategori, count: 0, uuid: kat.uuid };
@@ -48,6 +51,7 @@ export default function DetailBeritaPengunjung() {
   }, {});
   const masterKategoris = Object.values(kategoriCounts);
 
+  // Logika Sidebar: Mengambil semua tag unik
   const masterTags = Array.from(
     new Set(allBeritas.flatMap((b) => b.tags?.map((t) => JSON.stringify(t)) || []))
   ).map((t) => JSON.parse(t));
@@ -72,7 +76,7 @@ export default function DetailBeritaPengunjung() {
         <div className="flex flex-col lg:flex-row gap-10">
           
           {/* --- MAIN CONTENT (LEFT) --- */}
-          <div className="flex-1 min-w-0"> {/* min-w-0 penting untuk mencegah flex meluap */}
+          <div className="flex-1 min-w-0">
             <Card className="p-5 md:p-10 bg-white shadow-sm border border-gray-100 rounded-2xl overflow-hidden">
               
               {/* Category Chips */}
@@ -114,7 +118,7 @@ export default function DetailBeritaPengunjung() {
                 </div>
               </div>
 
-              {/* Main Image - Fixed Aspect Ratio */}
+              {/* Main Image */}
               <div className="mb-10 rounded-2xl overflow-hidden shadow-md bg-gray-100 aspect-video md:aspect-[21/9]">
                 <img 
                     src={berita.url} 
@@ -123,7 +127,7 @@ export default function DetailBeritaPengunjung() {
                 />
               </div>
 
-              {/* Content - Anti Overflow */}
+              {/* Content - Rich Text Render */}
               <div className="rich-text-container w-full overflow-hidden">
                 <div 
                   className="rich-text-content text-blue-gray-800 leading-relaxed text-lg break-words"
@@ -204,8 +208,8 @@ export default function DetailBeritaPengunjung() {
         </div>
       </div>
 
+      {/* Global CSS for Rich Text Editor Content */}
       <style>{`
-        /* Mengamankan konten dari Rich Text Editor */
         .rich-text-content p { margin-bottom: 1.5rem; word-wrap: break-word; }
         .rich-text-content h1, .rich-text-content h2 { 
             font-size: 1.5rem; font-weight: bold; margin-top: 2rem; margin-bottom: 1rem; color: #263238;
@@ -214,11 +218,9 @@ export default function DetailBeritaPengunjung() {
         .rich-text-content img { 
             max-width: 100%; height: auto; border-radius: 12px; margin: 1rem 0; 
         }
-        /* Mengamankan tabel agar tidak merusak layout mobile */
         .rich-text-content table { 
             display: block; width: 100%; overflow-x: auto; border-collapse: collapse; 
         }
-        /* Mengamankan video/iframe */
         .rich-text-content iframe {
             width: 100% !important; aspect-ratio: 16/9; height: auto !important; border-radius: 12px;
         }

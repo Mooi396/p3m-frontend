@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api";
 import {
   Card,
   CardBody,
@@ -9,6 +9,7 @@ import {
   Button,
   IconButton,
   Drawer,
+  Spinner,
 } from "@material-tailwind/react";
 import { 
   EyeIcon, 
@@ -16,33 +17,85 @@ import {
   XMarkIcon, 
   UserCircleIcon 
 } from "@heroicons/react/24/solid";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import SidebarAnggota from "./sidebarAnggota";
 import DashboardNavbar from "../dashboardNavbar";
+
+// --- Sub-Component: SecureAvatar ---
+const SecureAvatar = ({ src, alt, className, variant, size, fallback }) => {
+  const [imgSrc, setImgSrc] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchImage = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get(src, { responseType: 'blob' });
+        if (isMounted) {
+          const url = URL.createObjectURL(response.data);
+          setImgSrc(url);
+        }
+      } catch (error) {
+        if (isMounted) setImgSrc(null);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    if (src) fetchImage();
+    else setLoading(false);
+
+    return () => {
+      isMounted = false;
+      if (imgSrc) URL.revokeObjectURL(imgSrc);
+    };
+  }, [src]);
+
+  if (loading || !imgSrc) {
+    return (
+      <div className={`${className} flex items-center justify-center bg-gray-100 rounded-full overflow-hidden border border-gray-200 shadow-sm`}>
+        {fallback}
+      </div>
+    );
+  }
+
+  return (
+    <Avatar 
+      src={imgSrc} 
+      alt={alt} 
+      className={className} 
+      variant={variant}
+      size={size}
+    />
+  );
+};
 
 export default function DashboardAnggota() {
   const [user, setUser] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const API_URL = process.env.REACT_APP_API_URL;
+  const navigate = useNavigate();
 
   useEffect(() => {
     const getMe = async () => {
       try {
-        const response = await axios.get(`${API_URL}/me`, {
-          withCredentials: true,
-        });
+        const response = await api.get("/me");
         setUser(response.data);
       } catch (error) {
         console.error("Gagal mengambil data user:", error);
+        if (error.response?.status === 401) {
+          localStorage.removeItem("token");
+          navigate("/masuk");
+        }
       }
     };
     getMe();
-  }, [API_URL]);
+  }, [navigate]);
 
   if (!user) return (
     <div className="flex h-screen w-full items-center justify-center bg-gray-50">
       <div className="flex flex-col items-center gap-2">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-black"></div>
+        <Spinner className="h-10 w-10" color="blue" />
         <Typography color="gray" className="font-medium">Memuat Dashboard...</Typography>
       </div>
     </div>
@@ -70,11 +123,11 @@ export default function DashboardAnggota() {
 
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* NAVBAR */}
-        <div className="flex items-center bg-white lg:bg-transparent shrink-0">
+        <div className="flex items-center bg-white lg:bg-transparent shrink-0 shadow-sm lg:shadow-none">
           <IconButton
             variant="text"
             color="blue-gray"
-            className="lg:hidden mr-2"
+            className="lg:hidden mr-2 ml-2"
             onClick={() => setIsDrawerOpen(true)}
           >
             <Bars3Icon className="h-6 w-6" />
@@ -93,25 +146,20 @@ export default function DashboardAnggota() {
                 {/* Header Profil */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-gray-100 mb-8">
                   <div className="flex flex-col sm:flex-row items-center gap-4 md:gap-6 text-center sm:text-left">
-                    {profil?.url ? (
-                      <Avatar
-                        src={profil.url}
-                        alt="foto-profil"
-                        size="xl"
-                        variant="circular"
-                        className="border-2 border-gray-200 shadow-sm"
-                      />
-                    ) : (
-                      <div className="h-20 w-20 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
-                        <UserCircleIcon className="h-14 w-14 text-gray-400" />
-                      </div>
-                    )}
+                    <SecureAvatar 
+                      src={profil?.url}
+                      alt="foto-profil"
+                      size="xl"
+                      variant="circular"
+                      className="h-20 w-20 border-2 border-gray-200 shadow-sm"
+                      fallback={<UserCircleIcon className="h-14 w-14 text-gray-400" />}
+                    />
                     <div>
                       <Typography variant="h4" color="blue-gray" className="font-bold text-xl md:text-2xl">
                         {profil?.nama_lengkap}{profil?.gelar ? `, ${profil.gelar}` : ""}
                         {!profil?.nama_lengkap && user.username}
                       </Typography>
-                      <Typography variant="paragraph" color="gray" className="font-medium opacity-70">
+                      <Typography variant="paragraph" color="gray" className="font-medium opacity-70 uppercase text-xs tracking-wider">
                         {profil?.jabatan || "Anggota Forum"}
                       </Typography>
                     </div>
@@ -121,7 +169,7 @@ export default function DashboardAnggota() {
                     <Link to="/dashboard/profil" className="w-full sm:w-auto">
                       <Tooltip content="Lihat Detail Profil">
                         <Button 
-                          color="black" // Mengganti blue ke black
+                          color="black"
                           size="md" 
                           className="flex items-center justify-center gap-2 rounded-lg normal-case w-full sm:px-6 shadow-none hover:shadow-md"
                         >
@@ -160,7 +208,7 @@ export default function DashboardAnggota() {
                       Halo, {user.username}!
                     </Typography>
                     <Typography variant="small" color="gray" className="leading-relaxed">
-                      Selamat datang di dashboard Anggota P3M. Di sini Anda dapat memantau status verifikasi akun Anda dan mengakses data personal. Pastikan data profil Anda selalu diperbarui.
+                      Selamat datang di dashboard Anggota Forum. Di sini Anda dapat memantau status verifikasi akun Anda dan mengakses data personal. Pastikan data profil Anda selalu diperbarui melalui menu profil.
                     </Typography>
                   </div>
                 </div>
@@ -173,7 +221,6 @@ export default function DashboardAnggota() {
   );
 }
 
-// Komponen Helper Field
 function ReadOnlyField({ label, value, isChip, color }) {
   const colorMap = {
     gray: "bg-gray-100 text-gray-700 border-gray-200",

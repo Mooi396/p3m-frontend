@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
-import SidebarAdmin from "../../admin/sidebarAdmin";
-import axios from "axios";
+import React, { useState, useEffect, useCallback } from "react";
+import { useSelector } from "react-redux";
+// Menggunakan instance api (axios interceptor) agar token otomatis terkirim
+import api from "../../../utils/api"; 
 import { 
   MagnifyingGlassIcon, 
   Bars3Icon, 
@@ -24,7 +25,8 @@ import {
   Drawer,
   Select,
   Option,
-  CardFooter
+  CardFooter,
+  Spinner
 } from "@material-tailwind/react";
 import { 
   PencilIcon, 
@@ -33,45 +35,56 @@ import {
   Squares2X2Icon 
 } from "@heroicons/react/24/solid";
 import DashboardNavbar from "../../dashboardNavbar";
-import { useSelector } from "react-redux";
+import SidebarAdmin from "../../admin/sidebarAdmin";
 import SidebarHumas from "../sidebarHumas";
+import Head from "../../head"; // Pastikan komponen Head tersedia untuk meta title
 
-const TABLE_HEAD = ["Nama Kategori", "UUID", "Actions"];
+const TABLE_HEAD = ["Nama Kategori", "UUID", "Aksi"];
 
 export default function DaftarKategoriAdmin() {
+  const { user: authuser } = useSelector((state) => state.auth);
+  
+  // State Data
   const [kategoris, setKategoris] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  // State UI
   const [searchTerm, setSearchTerm] = useState("");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
+  
+  // State Form
   const [currentUuid, setCurrentUuid] = useState("");
   const [namaKategori, setNamaKategori] = useState("");
-  const { user: authuser } = useSelector((state) => state.auth);
-  const API_URL = process.env.REACT_APP_API_URL;
 
   // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+  // Reset ke halaman 1 jika filter berubah
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, rowsPerPage]);
 
+  // Fetch Data Kategori
   const getKategoris = useCallback(async () => {
+    setLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/kategori`, {
-        withCredentials: true,
-      });
+      const response = await api.get("/kategori");
       setKategoris(response.data);
     } catch (error) {
       console.error("Gagal mengambil data kategori:", error);
+    } finally {
+      setLoading(false);
     }
-  }, [API_URL]);
+  }, []);
   
   useEffect(() => {
     getKategoris();
   }, [getKategoris]);
 
+  // Handlers
   const handleOpen = () => {
     setOpen(!open);
     if (open) {
@@ -88,33 +101,30 @@ export default function DaftarKategoriAdmin() {
     setOpen(true);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    if(e) e.preventDefault();
+    if (!namaKategori.trim()) return alert("Nama kategori tidak boleh kosong");
+
     try {
       if (isEdit) {
-        await axios.patch(`${API_URL}/kategori/${currentUuid}`, 
-          { nama_kategori: namaKategori }, 
-          { withCredentials: true }
-        );
+        await api.patch(`/kategori/${currentUuid}`, { nama_kategori: namaKategori });
       } else {
-        await axios.post(`${API_URL}/kategori`, 
-          { nama_kategori: namaKategori }, 
-          { withCredentials: true }
-        );
+        await api.post("/kategori", { nama_kategori: namaKategori });
       }
       getKategoris();
       handleOpen();
     } catch (error) {
-      alert(error.response?.data?.msg || "Terjadi kesalahan");
+      alert(error.response?.data?.msg || "Terjadi kesalahan sistem");
     }
   };
 
   const deleteKategori = async (uuid) => {
-    if (window.confirm("Yakin ingin menghapus kategori ini?")) {
+    if (window.confirm("Apakah Anda yakin ingin menghapus kategori ini? Tindakan ini tidak bisa dibatalkan.")) {
       try {
-        await axios.delete(`${API_URL}/kategori/${uuid}`, { withCredentials: true });
+        await api.delete(`/kategori/${uuid}`);
         getKategoris();
       } catch (error) {
-        alert(error.response?.data?.msg || "Gagal menghapus");
+        alert(error.response?.data?.msg || "Gagal menghapus data");
       }
     }
   };
@@ -153,24 +163,31 @@ export default function DaftarKategoriAdmin() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
-      <div className="hidden lg:block">
+    <div className="flex h-screen overflow-hidden bg-gray-50/50">
+      <Head title="Manajemen Kategori - Admin" />
+
+      {/* Sidebar Desktop */}
+      <div className="hidden lg:block shrink-0">
         {authuser?.role === "admin" ? <SidebarAdmin /> : <SidebarHumas />}
       </div>
 
+      {/* Sidebar Mobile */}
       <Drawer open={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} className="p-0">
-        <div className="flex items-center justify-between p-4 border-b">
-          <Typography variant="h5" color="blue-gray">Menu Navigasi</Typography>
+        <div className="flex items-center justify-between p-4 border-b bg-white">
+          <Typography variant="h5" color="blue-gray">Navigasi</Typography>
           <IconButton variant="text" color="blue-gray" onClick={() => setIsDrawerOpen(false)}>
-            <XMarkIcon className="h-5 w-5" />
+            <XMarkIcon className="h-6 w-6" />
           </IconButton>
         </div>
-        {authuser?.role === "admin" ? <SidebarAdmin /> : <SidebarHumas />}
+        <div className="h-[calc(100vh-70px)] overflow-y-auto">
+           {authuser?.role === "admin" ? <SidebarAdmin /> : <SidebarHumas />}
+        </div>
       </Drawer>
 
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        <div className="flex items-center bg-white lg:bg-transparent">
-          <IconButton variant="text" color="blue-gray" className="lg:hidden mr-2" onClick={() => setIsDrawerOpen(true)}>
+        {/* Top Navbar */}
+        <div className="flex items-center bg-white lg:bg-transparent border-b lg:border-none">
+          <IconButton variant="text" color="blue-gray" className="lg:hidden ml-2" onClick={() => setIsDrawerOpen(true)}>
             <Bars3Icon className="h-6 w-6" />
           </IconButton>
           <div className="flex-1">
@@ -178,129 +195,150 @@ export default function DaftarKategoriAdmin() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto p-4 lg:p-8">
-          <Card className="w-full shadow-md border border-gray-200 rounded-xl overflow-hidden">
-            <CardHeader floated={false} shadow={false} className="rounded-none p-4">
+        {/* Main Content Area */}
+        <div className="flex-1 overflow-y-auto p-4 lg:p-8">
+          <Card className="w-full shadow-sm border border-gray-200 rounded-xl overflow-hidden">
+            <CardHeader floated={false} shadow={false} className="rounded-none p-4 pb-0">
               <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                  <Typography variant="h5" color="blue-gray">Manajemen Kategori Berita</Typography>
+                  <Typography variant="h4" color="blue-gray" className="font-bold">
+                    Kategori Berita
+                  </Typography>
                   <Typography color="gray" className="mt-1 font-normal text-sm">
-                    Total {filteredRows.length} kategori ditemukan
+                    Kelola kategori untuk pengelompokan berita dan konten.
                   </Typography>
                 </div>
-                <Button className="flex items-center gap-3 w-full sm:w-auto justify-center" size="sm" onClick={handleOpen}>
-                  <PlusIcon strokeWidth={2} className="h-4 w-4" /> Tambah Kategori
+                <Button 
+                  className="flex items-center gap-3 justify-center" size="sm" 
+                  onClick={handleOpen}
+                >
+                  <PlusIcon strokeWidth={2} className="h-5 w-5" /> Tambah Kategori
                 </Button>
               </div>
-              <div className="flex flex-col items-center justify-end gap-4 md:flex-row">
-                <div className="w-full md:w-72">
+
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4 border-t border-gray-100 py-4">
+                <div className="flex items-center gap-2">
+                   <Chip variant="ghost" value={`${filteredRows.length} Total`} size="sm" className="rounded-full" />
+                </div>
+                <div className="w-full md:w-80">
                   <Input 
-                    label="Cari Nama Kategori..." 
+                    label="Cari kategori..." 
                     icon={<MagnifyingGlassIcon className="h-5 w-5" />} 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    className="focus:ring-0"
                   />
                 </div>
               </div>
             </CardHeader>
 
             <CardBody className="overflow-x-auto px-0 pt-0">
-              <table className="w-full min-w-max table-auto text-left">
-                <thead>
-                  <tr>
-                    {TABLE_HEAD.map((head) => (
-                      <th key={head} className="border-y border-blue-gray-100 bg-blue-gray-50/50 p-4">
-                        <Typography variant="small" color="blue-gray" className="font-bold leading-none opacity-70 text-[11px] uppercase">
-                          {head}
-                        </Typography>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentItems.map((kategori, index) => {
-                    const isLast = index === currentItems.length - 1;
-                    const classes = isLast ? "p-4" : "p-4 border-b border-blue-gray-50";
-
-                    return (
-                      <tr key={kategori.uuid} className="hover:bg-gray-50 transition-colors">
-                        <td className={classes}>
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-gray-100 rounded-lg hidden sm:block">
-                              <Squares2X2Icon className="h-5 w-5 text-gray-800" />
-                            </div>
-                            <Typography variant="small" color="blue-gray" className="font-bold text-xs lg:text-sm">
-                              {kategori.nama_kategori}
-                            </Typography>
-                          </div>
-                        </td>
-                        <td className={classes}>
-                          <Typography variant="small" className="font-mono text-gray-500 text-[10px] lg:text-xs">
-                            {kategori.uuid}
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-3">
+                  <Spinner className="h-10 w-10 text-gray-500" />
+                  <Typography color="gray" className="animate-pulse">Menghubungkan ke server...</Typography>
+                </div>
+              ) : (
+                <table className="w-full min-w-max table-auto text-left">
+                  <thead>
+                    <tr>
+                      {TABLE_HEAD.map((head) => (
+                        <th key={head} className="border-y border-gray-100 bg-gray-50/50 p-4">
+                          <Typography variant="small" color="blue-gray" className="font-bold leading-none opacity-80 text-[11px] uppercase tracking-wider">
+                            {head}
                           </Typography>
-                        </td>
-                        <td className={classes}>
-                          <div className="flex gap-2">
-                            <Tooltip content="Edit Kategori">
-                              <IconButton variant="text" size="sm" onClick={() => handleEdit(kategori)}>
-                                <PencilIcon className="h-4 w-4" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip content="Hapus Kategori">
-                              <IconButton variant="text" color="red" size="sm" onClick={() => deleteKategori(kategori.uuid)}>
-                                <TrashIcon className="h-4 w-4" />
-                              </IconButton>
-                            </Tooltip>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentItems.map((kategori, index) => {
+                      const isLast = index === currentItems.length - 1;
+                      const classes = isLast ? "p-4" : "p-4 border-b border-gray-50";
+
+                      return (
+                        <tr key={kategori.uuid} className="hover:bg-blue-50/30 transition-colors group">
+                          <td className={classes}>
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-blue-50 rounded-lg text-blue-600 group-hover:bg-blue-100 transition-colors">
+                                <Squares2X2Icon className="h-5 w-5" />
+                              </div>
+                              <Typography variant="small" color="blue-gray" className="font-semibold">
+                                {kategori.nama_kategori}
+                              </Typography>
+                            </div>
+                          </td>
+                          <td className={classes}>
+                            <Typography variant="small" className="font-mono text-gray-400 text-xs bg-gray-100 px-2 py-1 rounded inline-block">
+                              {kategori.uuid}
+                            </Typography>
+                          </td>
+                          <td className={classes}>
+                            <div className="flex gap-1">
+                              <Tooltip content="Ubah Nama">
+                                <IconButton variant="text" size="sm" onClick={() => handleEdit(kategori)}>
+                                  <PencilIcon className="h-4 w-4" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip content="Hapus Permanen">
+                                <IconButton variant="text" color="red" size="sm" onClick={() => deleteKategori(kategori.uuid)}>
+                                  <TrashIcon className="h-4 w-4" />
+                                </IconButton>
+                              </Tooltip>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {!loading && filteredRows.length === 0 && (
+                      <tr>
+                        <td colSpan={3} className="p-16 text-center">
+                          <div className="flex flex-col items-center opacity-40">
+                             <MagnifyingGlassIcon className="h-12 w-12 mb-2" />
+                             <Typography variant="h6">Tidak ada data yang cocok</Typography>
                           </div>
                         </td>
                       </tr>
-                    );
-                  })}
-                  {filteredRows.length === 0 && (
-                    <tr>
-                      <td colSpan={3} className="p-10 text-center">
-                        <Typography variant="small" color="gray" className="italic">Data tidak ditemukan</Typography>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                    )}
+                  </tbody>
+                </table>
+              )}
             </CardBody>
 
-            <CardFooter className="flex flex-wrap items-center justify-between border-t border-blue-gray-50 p-4 gap-4">
-              <div className="flex items-center flex-wrap gap-4">
-                <Typography variant="small" color="blue-gray" className="font-normal whitespace-nowrap">
-                  Halaman <b>{currentPage}</b> dari <b>{totalPages || 1}</b>
+            <CardFooter className="flex flex-wrap items-center justify-between border-t border-gray-100 p-4 gap-4 bg-gray-50/30">
+              <div className="flex items-center gap-4">
+                <Typography variant="small" color="blue-gray" className="font-normal">
+                  Halaman <span className="font-bold text-gray-600">{currentPage}</span> dari <span className="font-bold">{totalPages || 1}</span>
                 </Typography>
-                <div className="w-20">
+                <div className="w-24">
                   <Select
                     label="Baris"
+                    size="sm"
                     value={rowsPerPage.toString()}
                     onChange={(val) => setRowsPerPage(Number(val))}
                   >
-                    <Option value="10">10</Option>
-                    <Option value="15">15</Option>
-                    <Option value="20">20</Option>
+                    <Option value="10">10 Baris</Option>
+                    <Option value="25">25 Baris</Option>
+                    <Option value="50">50 Baris</Option>
                   </Select>
                 </div>
               </div>
               
-              <div className="flex items-center gap-1 sm:gap-2">
+              <div className="flex items-center gap-1">
                 <Button
                   variant="outlined"
                   size="sm"
                   onClick={() => paginate(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="p-2 sm:px-3 flex items-center gap-2 capitalize"
+                  className="flex items-center gap-2 border-gray-300"
                 >
-                  <ChevronLeftIcon strokeWidth={3} className="h-4 w-4" /> 
-                  <span className="hidden sm:block text-[11px]">Sebelumnya</span>
+                  <ChevronLeftIcon strokeWidth={3} className="h-3 w-3" />
                 </Button>
 
                 <div className="flex items-center gap-1">
                   {getPageNumbers().map((page, index) => (
                     page === "..." ? (
-                      <span key={`dots-${index}`} className="px-1 text-blue-gray-500 text-xs">...</span>
+                      <span key={`dots-${index}`} className="px-2 text-gray-400">...</span>
                     ) : (
                       <IconButton
                         key={page}
@@ -308,7 +346,7 @@ export default function DaftarKategoriAdmin() {
                         variant={currentPage === page ? "filled" : "text"}
                         color={currentPage === page ? null : "blue-gray"}
                         onClick={() => paginate(page)}
-                        className="rounded-md h-8 w-8 text-xs"
+                        className="rounded-md"
                       >
                         {page}
                       </IconButton>
@@ -321,10 +359,9 @@ export default function DaftarKategoriAdmin() {
                   size="sm"
                   onClick={() => paginate(currentPage + 1)}
                   disabled={currentPage === totalPages || totalPages === 0}
-                  className="p-2 sm:px-3 flex items-center gap-2 capitalize"
+                  className="flex items-center gap-2 border-gray-300"
                 >
-                  <span className="hidden sm:block text-[11px]">Berikutnya</span>
-                  <ChevronRightIcon strokeWidth={3} className="h-4 w-4" />
+                  <ChevronRightIcon strokeWidth={3} className="h-3 w-3" />
                 </Button>
               </div>
             </CardFooter>
@@ -332,26 +369,47 @@ export default function DaftarKategoriAdmin() {
         </div>
       </div>
 
-      <Dialog open={open} handler={handleOpen} size="xs">
-        <DialogHeader>{isEdit ? "Update Kategori" : "Tambah Kategori Baru"}</DialogHeader>
-        <DialogBody divider>
-          <div className="flex flex-col gap-4">
+      {/* Modal Add/Edit */}
+      <Dialog open={open} handler={handleOpen} size="xs" className="rounded-2xl">
+        <DialogHeader className="flex flex-col items-start gap-1">
+          <Typography variant="h5" color="blue-gray">
+            {isEdit ? "Update Kategori" : "Buat Kategori Baru"}
+          </Typography>
+          <Typography className="font-normal text-sm text-gray-500">
+            {isEdit ? "Perbarui nama kategori yang sudah ada." : "Tambahkan kategori baru untuk konten berita Anda."}
+          </Typography>
+        </DialogHeader>
+        <DialogBody>
+          <div className="grid gap-6">
             <Input 
+              autoFocus
               label="Nama Kategori" 
+              size="lg"
               value={namaKategori} 
               onChange={(e) => setNamaKategori(e.target.value)} 
+              onKeyUp={(e) => e.key === 'Enter' && handleSubmit()}
             />
           </div>
         </DialogBody>
-        <DialogFooter>
-          <Button variant="text" color="red" onClick={handleOpen} className="mr-1">
+        <DialogFooter className="gap-2">
+          <Button variant="text" color="red" onClick={handleOpen} className="rounded-lg">
             <span>Batal</span>
           </Button>
-          <Button onClick={handleSubmit}>
-            <span>{isEdit ? "Simpan Perubahan" : "Simpan"}</span>
+          <Button  
+            onClick={handleSubmit} 
+            className="rounded-lg shadow-gray-100"
+          >
+            <span>{isEdit ? "Simpan Perubahan" : "Simpan Data"}</span>
           </Button>
         </DialogFooter>
       </Dialog>
     </div>
   );
 }
+
+// Komponen Pembantu Chip jika belum ada di library
+const Chip = ({ value, color, size, className, variant }) => (
+  <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded ${variant === 'ghost' ? `bg-${color}-50 text-${color}-700` : `bg-${color}-500 text-white`} ${className}`}>
+    {value}
+  </span>
+);

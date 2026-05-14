@@ -1,9 +1,16 @@
 import React, { useState, useEffect, useCallback } from "react";
 import SidebarAdmin from "../../admin/sidebarAdmin";
-import axios from "axios";
+// Menggunakan instance api dari utils
+import api from "../../../utils/api";
 import TambahUserAdmin from "./tambahUser";
 import EditUserComponent from "./editUser";
-import { MagnifyingGlassIcon, Squares2X2Icon, ListBulletIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import { 
+  MagnifyingGlassIcon, 
+  Squares2X2Icon, 
+  ListBulletIcon, 
+  ChevronLeftIcon, 
+  ChevronRightIcon 
+} from "@heroicons/react/24/outline";
 import {
   Card,
   CardHeader,
@@ -90,7 +97,6 @@ export default function DaftarUserAdmin() {
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("table"); 
-  const API_URL = process.env.REACT_APP_API_URL;
   
   // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
@@ -107,22 +113,22 @@ export default function DaftarUserAdmin() {
 
   const { user: authuser } = useSelector((state) => state.auth);
 
-  
+  // Ambil token untuk disisipkan ke gambar profile user yang pending
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     setCurrentPage(1);
   }, [filter, searchTerm, rowsPerPage]);
 
+  // Fungsi mengambil data menggunakan utilitas api
   const getUsers = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_URL}/users`, {
-        withCredentials: true,
-      });
+      const response = await api.get("/users");
       setUsers(response.data);
     } catch (error) {
       console.error("Gagal mengambil data user:", error);
     }
-  }, [API_URL]);
+  }, []);
   
   useEffect(() => {
     getUsers();
@@ -131,22 +137,25 @@ export default function DaftarUserAdmin() {
   const deleteUser = async (uuid) => {
     if (window.confirm("Yakin ingin menghapus user ini?")) {
       try {
-        await axios.delete(`${API_URL}/users/${uuid}`, { withCredentials: true });
+        await api.delete(`/users/${uuid}`);
         getUsers();
-      } catch (error) { console.error("Gagal menghapus:", error); }
+      } catch (error) { 
+        console.error("Gagal menghapus:", error); 
+        alert(error.response?.data?.msg || "Gagal menghapus user");
+      }
     }
   };
 
   const verifyUser = async (uuid) => {
     try {
-      await axios.patch(`${API_URL}/users/${uuid}/verify`, {}, { withCredentials: true });
+      await api.patch(`/users/${uuid}/verify`);
       getUsers();
     } catch (error) { console.error("Gagal verifikasi:", error); }
   };
 
   const rejectUser = async (uuid) => {
     try {
-      await axios.patch(`${API_URL}/users/${uuid}/reject`, {}, { withCredentials: true });
+      await api.patch(`/users/${uuid}/reject`);
       getUsers();
     } catch (error) { console.error("Gagal menolak:", error); }
   };
@@ -154,7 +163,7 @@ export default function DaftarUserAdmin() {
   const cancelVerifyUser = async (uuid) => {
     if (window.confirm("Batalkan verifikasi?")) {
       try {
-        await axios.patch(`${API_URL}/users/${uuid}/cancel-verify`, {}, { withCredentials: true });
+        await api.patch(`/users/${uuid}/cancel-verify`);
         getUsers();
       } catch (error) { alert("Gagal membatalkan verifikasi"); }
     }
@@ -163,14 +172,15 @@ export default function DaftarUserAdmin() {
   const cancelRejectUser = async (uuid) => {
     if (window.confirm("Batalkan penolakan?")) {
       try {
-        await axios.patch(`${API_URL}/users/${uuid}/cancel-reject`, {}, { withCredentials: true });
+        await api.patch(`/users/${uuid}/cancel-reject`);
         getUsers();
       } catch (error) { alert("Gagal membatalkan penolakan"); }
     }
   };
 
   const handleOpenPhotoPreview = (url = "", name = "") => {
-    setSelectedPhoto({ url, name });
+    // Sisipkan token pada URL preview gambar
+    setSelectedPhoto({ url: url ? `${url}?token=${token}` : "", name });
     setOpenPhotoPreview(!openPhotoPreview);
   };
 
@@ -208,7 +218,6 @@ export default function DaftarUserAdmin() {
     }
   };
 
-  // Logic Ellipsis Pagination
   const getPageNumbers = () => {
     const pages = [];
     if (totalPages <= 5) {
@@ -229,41 +238,140 @@ export default function DaftarUserAdmin() {
     <div className="flex gap-1">
       {item.status === "verified" && (
         <Tooltip content="Batal Verifikasi">
-          <IconButton variant="text" color="amber" size="sm" onClick={() => cancelVerifyUser(item.uuid)}><ArrowPathIcon className="h-4 w-4" /></IconButton>
+          <IconButton variant="text" color="amber" size="sm" onClick={() => cancelVerifyUser(item.uuid)}>
+            <ArrowPathIcon className="h-4 w-4" />
+          </IconButton>
         </Tooltip>
       )}
       {item.status === "rejected" && (
         <Tooltip content="Batal Penolakan">
-          <IconButton variant="text" color="amber" size="sm" onClick={() => cancelRejectUser(item.uuid)}><ArrowPathIcon className="h-4 w-4" /></IconButton>
+          <IconButton variant="text" color="amber" size="sm" onClick={() => cancelRejectUser(item.uuid)}>
+            <ArrowPathIcon className="h-4 w-4" />
+          </IconButton>
         </Tooltip>
       )}
       {item.status === "pending" && (
         <>
           <Tooltip content="Verifikasi">
-            <IconButton variant="text" color="green" size="sm" onClick={() => verifyUser(item.uuid)}><CheckIcon className="h-4 w-4" /></IconButton>
+            <IconButton variant="text" color="green" size="sm" onClick={() => verifyUser(item.uuid)}>
+              <CheckIcon className="h-4 w-4" />
+            </IconButton>
           </Tooltip>
           <Tooltip content="Tolak">
-            <IconButton variant="text" color="red" size="sm" onClick={() => rejectUser(item.uuid)}><XMarkIcon className="h-4 w-4" /></IconButton>
+            <IconButton variant="text" color="red" size="sm" onClick={() => rejectUser(item.uuid)}>
+              <XMarkIcon className="h-4 w-4" />
+            </IconButton>
           </Tooltip>
         </>
       )}
       <Tooltip content="Lihat Detail">
-        <IconButton variant="text" size="sm" onClick={() => handleOpen(item)}><EyeIcon className="h-4 w-4"/></IconButton>
+        <IconButton variant="text" size="sm" onClick={() => handleOpen(item)}>
+          <EyeIcon className="h-4 w-4"/>
+        </IconButton>
       </Tooltip>
       {authuser?.role === "admin" && (
         <>
         {item.status !== "verified" && item.status !== "rejected" && (
           <Tooltip content="Edit">
-            <IconButton variant="text" size="sm" onClick={() => handleOpenEdit(item)}><PencilIcon className="h-4 w-4"/></IconButton>
+            <IconButton variant="text" size="sm" onClick={() => handleOpenEdit(item)}>
+              <PencilIcon className="h-4 w-4"/>
+            </IconButton>
           </Tooltip>
         )}
           <Tooltip content="Hapus">
-            <IconButton variant="text" color="red" size="sm" onClick={() => deleteUser(item.uuid)}><TrashIcon className="h-4 w-4" /></IconButton>
+            <IconButton variant="text" color="red" size="sm" onClick={() => deleteUser(item.uuid)}>
+              <TrashIcon className="h-4 w-4" />
+            </IconButton>
           </Tooltip>
         </>
       )}
     </div>
   );
+
+    const SecureImage = ({ src, alt, className, onClick }) => {
+    const [imageBlob, setImageBlob] = useState(null);
+  
+    useEffect(() => {
+      const fetchImage = async () => {
+        try {
+          // Mengambil image sebagai blob lewat axios instance (yang sudah punya interceptor token)
+          const response = await api.get(src, { responseType: 'blob' });
+          const url = URL.createObjectURL(response.data);
+          setImageBlob(url);
+        } catch (error) {
+          console.error("Gagal memuat gambar secara aman", error);
+          setImageBlob("https://via.placeholder.com/150"); // fallback
+        }
+      };
+  
+      if (src) fetchImage();
+      
+      // Cleanup URL saat komponen unmount
+      return () => {
+        if (imageBlob) URL.revokeObjectURL(imageBlob);
+      };
+    }, [src]);
+  
+    return (
+      <img 
+        src={imageBlob || ""} 
+        alt={alt} 
+        className={className} 
+        onClick={onClick}
+        onError={(e) => { e.target.src = "https://via.placeholder.com/150" }}
+      />
+    );
+  };
+
+   const SecureAvatar = ({ src, alt, size, variant, fallback, className }) => {
+    const [imgSrc, setImgSrc] = useState(null);
+    const [loading, setLoading] = useState(true);
+  
+    useEffect(() => {
+      let isMounted = true;
+      const fetchImage = async () => {
+        try {
+          setLoading(true);
+          const response = await api.get(src, { responseType: 'blob' });
+          if (isMounted) {
+            const url = URL.createObjectURL(response.data);
+            setImgSrc(url);
+          }
+        } catch (error) {
+          if (isMounted) setImgSrc(null);
+        } finally {
+          if (isMounted) setLoading(false);
+        }
+      };
+  
+      if (src) {
+        fetchImage();
+      } else {
+        setLoading(false);
+      }
+  
+      return () => {
+        isMounted = false;
+        if (imgSrc) URL.revokeObjectURL(imgSrc);
+      };
+    }, [src]);
+  
+    // Jika masih loading atau gambar gagal dimuat (imgSrc null), tampilkan fallback
+    if (loading || !imgSrc) {
+      return <div className={className}>{fallback}</div>;
+    }
+  
+    // Jika gambar berhasil didapat, render Avatar tanpa children
+    return (
+      <Avatar 
+        src={imgSrc} 
+        alt={alt} 
+        size={size} 
+        variant={variant} 
+        className={className} 
+      />
+    );
+  };
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-gray-50">
@@ -323,7 +431,12 @@ export default function DaftarUserAdmin() {
                   </TabsHeader>
                 </Tabs>
                 <div className="w-full md:w-72">
-                  <Input label="Cari User..." icon={<MagnifyingGlassIcon className="h-5 w-5" />} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                  <Input 
+                    label="Cari User..." 
+                    icon={<MagnifyingGlassIcon className="h-5 w-5" />} 
+                    value={searchTerm} 
+                    onChange={(e) => setSearchTerm(e.target.value)} 
+                  />
                 </div>
               </div>
             </CardHeader>
@@ -351,7 +464,12 @@ export default function DaftarUserAdmin() {
                             <div className="flex items-center gap-3">
                               <div className="relative cursor-pointer" onClick={() => info.url && handleOpenPhotoPreview(info.url, info.nama_lengkap || item.username)}>
                                 {info.url ? (
-                                  <Avatar src={info.url} size="sm" className="border border-gray-200" />
+                                  <SecureAvatar 
+                                    src={info.url} 
+                                    size="sm" 
+                                    className="border border-gray-200" 
+                                    fallback={<UserCircleIcon className="h-24 w-24 text-gray-300" />}
+                                  />
                                 ) : (
                                   <div className="h-9 w-9 rounded-full bg-blue-gray-50 flex items-center justify-center"><UserCircleIcon className="h-6 w-6 text-blue-gray-300" /></div>
                                 )}
@@ -393,11 +511,12 @@ export default function DaftarUserAdmin() {
                               onClick={() => info.url && handleOpenPhotoPreview(info.url, item.username)}
                             >
                               {info.url ? (
-                                <Avatar 
-                                  src={info.url} 
-                                  alt={item.username} 
-                                  className="border border-blue-gray-100" 
-                                />
+                                <SecureAvatar 
+                                  src={info.url}
+                                  alt={item.username}
+                                  className="border border-gray-100" 
+                                  fallback={<UserCircleIcon className="h-24 w-24 text-gray-300" />}
+                                  />
                               ) : (
                                 <div className="h-12 w-12 rounded-full bg-blue-gray-50 flex items-center justify-center">
                                   <UserCircleIcon className="h-8 w-8 text-blue-gray-300" />
@@ -483,7 +602,7 @@ export default function DaftarUserAdmin() {
                         key={page}
                         size="sm"
                         variant={currentPage === page ? "filled" : "text"}
-                        color={currentPage === page ? null : "blue-gray"}
+                        color={currentPage === page ? "blue" : "blue-gray"}
                         onClick={() => paginate(page)}
                         className="rounded-md h-8 w-8 text-xs"
                       >
@@ -509,6 +628,7 @@ export default function DaftarUserAdmin() {
         </div>
       </div>
 
+      {/* Detail Dialog */}
       <Dialog open={open} handler={() => handleOpen(null)} size="md" className="max-h-[90vh] overflow-y-auto rounded-xl">
         <DialogHeader className="flex justify-between items-center border-b border-gray-100">
           <Typography variant="h5" color="blue-gray">Detail Profil Pengguna</Typography>
@@ -521,7 +641,12 @@ export default function DaftarUserAdmin() {
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
               <div className="md:col-span-4 flex flex-col items-center border-b md:border-b-0 md:border-r border-gray-100 pb-6 md:pb-0 md:pr-4">
                 {selectedUser.anggotas?.[0]?.url ? (
-                  <Avatar src={selectedUser.anggotas[0].url} size="xl" className="border border-gray-200 h-24 w-24" />
+                  <SecureAvatar 
+                    src={selectedUser.anggotas?.[0]?.url} 
+                    size="xl" 
+                    className="border border-gray-200 h-24 w-24" 
+                    fallback={<UserCircleIcon className="h-24 w-24 text-gray-300" />}
+                  />
                 ) : (
                   <div className="h-24 w-24 rounded-full bg-blue-gray-50 flex items-center justify-center">
                     <UserCircleIcon className="h-16 w-16 text-blue-gray-300" />
@@ -549,19 +674,23 @@ export default function DaftarUserAdmin() {
             <div className="flex justify-center py-4">Memuat data...</div>
           )}
         </DialogBody>
-        
         <DialogFooter>
-          <Button color="black" onClick={() => handleOpen(null)}>Tutup</Button>
+          <Button color="black" onClick={() => handleOpen(null)} className="capitalize">Tutup</Button>
         </DialogFooter>
       </Dialog>
 
+      {/* Photo Preview Dialog */}
       <Dialog size="md" open={openPhotoPreview} handler={() => setOpenPhotoPreview(false)} className="shadow-2xl overflow-hidden rounded-xl">
         <DialogHeader className="flex justify-between items-center bg-gray-50 py-3 px-5 border-b">
           <Typography variant="h6">Preview Foto Profil</Typography>
           <IconButton variant="text" size="sm" onClick={() => setOpenPhotoPreview(false)}><XMarkIcon className="h-5 w-5" /></IconButton>
         </DialogHeader>
         <DialogBody className="bg-gray-100 flex justify-center p-6">
-          <img alt="Profile" className="max-h-[60vh] rounded-xl shadow-xl border-4 border-white" src={selectedPhoto.url} />
+        <SecureImage 
+          src={selectedPhoto.url} 
+          alt="Profile"
+          className="h-full w-full object-cover" 
+        />
         </DialogBody>
       </Dialog>
 

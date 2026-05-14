@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import SidebarAdmin from "../../admin/sidebarAdmin";
-import axios from "axios";
+// Menggunakan instance api dari utils
+import api from "../../../utils/api";
 import {
   MagnifyingGlassIcon, 
   Bars3Icon, 
@@ -43,7 +44,6 @@ export default function DaftarPengurusComponent() {
   const [openAdd, setOpenAdd] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [selectedPengurus, setSelectedPengurus] = useState(null);
-  const API_URL = process.env.REACT_APP_API_URL;
   
   const handleOpenAdd = () => setOpenAdd(!openAdd);
 
@@ -52,27 +52,25 @@ export default function DaftarPengurusComponent() {
     setOpenImageModal(true);
   };
 
-  
-
+  // Fungsi mengambil data menggunakan utilitas API
   const getPengurus = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_URL}/pengurus`, {
-        withCredentials: true,
-      });
+      const response = await api.get("/pengurus");
       setPengurus(response.data);
     } catch (error) {
       console.error("Gagal mengambil data pengurus:", error);
     }
-  }, [API_URL]);
+  }, []);
   
   useEffect(() => {
     getPengurus();
   }, [getPengurus]);
   
+  // Fungsi menghapus data menggunakan utilitas API
   const deletePengurus = async (uuid) => {
     if (window.confirm("Yakin ingin menghapus pengurus ini?")) {
       try {
-        await axios.delete(`${API_URL}/pengurus/${uuid}`, { withCredentials: true });
+        await api.delete(`/pengurus/${uuid}`);
         getPengurus();
       } catch (error) {
         alert(error.response?.data?.msg || "Gagal menghapus");
@@ -90,9 +88,11 @@ export default function DaftarPengurusComponent() {
   }, [searchTerm, rowsPerPage]);
 
   const filteredRows = pengurus.filter((item) => {
-    const matchesSearch = item.nama_lengkap.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          item.jabatan.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          item.instansi.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = 
+      item.nama_lengkap.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      item.jabatan.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      item.instansi.toLowerCase().includes(searchTerm.toLowerCase());
+    
     const canSee = authuser?.role === "admin" || authuser?.role === "ketua_forum";
     return matchesSearch && canSee;
   });
@@ -141,6 +141,7 @@ export default function DaftarPengurusComponent() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
+      {/* Sidebar Section */}
       <div className="hidden lg:block">
         {authuser?.role === "admin" ? <SidebarAdmin /> : <SidebarKetuaForum />}
       </div>
@@ -155,6 +156,7 @@ export default function DaftarPengurusComponent() {
         {authuser?.role === "admin" ? <SidebarAdmin /> : <SidebarKetuaForum />}
       </Drawer>
 
+      {/* Main Content */}
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
         <div className="flex items-center bg-white lg:bg-transparent">
           <IconButton 
@@ -190,7 +192,7 @@ export default function DaftarPengurusComponent() {
                     </IconButton>
                   </div>
                   <Button onClick={handleOpenAdd} className="flex items-center gap-3" size="sm">
-                    <PlusIcon strokeWidth={2} className="h-4 w-4" /> Tambah
+                    <PlusIcon strokeWidth={2} className="h-4 w-4" /> Tambah Pengurus
                   </Button>
                 </div>
               </div>
@@ -256,7 +258,7 @@ export default function DaftarPengurusComponent() {
                     <Card key={item.uuid} className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow rounded-xl">
                       <CardBody className="flex flex-col items-center p-6">
                         <div 
-                          className="h-24 w-24 mb-4 rounded-full overflow-hidden border-4 border-blue-50 shadow-inner cursor-pointer"
+                          className="h-24 w-24 mb-4 rounded-full overflow-hidden border-4 border-gray-50 shadow-inner cursor-pointer"
                           onClick={() => handleOpenImage(item.url, item.image, item.nama_lengkap)}
                         >
                           <img src={item.url} className="w-full h-full object-cover" alt={item.nama_lengkap} onError={(e) => e.target.src = "https://via.placeholder.com/150"} />
@@ -264,10 +266,10 @@ export default function DaftarPengurusComponent() {
                         <Typography variant="h6" color="blue-gray" className="text-center">{item.nama_lengkap}</Typography>
                         <div className="mt-4 w-full space-y-2 border-t pt-4">
                            <div className="flex items-center gap-2 text-xs text-gray-600">
-                             <BriefcaseIcon className="h-4 w-4 text-blue-500" /> <span className="font-medium">Jabatan:</span> {item.jabatan}
+                             <BriefcaseIcon className="h-4 w-4 text-gray-500" /> <span className="font-medium">Jabatan:</span> {item.jabatan}
                            </div>
                            <div className="flex items-center gap-2 text-xs text-gray-600">
-                             <BuildingOfficeIcon className="h-4 w-4 text-blue-500" /> <span className="font-medium">Instansi:</span> {item.instansi}
+                             <BuildingOfficeIcon className="h-4 w-4 text-gray-500" /> <span className="font-medium">Instansi:</span> {item.instansi}
                            </div>
                         </div>
                         <div className="mt-6 flex justify-center w-full">
@@ -352,6 +354,7 @@ export default function DaftarPengurusComponent() {
         </div>
       </div>
 
+      {/* Image Preview Modal */}
       <Dialog size="md" open={openImageModal} handler={() => setOpenImageModal(false)} className="shadow-2xl overflow-hidden flex flex-col max-h-[95vh] w-[95vw] md:w-full">
         <DialogHeader className="flex shrink-0 justify-between items-center border-b border-gray-100 bg-gray-50 py-3 px-5">
           <div className="flex flex-col min-w-0">
@@ -369,6 +372,7 @@ export default function DaftarPengurusComponent() {
         </DialogBody>
       </Dialog>
 
+      {/* Action Modals */}
       <CreatePengurusModal open={openAdd} handler={handleOpenAdd} refreshData={getPengurus} />
       <EditPengurusModal 
         open={openEdit} 
