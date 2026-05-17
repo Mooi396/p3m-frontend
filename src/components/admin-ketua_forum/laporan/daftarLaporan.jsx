@@ -63,8 +63,6 @@ export default function DaftarLaporanComponents() {
   const [viewMode, setViewMode] = useState("table"); 
   const [loadingFile, setLoadingFile] = useState(false);
 
-  
-  // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 

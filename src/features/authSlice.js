@@ -19,17 +19,30 @@ export const LoginUser = createAsyncThunk(
   "user/LoginUser",
   async (user, thunkAPI) => {
     try {
+      // 1. Tembak API Login untuk verifikasi email & password
       const response = await axios.post("http://localhost:5000/login", {
         email: user.email,
         password: user.password,
       });
       
-      // SIMPAN TOKEN KE LOCALSTORAGE
+      // 2. Simpan token ke localStorage
+      let token = null;
       if (response.data.accessToken) {
-        localStorage.setItem("token", response.data.accessToken);
+        token = response.data.accessToken;
+        localStorage.setItem("token", token);
       }
       
-      return response.data;
+      // 3. --- SOLUSI GAMBAR PROFIL ---
+      // Daripada mereturn data login yang tidak lengkap, kita langsung ambil 
+      // data full user (termasuk relasi 'anggotas' dan URL foto) dari endpoint /me
+      const meResponse = await axios.get("http://localhost:5000/me", {
+        // Gunakan token yang baru saja didapat
+        headers: token ? { Authorization: `Bearer ${token}` } : getAuthHeader(), 
+        withCredentials: true
+      });
+      
+      // 4. Return data lengkap ke state Redux
+      return meResponse.data; 
     } catch (error) {
       if (error.response) {
         const message = error.response.data.msg;
@@ -56,7 +69,7 @@ export const GetMe = createAsyncThunk("user/GetMe", async (_, thunkAPI) => {
 
 export const LogOut = createAsyncThunk("user/LogOut", async () => {
   await axios.delete("http://localhost:5000/logout", {
-    headers: getAuthHeader(), // KIRIM TOKEN DI HEADER (Opsional tapi baik)
+    headers: getAuthHeader(), 
     withCredentials: true
   });
   // HAPUS TOKEN DARI LOCALSTORAGE SAAT LOGOUT
@@ -78,11 +91,15 @@ export const authSlice = createSlice({
     // Login User
     builder.addCase(LoginUser.pending, (state) => {
       state.isLoading = true;
+      state.isError = false;
+      state.message = "";
     });
     builder.addCase(LoginUser.fulfilled, (state, action) => {
       state.isLoading = false;
       state.isSuccess = true;
-      state.user = action.payload;
+      state.isError = false;
+      // Sekarang payload ini berisi data LENGKAP (termasuk foto profil)
+      state.user = action.payload; 
     });
     builder.addCase(LoginUser.rejected, (state, action) => {
       state.isLoading = false;
@@ -93,10 +110,13 @@ export const authSlice = createSlice({
     // Get User Login (GetMe)
     builder.addCase(GetMe.pending, (state) => {
       state.isLoading = true;
+      state.isError = false;
+      state.message = "";
     });
     builder.addCase(GetMe.fulfilled, (state, action) => {
       state.isLoading = false;
       state.isSuccess = true;
+      state.isError = false;
       state.user = action.payload;
     });
     builder.addCase(GetMe.rejected, (state, action) => {
@@ -109,7 +129,6 @@ export const authSlice = createSlice({
     builder.addCase(LogOut.fulfilled, (state) => {
       state.user = null;
       state.isSuccess = true;
-      // Memastikan state error/message bersih saat logout
       state.isError = false;
       state.message = "";
     });

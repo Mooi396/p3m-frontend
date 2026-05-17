@@ -190,7 +190,6 @@ export default function CreatePengurusModal({ open, handler, refreshData }) {
           </Button>
           <Button 
             type="submit" 
-            color="blue" 
             loading={loading}
             className="capitalize"
           >

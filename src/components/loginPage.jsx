@@ -30,15 +30,15 @@ export default function LoginPage() {
     if (user || isSuccess) {
       // Pastikan data role ada sebelum navigasi
       if (user && user.role === "admin") {
-        navigate("/dashboard/profil");
+        window.location.href = "/dashboard/profil";
       } else {
-        navigate("/dashboard");
+        window.location.href = "/dashboard";
       }
       
       // Reset state auth agar tidak loop redirect saat kembali ke login
       dispatch(reset());
     }
-  }, [user, isSuccess, dispatch, navigate]);
+  }, [user, isSuccess, dispatch]);
 
   const Auth = (e) => {
     e.preventDefault();
@@ -57,7 +57,7 @@ export default function LoginPage() {
             Masuk
           </Typography>
           <Typography color="gray" className="mt-1 font-normal mb-8">
-            Masukkan detail Anda untuk masuk ke akun Anda.
+            {message || "Masukkan email dan kata sandi untuk masuk ke akun Anda."}
           </Typography>
 
           <form onSubmit={Auth} className="flex flex-col gap-6">
@@ -97,14 +97,6 @@ export default function LoginPage() {
                 </IconButton>
               </div>
             </div>
-
-            {isError && (
-              <div className="bg-red-50 p-3 rounded-md border border-red-100">
-                  <Typography variant="small" color="red" className="text-center font-medium">
-                  {message}
-                  </Typography>
-              </div>
-            )}
 
             <Button 
               type="submit" 

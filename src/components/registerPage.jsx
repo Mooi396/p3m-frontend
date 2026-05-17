@@ -142,14 +142,14 @@ export default function RegisterPage() {
                 <Typography variant="h6" color="blue-gray" className="flex items-center gap-2 border-b border-gray-50 pb-2">
                    Informasi Akun
                 </Typography>
-                <Input size="lg" label="Username" name="username" value={formData.username} onChange={handleChange} required color="blue" />
-                <Input size="lg" label="Email" name="email" type="email" value={formData.email} onChange={handleChange} required color="blue" />
+                <Input size="lg" label="Username" name="username" value={formData.username} onChange={handleChange} required />
+                <Input size="lg" label="Email" name="email" type="email" value={formData.email} onChange={handleChange} required />
                 
                 <div className="relative">
                   <Input 
                     size="lg" label="Password" name="password" 
                     type={showPassword ? "text" : "password"} 
-                    value={formData.password} onChange={handleChange} required color="blue"
+                    value={formData.password} onChange={handleChange} required
                   />
                   <IconButton
                     variant="text" size="sm" className="!absolute right-1 top-1 rounded"
@@ -162,16 +162,16 @@ export default function RegisterPage() {
                 <Input
                   size="lg" label="Konfirmasi Password" name="confPassword" 
                   type={showPassword ? "text" : "password"}
-                  value={formData.confPassword} onChange={handleChange} required color="blue"
+                  value={formData.confPassword} onChange={handleChange} required
                 />
 
                 <Typography variant="h6" color="blue-gray" className="flex items-center gap-2 border-b border-gray-50 pb-2 mt-4">
                   Tautan Akademik (Opsional)
                 </Typography>
-                <Input size="lg" label="URL LinkedIn" name="linkedin" value={formData.linkedin} onChange={handleChange} color="blue" placeholder="https://linkedin.com/in/..." />
-                <Input size="lg" label="URL Google Scholar" name="google_scholar" value={formData.google_scholar} onChange={handleChange} color="blue" />
-                <Input size="lg" label="URL Scopus" name="scopus" value={formData.scopus} onChange={handleChange} color="blue" />
-                <Input size="lg" label="URL Sinta" name="sinta" value={formData.sinta} onChange={handleChange} color="blue" />
+                <Input size="lg" label="URL LinkedIn" name="linkedin" value={formData.linkedin} onChange={handleChange} placeholder="https://linkedin.com/in/..." />
+                <Input size="lg" label="URL Google Scholar" name="google_scholar" value={formData.google_scholar} onChange={handleChange} />
+                <Input size="lg" label="URL Scopus" name="scopus" value={formData.scopus} onChange={handleChange} />
+                <Input size="lg" label="URL Sinta" name="sinta" value={formData.sinta} onChange={handleChange} />
               </div>
 
               {/* KOLOM KANAN: PROFIL */}
@@ -179,10 +179,10 @@ export default function RegisterPage() {
                 <Typography variant="h6" color="blue-gray" className="flex items-center gap-2 border-b border-gray-50 pb-2">
                   Profil Anggota
                 </Typography>
-                <Input size="lg" label="Nama Lengkap" name="nama_lengkap" value={formData.nama_lengkap} onChange={handleChange} required color="blue" />
-                <Input size="lg" label="Gelar Akademik" name="gelar" value={formData.gelar} onChange={handleChange} required color="blue" placeholder="Misal: S.Kom., M.T." />
-                <Input size="lg" label="Jabatan" name="jabatan" value={formData.jabatan} onChange={handleChange} required color="blue" />
-                <Input size="lg" label="Masa Jabat" name="masa_jabat" value={formData.masa_jabat} onChange={handleChange} required color="blue" placeholder="Misal: 2024-2026" />
+                <Input size="lg" label="Nama Lengkap" name="nama_lengkap" value={formData.nama_lengkap} onChange={handleChange} required />
+                <Input size="lg" label="Gelar Akademik" name="gelar" value={formData.gelar} onChange={handleChange} required placeholder="Misal: S.Kom., M.T." />
+                <Input size="lg" label="Jabatan" name="jabatan" value={formData.jabatan} onChange={handleChange} required />
+                <Input size="lg" label="Masa Jabat" name="masa_jabat" value={formData.masa_jabat} onChange={handleChange} required placeholder="Misal: 2024-2026" />
                 
                 {/* INPUT INSTANSI DENGAN SEARCH DROPDOWN */}
                 <div className="relative">
@@ -195,8 +195,7 @@ export default function RegisterPage() {
                     onChange={handleInstansiChange}
                     onFocus={() => formData.instansi.length > 1 && setIsDropdownOpen(true)}
                     icon={<MagnifyingGlassIcon className="h-5 w-5" />}
-                    required 
-                    color="blue"
+                    required
                   />
                   
                   {isDropdownOpen && (
@@ -208,14 +207,14 @@ export default function RegisterPage() {
                           filteredKampus.map((item, index) => (
                             <ListItem 
                               key={index} 
-                              className="text-xs py-2 px-3 hover:bg-blue-50"
+                              className="text-xs py-2 px-3 hover:bg-gray-50"
                               onClick={() => handleSelectKampus(item.name)}
                             >
                               {item.name}
                             </ListItem>
                           ))
                         ) : (
-                          <ListItem disabled className="text-xs text-blue-600 italic">
+                          <ListItem disabled className="text-xs text-gray-600 italic">
                             Nama tidak ditemukan? Silakan ketik manual...
                           </ListItem>
                         )}
@@ -257,15 +256,14 @@ export default function RegisterPage() {
               className="mt-12 h-12 flex justify-center items-center text-sm tracking-wider shadow-none hover:shadow-lg" 
               fullWidth
               loading={isSubmitting}
-              color="blue"
             >
               {isSubmitting ? "Mendaftarkan..." : "Daftar Sekarang"}
             </Button>
 
-            <Typography color="gray" className="mt-6 text-center font-normal text-sm">
+            <Typography color="gray" className="mt-4 text-center font-normal">
               Sudah memiliki akun?{" "}
-              <Link to={"/masuk"} className="font-bold text-blue-600 hover:underline">
-                Masuk di sini
+              <Link to={"/masuk"} className="font-medium text-gray-900">
+                Masuk
               </Link>
             </Typography>
           </form>

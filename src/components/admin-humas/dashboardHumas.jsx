@@ -4,9 +4,11 @@ import {
   IconButton, Chip, Button, Drawer, Spinner
 } from "@material-tailwind/react";
 import { 
-  CalendarDateRangeIcon, NewspaperIcon,
   XMarkIcon, EyeIcon, Bars3Icon, ArrowLongRightIcon
 } from "@heroicons/react/24/solid";
+import {
+  CalendarDateRangeIcon, NewspaperIcon,
+} from "@heroicons/react/24/outline";
 import { Link, useNavigate } from 'react-router-dom';
 
 // Import API utilitas dan komponen lokal
@@ -16,34 +18,18 @@ import DashboardNavbar from '../dashboardNavbar';
 import DetailAgenda from './detailAgenda';
 
 // --- Komponen Reusable: Kartu Statistik ---
-const StatCard = ({ icon, color, label, value, loading }) => (
-  <Card className="border border-blue-gray-50 shadow-sm transition-transform hover:scale-[1.02]">
-    <CardBody className="flex items-center gap-4 p-4 text-black">
-      <IconButton 
-        variant="gradient" 
-        color={color} 
-        size="lg" 
-        className="pointer-events-none rounded-lg shadow-none"
-      >
-        {icon}
-      </IconButton>
+const StatCard = ({ icon, color, label, value }) => (
+  <Card className="border border-blue-gray-50 shadow-sm">
+    <CardBody className="flex items-center gap-4 p-4">
+      <IconButton variant="outlined" color={color} size="lg" className="pointer-events-none rounded-full">{icon}</IconButton>
       <div>
-        <Typography variant="small" className="font-medium text-blue-gray-500 uppercase tracking-wider text-[10px]">
-          {label}
-        </Typography>
-        {loading ? (
-          <div className="h-7 w-12 bg-gray-200 animate-pulse rounded mt-1" />
-        ) : (
-          <Typography variant="h4" className="font-bold text-blue-gray-900">
-            {value}
-          </Typography>
-        )}
+        <Typography variant="small" className="font-medium text-blue-gray-500">{label}</Typography>
+        <Typography variant="h4">{value}</Typography>
       </div>
     </CardBody>
   </Card>
 );
 
-// --- Komponen Reusable: Tabel Verifikasi ---
 const VerificationTable = ({ title, data, link, renderRow, loading }) => (
   <Card className="border border-blue-gray-50 shadow-sm h-full text-black">
     <CardHeader floated={false} shadow={false} className="flex justify-between items-center rounded-none pb-4 mx-4 mt-4">
@@ -51,8 +37,8 @@ const VerificationTable = ({ title, data, link, renderRow, loading }) => (
         {title}
       </Typography>
       <Link to={link}>
-        <Button variant="text" size="sm" color="blue" className="flex items-center gap-2 hover:bg-blue-50">
-          Lihat Semua <ArrowLongRightIcon className="h-4 w-4" />
+        <Button variant="text" size="sm" className="flex items-center gap-2">
+          Semua <ArrowLongRightIcon className="h-4 w-4" />
         </Button>
       </Link>
     </CardHeader>
@@ -124,7 +110,7 @@ const DashboardHumas = () => {
       // Jika session habis atau token tidak valid, arahkan ke login
       if (error.response?.status === 401) {
         localStorage.removeItem("token");
-        navigate("/masuk"); // Disesuaikan agar seragam dengan rute aplikasi kamu
+        navigate("/masuk", { replace: true });
       }
     } finally {
       setLoading(false);
@@ -149,8 +135,6 @@ const DashboardHumas = () => {
       <aside className="hidden lg:block shrink-0">
         <SidebarHumas />
       </aside>
-
-      {/* SIDEBAR MOBILE (DRAWER) */}
       <Drawer 
         open={isDrawerOpen} 
         onClose={() => setIsDrawerOpen(false)} 
@@ -167,7 +151,7 @@ const DashboardHumas = () => {
 
       <div className='flex-1 flex flex-col min-w-0 h-full overflow-hidden'>
         {/* TOPBAR / NAVBAR */}
-        <header className="flex items-center bg-white lg:bg-transparent border-b lg:border-none px-4 shrink-0 z-10">
+        <header className="flex items-center bg-white lg:bg-transparent border-b lg:border-none shrink-0 z-10">
           <IconButton 
             variant="text" 
             color="blue-gray" 
@@ -185,16 +169,16 @@ const DashboardHumas = () => {
         <main className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-8">
           {/* Welcome Message */}
           <section>
-            <Typography variant="h4" color="blue-gray" className="text-2xl font-black text-blue-gray-900">
-              Selamat datang, {loading ? "..." : user?.username} 👋
+            <Typography variant="h4" color="blue-gray" className="text-2xl lg:text-3xl">
+              Selamat datang, {loading ? "..." : user?.username}
             </Typography>
-            <Typography color="gray" className="font-normal text-sm lg:text-base opacity-80">
+            <Typography color="gray" className="font-normal text-sm lg:text-base">
               Berikut adalah ringkasan publikasi Anda hari ini.
             </Typography>
           </section>
 
           {/* Stats Cards - Grid */}
-          <section className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
             <StatCard 
               icon={<CalendarDateRangeIcon className="h-6 w-6"/>} 
               color="green" 
@@ -231,8 +215,7 @@ const DashboardHumas = () => {
                   </td>
                   <td className={classes}>
                     <IconButton 
-                      variant="text" 
-                      color="blue"
+                      variant="text"
                       size="sm" 
                       onClick={() => navigate(`/dashboard/berita/${berita.uuid}`)}
                     >
@@ -257,12 +240,11 @@ const DashboardHumas = () => {
                     </Typography>
                   </td>
                   <td className={classes}>
-                    <Chip size="sm" variant="ghost" value="Proses" color="amber" className="text-[9px] rounded-full uppercase font-bold tracking-tighter"/>
+                    <Chip size="sm" variant="ghost" value="Pending" color="amber" className="text-[10px] text-center"/>
                   </td>
                   <td className={classes}>
                     <IconButton 
-                      variant="text" 
-                      color="blue"
+                      variant="text"
                       size="sm" 
                       onClick={() => { setSelectedItem(agenda); setOpenDetailAgenda(true); }}
                     >

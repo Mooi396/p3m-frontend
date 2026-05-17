@@ -49,11 +49,7 @@ export default function DaftarBeritaAdmin() {
   const [openImageModal, setOpenImageModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState({ url: "", image: "", title: "" });
   const { user: authuser } = useSelector((state) => state.auth);
-
-  // Ambil token untuk disisipkan ke tag <img>
   const token = localStorage.getItem("token");
-
-  // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -295,11 +291,9 @@ export default function DaftarBeritaAdmin() {
                       <Squares2X2Icon className="h-4 w-4" />
                     </IconButton>
                   </div>
-                  <Link to="/dashboard/berita/tambah" className="flex-1 sm:flex-none">
-                    <Button className="flex items-center gap-3" size="sm">
+                    <Button className="flex items-center gap-3" size="sm" onClick={() => navigate(`/dashboard/berita/tambah`)}>
                       <PlusIcon className="h-4 w-4" /> Tambah Berita
                     </Button>
-                  </Link>
                 </div>
               </div>
 
