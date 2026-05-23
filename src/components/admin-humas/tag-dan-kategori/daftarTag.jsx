@@ -42,28 +42,17 @@ import DashboardNavbar from "../../dashboardNavbar";
 const TABLE_HEAD = ["Nama Tag", "UUID", "Actions"];
 
 export default function DaftarTagAdmin() {
-  // Authentication
   const { user: authuser } = useSelector((state) => state.auth);
-
-  // Data State
   const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  // UI State
   const [searchTerm, setSearchTerm] = useState("");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
-  
-  // Form State
   const [currentUuid, setCurrentUuid] = useState("");
   const [namaTag, setNamaTag] = useState("");
-
-  // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-
-  // Fetch Data Tags menggunakan instance API
   const getTags = useCallback(async () => {
     setLoading(true);
     try {
@@ -333,9 +322,10 @@ export default function DaftarTagAdmin() {
                   size="sm"
                   onClick={() => paginate(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="flex items-center gap-2"
+                  className="p-2 sm:px-3 flex items-center gap-2 capitalize"
                 >
-                  <ChevronLeftIcon strokeWidth={3} className="h-3 w-3" /> Prev
+                  <ChevronLeftIcon strokeWidth={3} className="h-4 w-4" />
+                  <span className="hidden sm:block text-[11px]">Sebelumnya</span>
                 </Button>
 
                 <div className="flex items-center gap-1 mx-2">
@@ -362,9 +352,10 @@ export default function DaftarTagAdmin() {
                   size="sm"
                   onClick={() => paginate(currentPage + 1)}
                   disabled={currentPage === totalPages || totalPages === 0}
-                  className="flex items-center gap-2"
+                  className="p-2 sm:px-3 flex items-center gap-2 capitalize"
                 >
-                  Next <ChevronRightIcon strokeWidth={3} className="h-3 w-3" />
+                  <ChevronRightIcon strokeWidth={3} className="h-4 w-4" />
+                  <span className="hidden sm:block text-[11px]">Berikutnya</span>
                 </Button>
               </div>
             </CardFooter>

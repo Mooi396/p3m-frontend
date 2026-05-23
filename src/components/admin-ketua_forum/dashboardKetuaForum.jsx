@@ -16,13 +16,8 @@ import DashboardNavbar from '../dashboardNavbar';
 import { Link } from 'react-router-dom';
 import DetailLaporan from './detail/detailLaporan';
 import SidebarKetuaForum from './sidebarKetuaForum';
+import { useSelector } from 'react-redux';
 
-// --- Sub-Components ---
-
-/**
- * Komponen SecureAvatar untuk menangani pengambilan gambar via API 
- * agar tidak mengekspos token di URL dan menghindari error void element.
- */
 const SecureAvatar = ({ src, alt, size, variant, fallback, className }) => {
   const [imgSrc, setImgSrc] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -147,7 +142,6 @@ const VerificationTable = ({ title, data, link, renderRow }) => (
   </Card>
 );
 
-// --- Main Component ---
 const DashboardKetuaForum = () => {
   const [users, setUsers] = useState([]);
   const [laporans, setLaporans] = useState([]);
@@ -158,7 +152,8 @@ const DashboardKetuaForum = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [openDetailLaporan, setOpenDetailLaporan] = useState(false);
-  const [userMe, setUserMe] = useState(null);
+  const { user } = useSelector((state) => state.auth);
+
 
   const handleOpen = (user = null) => {
     setSelectedUser(user);
@@ -186,15 +181,6 @@ const DashboardKetuaForum = () => {
   }, []);
 
   useEffect(() => {
-    const getMe = async () => {
-      try {
-        const response = await api.get('/me');
-        setUserMe(response.data);
-      } catch (error) {
-        console.error("Gagal mengambil data user:", error);
-      }
-    };
-    getMe();
     fetchData();
   }, [fetchData]);
 
@@ -242,7 +228,7 @@ const DashboardKetuaForum = () => {
         <div className="flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="mb-6">
             <Typography variant="h4" color="blue-gray" className="text-2xl capitalize">
-              Selamat datang, {userMe?.username}
+              Selamat datang, {user?.username}
             </Typography>
             <Typography color="gray" className="font-normal text-sm">
               Panel manajemen forum hari ini.
@@ -274,7 +260,7 @@ const DashboardKetuaForum = () => {
                     </div>
                   </td>
                   <td className={classes}>
-                    <Chip size="sm" variant="ghost" value="pending" color="amber" className="text-[10px]"/>
+                    <Chip size="sm" variant="ghost" value="pending" color="amber" className="text-[10px] text-center"/>
                   </td>
                   <td className={classes}>
                     <div className="flex gap-0">
@@ -297,7 +283,7 @@ const DashboardKetuaForum = () => {
                     <Typography variant="small" className="font-bold truncate w-32 sm:w-48 text-xs">{laporan.keterangan}</Typography>
                   </td>
                   <td className={classes}>
-                    <Chip size="sm" variant="ghost" value="pending" color="amber" className="text-[10px]"/>
+                    <Chip size="sm" variant="ghost" value="pending" color="amber" className="text-[10px] text-center"/>
                   </td>
                   <td className={classes}>
                     <IconButton variant="text" size="sm" onClick={() => { setSelectedItem(laporan); setOpenDetailLaporan(true); }}><EyeIcon className="h-4 w-4"/></IconButton>
@@ -351,7 +337,7 @@ const DashboardKetuaForum = () => {
           )}
         </DialogBody>
         <DialogFooter className="p-4 border-t gap-2">
-          <Button variant="gradient" color="blue-gray" onClick={() => handleOpen(null)} className="capitalize">Tutup</Button>
+          <Button onClick={() => handleOpen(null)} className="capitalize">Tutup</Button>
         </DialogFooter>
       </Dialog>
 

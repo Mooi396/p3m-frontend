@@ -19,6 +19,7 @@ import DashboardNavbar from '../dashboardNavbar';
 import { Link, useNavigate } from 'react-router-dom';
 import DetailAgenda from './detail/detailAgenda';
 import DetailLaporan from './detail/detailLaporan';
+import { useSelector } from 'react-redux';
 
 // --- Sub-Components ---
 const InfoItem = ({ icon, label, value }) => (
@@ -100,13 +101,13 @@ const DashboardAdmin = () => {
   const [agendas, setAgendas] = useState([]);
   const [laporans, setLaporans] = useState([]);
   const [totals, setTotals] = useState({ user: 0, agenda: 0, berita: 0, laporan: 0 });
-  
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [openDetailAgenda, setOpenDetailAgenda] = useState(false);
   const [openDetailLaporan, setOpenDetailLaporan] = useState(false);
+  const { user } = useSelector((state) => state.auth);
 
   const navigate = useNavigate();
 
@@ -143,10 +144,10 @@ const DashboardAdmin = () => {
       // Jika error 401 (Unauthorized), arahkan ke login
       if (error.response?.status === 401) {
         localStorage.removeItem("token");
-        navigate("/masuk");
+        window.location.href = "/masuk";
       }
     }
-  }, [navigate]);
+  }, []);
   
   useEffect(() => {
     fetchData();
@@ -245,11 +246,9 @@ const DashboardAdmin = () => {
             <DashboardNavbar />
           </div>
         </div>
-
-        {/* MAIN CONTENT AREA */}
         <div className="flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="mb-6">
-            <Typography variant="h4" color="blue-gray" className="text-2xl lg:text-3xl">Selamat datang, Admin</Typography>
+            <Typography variant="h4" color="blue-gray" className="text-2xl lg:text-3xl">Selamat datang, {user?.username}</Typography>
             <Typography color="gray" className="font-normal text-sm lg:text-base">Ringkasan data organisasi hari ini.</Typography>
           </div>
 

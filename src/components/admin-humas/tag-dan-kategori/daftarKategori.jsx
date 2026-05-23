@@ -43,31 +43,21 @@ const TABLE_HEAD = ["Nama Kategori", "UUID", "Aksi"];
 
 export default function DaftarKategoriAdmin() {
   const { user: authuser } = useSelector((state) => state.auth);
-  
-  // State Data
   const [kategoris, setKategoris] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  // State UI
   const [searchTerm, setSearchTerm] = useState("");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
-  
-  // State Form
   const [currentUuid, setCurrentUuid] = useState("");
   const [namaKategori, setNamaKategori] = useState("");
-
-  // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // Reset ke halaman 1 jika filter berubah
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, rowsPerPage]);
 
-  // Fetch Data Kategori
   const getKategoris = useCallback(async () => {
     setLoading(true);
     try {
@@ -84,7 +74,6 @@ export default function DaftarKategoriAdmin() {
     getKategoris();
   }, [getKategoris]);
 
-  // Handlers
   const handleOpen = () => {
     setOpen(!open);
     if (open) {
@@ -330,9 +319,10 @@ export default function DaftarKategoriAdmin() {
                   size="sm"
                   onClick={() => paginate(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="flex items-center gap-2 border-gray-300"
+                  className="p-2 sm:px-3 flex items-center gap-2 capitalize"
                 >
-                  <ChevronLeftIcon strokeWidth={3} className="h-3 w-3" />
+                  <ChevronLeftIcon strokeWidth={3} className="h-4 w-4" />
+                  <span className="hidden sm:block text-[11px]">Sebelumnya</span>
                 </Button>
 
                 <div className="flex items-center gap-1">
@@ -359,9 +349,10 @@ export default function DaftarKategoriAdmin() {
                   size="sm"
                   onClick={() => paginate(currentPage + 1)}
                   disabled={currentPage === totalPages || totalPages === 0}
-                  className="flex items-center gap-2 border-gray-300"
+                  className="p-2 sm:px-3 flex items-center gap-2 capitalize"
                 >
-                  <ChevronRightIcon strokeWidth={3} className="h-3 w-3" />
+                  <ChevronRightIcon strokeWidth={3} className="h-4 w-4" />
+                  <span className="hidden sm:block text-[11px]">Berikutnya</span>
                 </Button>
               </div>
             </CardFooter>

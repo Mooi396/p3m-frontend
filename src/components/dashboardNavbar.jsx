@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-// Import instance api agar token terkirim otomatis di header
 import api from "../utils/api"; 
 import { Link, useNavigate } from "react-router-dom";
 import { LogOut, reset } from "../features/authSlice";
@@ -19,7 +18,56 @@ import {
   PencilIcon,
   PowerIcon,
 } from "@heroicons/react/24/solid";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+
+// --- Komponen SecureAvatar untuk mengambil gambar yang di-protect token ---
+const SecureAvatar = ({ src, alt, size, variant, fallback, className }) => {
+  const [imgSrc, setImgSrc] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchImage = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get(src, { responseType: 'blob' });
+        if (isMounted) {
+          const url = URL.createObjectURL(response.data);
+          setImgSrc(url);
+        }
+      } catch (error) {
+        if (isMounted) setImgSrc(null);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    if (src) {
+      fetchImage();
+    } else {
+      setLoading(false);
+    }
+
+    return () => {
+      isMounted = false;
+      if (imgSrc) URL.revokeObjectURL(imgSrc);
+    };
+  }, [src]);
+
+  if (loading || !imgSrc) {
+    return <div className={className}>{fallback}</div>;
+  }
+
+  return (
+    <Avatar 
+      src={imgSrc} 
+      alt={alt} 
+      size={size} 
+      variant={variant} 
+      className={className} 
+    />
+  );
+};
 
 const profileMenuItems = [
   {
@@ -36,27 +84,11 @@ const profileMenuItems = [
 
 function ProfileMenu() {
   const dispatch = useDispatch();
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const getMe = async () => {
-      try {
-        // Menggunakan api instance untuk fetch data profile
-        const response = await api.get("/me");
-        setUser(response.data);
-      } catch (error) {
-        console.error("Gagal mengambil data user:", error);
-        // Jika token tidak valid saat fetch profile, paksa logout di client
-        if (error.response?.status === 401) {
-          localStorage.removeItem("token");
-          navigate("/masuk");
-        }
-      }
-    };
-    getMe();
-  }, [navigate]);
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  
+  // Ambil data user dari Redux yang sudah disediakan bapaknya (Dashboard)
+  const { user } = useSelector((state) => state.auth);
 
   const info = user?.anggotas && user.anggotas.length > 0 ? user.anggotas[0] : {};
   const isNotVerified = user?.status !== "verified";
@@ -76,15 +108,14 @@ function ProfileMenu() {
     const isConfirmed = window.confirm("Anda yakin ingin keluar?");
     if (isConfirmed) {
       try {
-        // Jalankan LogOut dari authSlice yang sudah kita sesuaikan (menghapus token & session)
         await dispatch(LogOut()).unwrap();
         dispatch(reset());
-        navigate("/masuk");
+        // Gunakan hard refresh agar state memori SPA benar-benar bersih
+        window.location.href = "/masuk";
       } catch (error) {
         console.error("Gagal logout:", error);
-        // Fallback jika API logout gagal, tetap bersihkan client
         localStorage.removeItem("token");
-        navigate("/masuk");
+        window.location.href = "/masuk";
       }
     }
   };
@@ -100,12 +131,17 @@ function ProfileMenu() {
           className="flex items-center gap-1 rounded-full py-0.5 pr-2 pl-0.5 lg:ml-auto focus:outline-none"
         >
           {info.url ? (
-            <Avatar 
+            <SecureAvatar 
               src={info.url} 
               alt={user.username} 
               size="sm" 
               variant="circular" 
               className="border border-gray-900 p-0.5"
+              fallback={
+                <div className="h-8 w-8 rounded-full bg-blue-gray-50 flex items-center justify-center border border-gray-900">
+                  <UserCircleIcon className="h-6 w-6 text-blue-gray-300" />
+                </div>
+              }
             />
           ) : (
             <div className="h-8 w-8 rounded-full bg-blue-gray-50 flex items-center justify-center border border-gray-900">

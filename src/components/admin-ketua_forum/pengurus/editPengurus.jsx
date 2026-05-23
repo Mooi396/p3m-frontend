@@ -192,8 +192,7 @@ export default function EditPengurusModal({ open, handler, pengurus, refreshData
             Batal
           </Button>
           <Button 
-            type="submit" 
-            color="blue"
+            type="submit"
             loading={loading}
             className="capitalize"
           >

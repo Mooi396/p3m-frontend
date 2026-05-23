@@ -302,7 +302,7 @@ export default function ProfilOrganisasiComponent() {
                   size="sm" 
                   variant={isEdit ? "outlined" : "filled"} 
                   color={isEdit ? "red" : null}
-                  className="flex items-center gap-2 w-full sm:w-auto justify-center"
+                  className="flex items-center gap-3 w-full sm:w-auto"
                   onClick={() => {
                     setIsEdit(!isEdit);
                     if (isEdit) setPreviewUrl(null);
@@ -404,8 +404,8 @@ export default function ProfilOrganisasiComponent() {
                   </div>
                 </div>
 
-                <Button type="submit" size="lg" color="green" className="flex items-center justify-center gap-2 shadow-green-200">
-                  <CheckIcon className="h-5 w-5" /> Simpan Permanen
+                <Button type="submit" size="lg" className="flex items-center justify-center gap-2">
+                  <CheckIcon className="h-5 w-5" /> Simpan Perubahan
                 </Button>
               </form>
             )}

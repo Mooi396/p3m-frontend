@@ -97,8 +97,6 @@ export default function DaftarUserAdmin() {
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("table"); 
-  
-  // Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -602,7 +600,7 @@ export default function DaftarUserAdmin() {
                         key={page}
                         size="sm"
                         variant={currentPage === page ? "filled" : "text"}
-                        color={currentPage === page ? "blue" : "blue-gray"}
+                        color={currentPage === page ? null : "blue-gray"}
                         onClick={() => paginate(page)}
                         className="rounded-md h-8 w-8 text-xs"
                       >
