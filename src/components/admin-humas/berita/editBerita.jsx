@@ -59,7 +59,7 @@ export default function EditBerita() {
       const data = resBerita.data;
 
       // Validasi: Berita verified tidak boleh diedit oleh Humas (Hanya Admin)
-      if (data.status === "verified" && authuser?.role !== "admin") {
+      if (data.status === "verified") {
         alert("Berita yang sudah diverifikasi tidak dapat diedit kembali.");
         navigate("/dashboard/berita");
         return;

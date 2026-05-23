@@ -243,7 +243,7 @@ export default function DaftarBeritaAdmin() {
       alt={alt} 
       className={className} 
       onClick={onClick}
-      onError={(e) => { e.target.src = "https://via.placeholder.com/150" }}
+      onError={(e) => { e.target.src = "/default-image.png" }}
     />
   );
 };
