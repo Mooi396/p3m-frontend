@@ -160,7 +160,7 @@ export default function DaftarAnggotaP3M() {
                   </div>
 
                   {/* Research Links */}
-                  <div className="flex justify-center gap-2 mt-2 pt-3 border-t border-gray-50">
+                  <div className="flex justify-center flex-wrap gap-2 mt-2 pt-3 border-t border-gray-50">
                     {item.sinta && (
                       <a 
                         href={formatExternalLink(item.sinta)} 
@@ -189,6 +189,16 @@ export default function DaftarAnggotaP3M() {
                         className="text-[9px] bg-blue-50 text-blue-700 px-2 py-1 rounded font-bold hover:bg-blue-100 transition-colors"
                       >
                         LINKEDIN
+                      </a>
+                    )}
+                    {item.google_scholar && (
+                      <a 
+                        href={formatExternalLink(item.google_scholar)} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-[9px] bg-blue-50 text-blue-700 px-2 py-1 rounded font-bold hover:bg-blue-100 transition-colors"
+                      >
+                        GOOGLE SCHOLAR
                       </a>
                     )}
                   </div>
