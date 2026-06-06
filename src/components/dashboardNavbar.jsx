@@ -23,36 +23,39 @@ import { useDispatch, useSelector } from "react-redux";
 // --- Komponen SecureAvatar untuk mengambil gambar yang di-protect token ---
 const SecureAvatar = ({ src, alt, size, variant, fallback, className }) => {
   const [imgSrc, setImgSrc] = useState(null);
-  const [loading, setLoading] = useState(true);
+const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let isMounted = true;
-    const fetchImage = async () => {
-      try {
-        setLoading(true);
-        const response = await api.get(src, { responseType: 'blob' });
-        if (isMounted) {
-          const url = URL.createObjectURL(response.data);
-          setImgSrc(url);
-        }
-      } catch (error) {
-        if (isMounted) setImgSrc(null);
-      } finally {
-        if (isMounted) setLoading(false);
+useEffect(() => {
+  let isMounted = true;
+  let objectUrl = null; // 1. Buat variabel lokal untuk menampung URL
+
+  const fetchImage = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get(src, { responseType: 'blob' });
+      if (isMounted) {
+        objectUrl = URL.createObjectURL(response.data); // 2. Simpan ke variabel lokal
+        setImgSrc(objectUrl);
       }
-    };
-
-    if (src) {
-      fetchImage();
-    } else {
-      setLoading(false);
+    } catch (error) {
+      if (isMounted) setImgSrc(null);
+    } finally {
+      if (isMounted) setLoading(false);
     }
+  };
 
-    return () => {
-      isMounted = false;
-      if (imgSrc) URL.revokeObjectURL(imgSrc);
-    };
-  }, [src]);
+  if (src) {
+    fetchImage();
+  } else {
+    setLoading(false);
+  }
+
+  return () => {
+    isMounted = false;
+    // 3. Bersihkan menggunakan variabel lokal, bukan dari state 'imgSrc'
+    if (objectUrl) URL.revokeObjectURL(objectUrl); 
+  };
+}, [src]); // 4. Array dependency tetap cukup 'src' saja aman dari linting error!
 
   if (loading || !imgSrc) {
     return <div className={className}>{fallback}</div>;
