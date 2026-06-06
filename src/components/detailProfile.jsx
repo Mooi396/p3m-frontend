@@ -31,33 +31,36 @@ import SidebarKetuaForum from "./admin-ketua_forum/sidebarKetuaForum";
 // --- Sub-Component: SecureAvatar ---
 const SecureAvatar = ({ src, alt, className, variant, fallback }) => {
   const [imgSrc, setImgSrc] = useState(null);
-  const [loading, setLoading] = useState(true);
+const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let isMounted = true;
-    const fetchImage = async () => {
-      try {
-        setLoading(true);
-        const response = await api.get(src, { responseType: 'blob' });
-        if (isMounted) {
-          const url = URL.createObjectURL(response.data);
-          setImgSrc(url);
-        }
-      } catch (error) {
-        if (isMounted) setImgSrc(null);
-      } finally {
-        if (isMounted) setLoading(false);
+useEffect(() => {
+  let isMounted = true;
+  let objectUrl = null; // 1. Buat variabel lokal untuk menampung URL sementara
+
+  const fetchImage = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get(src, { responseType: 'blob' });
+      if (isMounted) {
+        objectUrl = URL.createObjectURL(response.data); // 2. Simpan ke variabel lokal
+        setImgSrc(objectUrl);
       }
-    };
+    } catch (error) {
+      if (isMounted) setImgSrc(null);
+    } finally {
+      if (isMounted) setLoading(false);
+    }
+  };
 
-    if (src) fetchImage();
-    else setLoading(false);
+  if (src) fetchImage();
+  else setLoading(false);
 
-    return () => {
-      isMounted = false;
-      if (imgSrc) URL.revokeObjectURL(imgSrc);
-    };
-  }, [src]);
+  return () => {
+    isMounted = false;
+    // 3. Bersihkan memori menggunakan variabel lokal, bukan state 'imgSrc'
+    if (objectUrl) URL.revokeObjectURL(objectUrl); 
+  };
+}, [src]); // 4. Dependency tetap 'src' saja, aman dari error linter!
 
   if (loading || !imgSrc) {
     return (
