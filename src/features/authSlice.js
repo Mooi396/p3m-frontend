@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import api from "../utils/api"; 
 
 const initialState = {
   user: null,
@@ -19,29 +19,25 @@ export const LoginUser = createAsyncThunk(
   "user/LoginUser",
   async (user, thunkAPI) => {
     try {
-      // 1. Tembak API Login untuk verifikasi email & password
-      const response = await axios.post("http://localhost:5000/login", {
+      // 2. Ganti 'axios.post("http://localhost:5000...")' menjadi 'api.post'
+      const response = await api.post("/login", {
         email: user.email,
         password: user.password,
       });
       
-      // 2. Simpan token ke localStorage
+      // Simpan token ke localStorage
       let token = null;
       if (response.data.accessToken) {
         token = response.data.accessToken;
         localStorage.setItem("token", token);
       }
       
-      // 3. --- SOLUSI GAMBAR PROFIL ---
-      // Daripada mereturn data login yang tidak lengkap, kita langsung ambil 
-      // data full user (termasuk relasi 'anggotas' dan URL foto) dari endpoint /me
-      const meResponse = await axios.get("http://localhost:5000/me", {
-        // Gunakan token yang baru saja didapat
+      // 3. Ganti 'axios.get("http://localhost:5000...")' menjadi 'api.get'
+      const meResponse = await api.get("/me", {
         headers: token ? { Authorization: `Bearer ${token}` } : getAuthHeader(), 
         withCredentials: true
       });
       
-      // 4. Return data lengkap ke state Redux
       return meResponse.data; 
     } catch (error) {
       if (error.response) {
@@ -54,8 +50,9 @@ export const LoginUser = createAsyncThunk(
 
 export const GetMe = createAsyncThunk("user/GetMe", async (_, thunkAPI) => {
   try {
-    const response = await axios.get("http://localhost:5000/me", {
-      headers: getAuthHeader(), // KIRIM TOKEN DI HEADER
+    // 4. Ganti ke 'api.get' tanpa prefix localhost
+    const response = await api.get("/me", {
+      headers: getAuthHeader(), 
       withCredentials: true
     });
     return response.data;
@@ -68,11 +65,11 @@ export const GetMe = createAsyncThunk("user/GetMe", async (_, thunkAPI) => {
 });
 
 export const LogOut = createAsyncThunk("user/LogOut", async () => {
-  await axios.delete("http://localhost:5000/logout", {
+  // 5. Ganti ke 'api.delete'
+  await api.delete("/logout", {
     headers: getAuthHeader(), 
     withCredentials: true
   });
-  // HAPUS TOKEN DARI LOCALSTORAGE SAAT LOGOUT
   localStorage.removeItem("token");
 });
 
@@ -98,7 +95,6 @@ export const authSlice = createSlice({
       state.isLoading = false;
       state.isSuccess = true;
       state.isError = false;
-      // Sekarang payload ini berisi data LENGKAP (termasuk foto profil)
       state.user = action.payload; 
     });
     builder.addCase(LoginUser.rejected, (state, action) => {
